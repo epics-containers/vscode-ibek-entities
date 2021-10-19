@@ -1,0 +1,26 @@
+{
+	"compilerOptions": {
+		"module": "none",
+		"target": "es6",
+		"moduleResolution": "node",
+		"outDir": "./out",
+		"lib": [
+			"es2016", "dom", "es2015.core"
+		],
+		"sourceMap": true,
+		/* Strict Type-Checking Option */
+		"strict": true,   /* enable all strict type-checking options */
+		/* Additional Checks */
+		"noUnusedLocals": true, /* Report errors on unused locals. */
+		// "noImplicitReturns": true, /* Report error when not all code paths in function return a value. */
+		// "noFallthroughCasesInSwitch": true, /* Report errors for fallthrough cases in switch statement. */
+		// "noUnusedParameters": true,  /* Report errors on unused parameters. */
+		"skipLibCheck": true,
+		"removeComments": true
+	},
+	"exclude": [
+		"../node_modules",
+		"../src",
+		"out"
+	]
+}
