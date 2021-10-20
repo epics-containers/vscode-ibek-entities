@@ -564,7 +564,7 @@ type HotRegister = {
 	bucket: {[key: string]: any}
 	register: (key: string,container: HTMLElement, tableData: any[], tableColumns: any[]) => void
 	getInstance: (key: string) => Handsontable | null
-
+	removeKey: (key: string) => void
 }
 
 type InitialDataObject = {

@@ -479,6 +479,7 @@ function displayYamlData(this: any, yamlDataTables: any[][], yamlTableHeaders: s
 			if(hot && hotContainer){
 				hot.destroy()
 				hot = null
+				HotRegisterer.removeKey("table"+i)
 				deleteHtmlContainer("container"+i)
 			}
 		}
@@ -2570,6 +2571,7 @@ let HotRegisterer: HotRegister = {
 	
 				lastClickedHeaderCellTh = th
 			},
+			outsideClickDeselects: false, //keep selection
 		
 		})
 	
@@ -2612,6 +2614,9 @@ let HotRegisterer: HotRegister = {
         let hot: Handsontable | null;
 		hot = this.bucket[key];  
 		return hot
+	},
+	removeKey: function(key) {
+		delete HotRegisterer.bucket[key]
 	}
 };
 

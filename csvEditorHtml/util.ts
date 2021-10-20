@@ -235,6 +235,16 @@ function addColumn(selectNewColumn = true) {
  */
 function addRow(selectNewRow = true) {
 
+	//need to make sure it has correct hot instance
+	for(let key in HotRegisterer.bucket){
+		let _hot = HotRegisterer.bucket[key]
+		const selections = _hot.getSelected()
+		if (selections){
+			//this is the hot instance that is currently selected
+			hot = _hot
+		}
+	}
+
 	if (!hot) throw new Error('table was null')
 
 	// const headerCells = hot.getColHeader()
@@ -254,8 +264,17 @@ function addRow(selectNewRow = true) {
  * the index is the visual one seen in the ui (e.g. changed when we reorder rows)
  */
 function _getSelectedVisualRowIndex(): number | null {
-
-	if (!hot) throw new Error('table was null')
+	
+	//need to make sure it has correct hot instance
+	for(let key in HotRegisterer.bucket){
+		let _hot = HotRegisterer.bucket[key]
+		const _selections = _hot.getSelected()
+		if (_selections){
+			//this is the hot instance that is currently selected
+			hot = _hot
+		}
+	}
+	if (!hot) throw new Error('table was null')	
 
 	const selections = hot.getSelected()
 	if (!selections?.length) return null
@@ -271,6 +290,15 @@ function _getSelectedVisualRowIndex(): number | null {
  */
 function _getSelectedVisualColIndex(): number | null {
 
+	//need to make sure it has correct hot instance
+	for(let key in HotRegisterer.bucket){
+		let _hot = HotRegisterer.bucket[key]
+		const _selections = _hot.getSelected()
+		if (_selections){
+			//this is the hot instance that is currently selected
+			hot = _hot
+		}
+	}
 	if (!hot) throw new Error('table was null')
 
 	const selections = hot.getSelected()
@@ -301,6 +329,15 @@ function insertRowBelow() {
 }
 
 function _insertRowInternal(belowCurrRow: boolean) {
+	//need to make sure it has correct hot instance
+	for(let key in HotRegisterer.bucket){
+		let _hot = HotRegisterer.bucket[key]
+		const _selections = _hot.getSelected()
+		if (_selections){
+			//this is the hot instance that is currently selected
+			hot = _hot
+		}
+	}
 	if (!hot) throw new Error('table was null')
 
 	const currRowIndex = _getSelectedVisualRowIndex()
@@ -903,6 +940,16 @@ function afterHandsontableCreated(hot: Handsontable) {
 	 * @param column2 Selection end visual column index.
 	 */
 	const afterSelectionHandler = (row: number, column: number, row2: number, column2: number) => {
+
+		//need to make sure it has correct hot instance
+		for(let key in HotRegisterer.bucket){
+			let _hot = HotRegisterer.bucket[key]
+			const selections = _hot.getSelected()
+			if (selections){
+				//this is the hot instance that is currently selected
+				hot = _hot
+			}
+		}
 
 		if (getIsSidePanelCollapsed()) {
 			//not update stats (might be costly and we don't display stats anyway)
