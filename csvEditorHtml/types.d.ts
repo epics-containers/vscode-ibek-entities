@@ -383,9 +383,16 @@ type DisplayMessageBoxMessage = {
 	content: string
 }
 
+/*
 type OverwriteFileMessage = {
 	command: 'apply'
 	csvContent: string
+	saveSourceFile: boolean
+}*/
+
+type OverwriteFileMessage = {
+	command: 'apply'
+	yamlContent: string
 	saveSourceFile: boolean
 }
 
@@ -571,4 +578,8 @@ type InitialDataObject = {
 	tablesArray: any[][]
 	tableHeaders: string[]
 	tableColumns: any[][]
+}
+
+type ReturnDataObject = {
+	tablesArray: any[][]
 }

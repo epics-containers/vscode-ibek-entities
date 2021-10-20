@@ -375,6 +375,7 @@ function postSetEditorHasChanges(hasChanges: boolean) {
  * @param csvContent 
  * @param saveSourceFile 
  */
+/*
 function _postApplyContent(csvContent: string, saveSourceFile: boolean) {
 
 	_setHasUnsavedChangesUiIndicator(false)
@@ -387,6 +388,27 @@ function _postApplyContent(csvContent: string, saveSourceFile: boolean) {
 	vscode.postMessage({
 		command: 'apply',
 		csvContent,
+		saveSourceFile
+	})
+}*/
+
+/**
+ * called to save the current edit state back to the file
+ * @param yamlContent 
+ * @param saveSourceFile 
+ */
+function _postApplyContent(yamlContent: string, saveSourceFile: boolean) {
+
+	_setHasUnsavedChangesUiIndicator(false)
+
+	if (!vscode) {
+		console.log(`_postApplyContent (but in browser)`)
+		return
+	}
+
+	vscode.postMessage({
+		command: 'apply',
+		yamlContent,
 		saveSourceFile
 	})
 }

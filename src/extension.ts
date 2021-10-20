@@ -508,9 +508,15 @@ function createNewEditorInstance(context: vscode.ExtensionContext, activeTextEdi
 				}
 				break
 			}
+			/*
 			case "apply": {
 				const { csvContent, saveSourceFile } = message
 				applyContent(instance, csvContent, saveSourceFile, config.openSourceFileAfterApply)
+				break
+			}*/
+			case "apply": {
+				const { yamlContent, saveSourceFile } = message
+				applyYamlContent(instance, yamlContent, saveSourceFile, config.openSourceFileAfterApply)
 				break
 			}
 
@@ -562,6 +568,7 @@ function createNewEditorInstance(context: vscode.ExtensionContext, activeTextEdi
 /**
  * tries to apply (replace the whole file content) with the new content
  */
+/*
 function applyContent(instance: Instance, newContent: string, saveSourceFile: boolean, openSourceFileAfterApply: boolean) {
 
 	vscode.workspace.openTextDocument(instance.sourceUri)
@@ -611,6 +618,74 @@ function applyContent(instance: Instance, newContent: string, saveSourceFile: bo
 			// 			})
 			// 	})
 
+		},
+			(reason) => {
+
+				//maybe the source file was deleted...
+				//see https://github.com/microsoft/vscode-extension-samples/pull/195/files
+
+				console.warn(`Could not find the source file, trying to access it and create a temp file with the same path...`)
+				console.warn(reason)
+
+				vscode.workspace.fs.stat(instance.sourceUri).
+					then(fileStat => {
+						//file exists and can be accessed
+						vscode.window.showErrorMessage(`Could apply changed because the source file could not be found`)
+
+					}, error => {
+
+						//file is probably deleted
+						// vscode.window.showWarningMessageMessage(`The source file could not be found and was probably deleted.`)
+						createNewSourceFile(instance, newContent, openSourceFileAfterApply, saveSourceFile)
+					})
+
+			})
+}*/
+
+/**
+ * tries to apply (replace the whole file content) with the new content, using js-yaml dump
+ */
+
+function applyYamlContent(instance: Instance, newContent: string, saveSourceFile: boolean, openSourceFileAfterApply: boolean) {
+	vscode.workspace.openTextDocument(instance.sourceUri)
+		.then(document => {
+			//fetch the old (saved) version
+			let yamlData = yaml.load(fs.readFileSync(document.uri.fsPath, 'utf8'));
+
+			//parse string back to json object
+			let newData: ReturnDataObject = JSON.parse(newContent)
+			yamlData.entities = newData.tablesArray
+			let yamlString = yaml.dump(yamlData)
+			fs.writeFileSync(document.uri.fsPath, yamlString, 'utf8')
+
+			const edit = new vscode.WorkspaceEdit()
+
+			var firstLine = document.lineAt(0);
+			var lastLine = document.lineAt(document.lineCount - 1);
+			var textRange = new vscode.Range(0,
+				firstLine.range.start.character,
+				document.lineCount - 1,
+				lastLine.range.end.character);
+
+			//don't apply if the content didn't change
+			// TO DO - won't work for yaml
+			if (document.getText() === yamlString) {
+				debugLog(`content didn't change`)
+				return
+			}
+
+			edit.replace(document.uri, textRange, yamlString)
+			vscode.workspace.applyEdit(edit)
+				.then(
+					editsApplied => {
+						_afterEditsApplied(instance, document, editsApplied, saveSourceFile, openSourceFileAfterApply)
+					},
+					(reason) => {
+						console.warn(`Error applying edits`)
+						console.warn(reason)
+						vscode.window.showErrorMessage(`Error applying edits`)
+					})
+			
 		},
 			(reason) => {
 
@@ -815,8 +890,9 @@ function parseYaml(yamlPath: string){
 	let tableHeaders: string[] = [] //array of header titles
 	let tablesArray: any[][] = [] //array of each data array for every table
 	let tableColumns: any[][] = [] //array of arrays of object, where each array of objects is one set of columns
+	let parseResult: any
 	try {
-		const parseResult = yaml.load(fs.readFileSync(yamlPath, 'utf8'));
+		parseResult = yaml.load(fs.readFileSync(yamlPath, 'utf8'));
 		let yamlIsValid: boolean = validateYaml(parseResult, jsonSchema)
 		if (yamlIsValid){
 			createTableData(parseResult, tableHeaders, tablesArray) 
@@ -826,7 +902,7 @@ function parseYaml(yamlPath: string){
 		console.log(e); //TO DO: do something if error loading file
 	}
 	return {
-		tablesArray, tableHeaders, tableColumns
+		 tablesArray, tableHeaders, tableColumns
 	}
 }
 
