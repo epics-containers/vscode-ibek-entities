@@ -257,6 +257,7 @@ function addRow(selectNewRow = true) {
 	}
 
 	checkAutoApplyHasHeader()
+	onResizeGrid()
 }
 
 /**
@@ -366,6 +367,7 @@ function _insertRowInternal(belowCurrRow: boolean) {
 	}
 
 	checkAutoApplyHasHeader()
+	onResizeGrid()
 }
 
 /**

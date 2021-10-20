@@ -2571,7 +2571,17 @@ let HotRegisterer: HotRegister = {
 	
 				lastClickedHeaderCellTh = th
 			},
-			outsideClickDeselects: false, //keep selection
+			outsideClickDeselects: function(event){
+				//if clicking on a button - span, button and i are all elements found on buttons but not tables/container
+				//TO DO - might need a more comprehensive method in future
+				if (event.tagName.toLowerCase() === "span" || event.tagName.toLowerCase() === "button" || event.tagName.toLowerCase() === "i"){
+					return false
+				}
+				//if clicking on anything else
+				else{
+					return true
+				}
+			}
 		
 		})
 	
