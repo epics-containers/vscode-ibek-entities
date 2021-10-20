@@ -1829,6 +1829,7 @@ function postApplyContent(saveSourceFile: boolean) {
 	if (isReadonlyMode) return
 
 	const csvContent = getDataAsCsv(defaultCsvReadOptions, defaultCsvWriteOptions)
+	const yamlContent = getYamlData()
 
 	//used to clear focus... else styles are not properly applied
 	//@ts-ignore

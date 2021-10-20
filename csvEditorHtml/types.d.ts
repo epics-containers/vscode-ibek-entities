@@ -336,11 +336,11 @@ type CsvUpdateMessage = {
 }
 
 /**
- * used to update the yaml object we use to build the table (changes will be lost!!)
+ * used to update the yaml object we use to build the table (changes will be lost!!) 
  */
 type YamlUpdateMessage = {
 	command: 'yamlUpdate'
-	yamlContent: InitialDataObject
+	yamlContent: string
 }
 
 /**

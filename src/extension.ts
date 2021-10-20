@@ -423,10 +423,10 @@ function createNewEditorInstance(context: vscode.ExtensionContext, activeTextEdi
 						panel.webview.postMessage(msg)
 					}*/
 
-					//new yaml data message
+					//new yaml data message, sends data as json string
 					const msg: ReceivedMessageFromVsCode = {
 						command: "yamlUpdate",
-						yamlContent: data
+						yamlContent: JSON.stringify(data)
 						}
 					panel.webview.postMessage(msg)
 				}

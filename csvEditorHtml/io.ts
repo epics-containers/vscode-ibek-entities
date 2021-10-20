@@ -104,6 +104,23 @@ function getData(): string[][] {
 }
 
 /**
+ * 
+ * @returns {any[][]} the current data in the handson table
+ */
+function getYamlData(): any[][] {
+	let allData: any[][] = []
+	for(let key in HotRegisterer.bucket){
+		let _hot = HotRegisterer.bucket[key]
+		if (!_hot) throw new Error('table was null')
+		let _tableData = _hot.getSourceData()
+		allData.push(_tableData)
+	}
+
+	return allData
+}
+
+
+/**
  * if we have an header row already it is ignored here!!
  */
 function getFirstRowWithIndex(skipCommentLines: boolean = true): HeaderRowWithIndex | null {
@@ -408,7 +425,7 @@ function handleVsCodeMessage(event: { data: ReceivedMessageFromVsCode }) {
 			break
 		}
 		case 'yamlUpdate': {
-			if (typeof message.yamlContent === 'object') {
+			if (typeof message.yamlContent === 'string') {
 				onReceiveYamlObject(message.yamlContent)
 				break
 			}
@@ -473,12 +490,13 @@ function onReceiveCsvContentSlice(slice: StringSlice) {
 	}
 }
 
+
 /**
- * 
+ *  receives json string and parses it back into data object
  */
-function onReceiveYamlObject(yamlObject: InitialDataObject){
+function onReceiveYamlObject(yamlObject: string){
 	stopReceiveCsvProgBar()
-	initialData = yamlObject
+	initialData = JSON.parse(yamlObject)
 	startRenderData()
 }
 
