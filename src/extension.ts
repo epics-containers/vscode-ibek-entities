@@ -9,6 +9,7 @@ const yaml = require('js-yaml');
 const fs   = require('fs');
 const Validator = require("jsonschema").Validator;
 const fetch = require('sync-fetch')
+const YAWN = require('yawn-yaml/cjs')
 
 
 // const debounceDocumentChangeInMs = 1000
@@ -643,20 +644,31 @@ function applyContent(instance: Instance, newContent: string, saveSourceFile: bo
 }*/
 
 /**
- * tries to apply (replace the whole file content) with the new content, using js-yaml dump
+ * tries to apply (replace the whole file content) with the new content, using yawn-yaml
  */
 
 function applyYamlContent(instance: Instance, newContent: string, saveSourceFile: boolean, openSourceFileAfterApply: boolean) {
 	vscode.workspace.openTextDocument(instance.sourceUri)
 		.then(document => {
+			//TO DO - currently lots of files being loaded unnecessarily, should streamline?
 			//fetch the old (saved) version
 			let yamlData = yaml.load(fs.readFileSync(document.uri.fsPath, 'utf8'));
-
+			//testing using yawn yaml to preserve comments
+			let yawn = new YAWN(fs.readFileSync(document.uri.fsPath, 'utf8'));
 			//parse string back to json object
 			let newData: ReturnDataObject = JSON.parse(newContent)
-			yamlData.entities = newData.tablesArray
-			let yamlString = yaml.dump(yamlData)
-			fs.writeFileSync(document.uri.fsPath, yamlString, 'utf8')
+			//want to iterate over every array in array in tablesArray
+			let index = 0
+			newData.tablesArray.forEach((array) => {
+				array.forEach((entity) => {
+					yamlData.entities[index] = entity
+					index += 1
+				})
+			})
+			//update yawn yaml with new data
+			yawn.json = yamlData
+			let yamlString = yawn.yaml
+			//let yamlString = yaml.dump(yamlData)
 
 			const edit = new vscode.WorkspaceEdit()
 
@@ -958,9 +970,8 @@ function createTableData(parseResult: any, tableHeaders: string[], tablesArray: 
             //takes first "type" value and adds to array of headers
             if (key === "type"){
             	// currently this is an object
-				  //let {type, ..._tempObject} = parseResult.entities[entity]
-				  //let _tempObject: {} = parseResult.entities[entity]
-				  let {type, ..._tempObject} = parseResult.entities[entity]
+				let _tempObject: {} = parseResult.entities[entity]
+				//let {type, ..._tempObject} = parseResult.entities[entity]
               	if (tableHeaders.indexOf(parseResult.entities[entity][key]) > -1){
                 	//do nothing to list of headers, because header already exists
                 	let index = tableHeaders.indexOf(parseResult.entities[entity][key]) //get index of existing header

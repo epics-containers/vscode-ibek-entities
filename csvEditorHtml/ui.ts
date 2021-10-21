@@ -2586,7 +2586,7 @@ let HotRegisterer: HotRegister = {
 			}
 		
 		})
-	
+
 		//@ts-ignore
 		Handsontable.dom.addEvent(window as any, 'resize', throttle(onResizeGrid, 200))
 	
@@ -2656,7 +2656,7 @@ function setColumnOptions(tableColumns: any[]){
 			_source = [true, false]
 		}
 		if(column.name !== "type"){
-			//only add columns that AREN't type 
+			//don't want type to be accepted column
 			let _tmpObj = {data: column.name, title: column.name}
 			columnOptions.push(_tmpObj)
 		}
