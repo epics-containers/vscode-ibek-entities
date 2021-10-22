@@ -401,7 +401,7 @@ function createNewEditorInstance(context: vscode.ExtensionContext, activeTextEdi
 			case 'ready': {
 
 				debugLog('received ready from webview')
-				let data = parseYaml(activeTextEditor.document.uri.fsPath)
+				let data = parseYaml(activeTextEditor.document.uri.fsPath, instance)
 
 				instance.hasChanges = false
 				setEditorHasChanges(instance, false)
@@ -897,8 +897,8 @@ function onSourceFileChanged(path: string, instance: Instance) {
 * @returns {[string[], string[][], string[]]| null} [0] comments before, [1] csv data, [2] comments after
 */
 
-function parseYaml(yamlPath: string){
-	let jsonSchema = fetchSchema(yamlPath)
+function parseYaml(yamlPath: string, instance: Instance){
+	let jsonSchema = fetchSchema(instance)
 	let tableHeaders: string[] = [] //array of header titles
 	let tablesArray: any[][] = [] //array of each data array for every table
 	let tableColumns: any[][] = [] //array of arrays of object, where each array of objects is one set of columns
@@ -921,20 +921,35 @@ function parseYaml(yamlPath: string){
 /**
  * check if yaml file specifies schema in first-line comment
  * if it does, check it exists and fetch it
- * @param yamlPath 
+ * @param instance
  */
-function fetchSchema(yamlPath: string){
-	//TO DO -read first line comment of yaml file, check it exists
+function fetchSchema(instance: Instance){
 	//TO DO AT LATER DATE - check if json schema is local file or linking to url to change method
-
-	//TO DO - extract link from first line comment
-	//if yaml file doesn't link to a schema:
-	vscode.window.showWarningMessage("Please specify a JSON schema to validate by in the YAML file. This should be the first line of the file, in the format:\n"+
-	"'# yaml-language-server: $schema=<json schema here>'")
-	//if schema link doesn't work
-	vscode.window.showErrorMessage("Could not fetch JSON schema to validate YAML file. Please check that the path to the schema is correct.")
-	const jsonSchema = fetch('https://raw.githubusercontent.com/epics-containers/ibek/master/tests/samples/schemas/pmac.schema.json').json()
-	return jsonSchema
+	let document = instance.document
+	if(document){
+		let firstLine: string = document.lineAt(0).text
+		//checks if first line is schema in comment
+		if(firstLine.indexOf("# yaml-language-server: $schema=") !== -1){
+			let schemaPath: string = firstLine.split('=')[1]
+			const jsonSchema = fetch(schemaPath).json()
+			if (jsonSchema){
+				return jsonSchema
+			}
+			else{
+				//TO DO - need proper exception handling?
+				vscode.window.showErrorMessage("Could not fetch JSON schema to validate YAML file. Please check that the path to the schema is correct.")
+			}
+		}
+		else{
+			//if yaml file doesn't link to a schema:
+			vscode.window.showWarningMessage("Please specify a JSON schema to validate by in the YAML file. This should be the first line of the file, in the format:\n"+
+			"'# yaml-language-server: $schema=<json schema here>'")
+		}
+	}
+	else{
+		//TO DO - Better error handling?
+		vscode.window.showErrorMessage("No active text document open.")
+	}
 }
 
 /*
@@ -943,6 +958,7 @@ function fetchSchema(yamlPath: string){
 
 function validateYaml(parsedYaml: any, schema: any){
 	const validator = new Validator();
+	if(parsedYaml && schema){
   		const validation = validator.validate(parsedYaml, schema);
   		if (validation.errors.length) {
     		//const errors = validation.errors.map(e => `${e.property} ${e.message}`).join("\n");
@@ -950,9 +966,13 @@ function validateYaml(parsedYaml: any, schema: any){
 			return false
   		}
   		else {
-			console.log("No errors validating YAML against JSON schema.")
 			return true
 		}
+	}
+	else{
+		vscode.window.showErrorMessage("Error validating YAML against schema.")
+		return false
+	}
 
 }
 
