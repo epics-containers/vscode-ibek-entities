@@ -492,7 +492,7 @@ function commentValueRenderer(instance: Handsontable, td: HTMLTableDataCellEleme
 (Handsontable.renderers as any).registerRenderer('commentValueRenderer', commentValueRenderer);
 
 /**
- * custom rendering for cells
+ * custom rendering for cells, fills in default values and changes background colours
  * @param instance 
  * @param td 
  * @param row 
@@ -506,7 +506,7 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 	//@ts-ignore
 	Handsontable.renderers.TextRenderer.apply(this, args);
 
-	//checks if cell is empty, fills in default
+	//checks if cell is empty, fills in default value
 	if(args[5] === null || args[5] === ""){
 		td.style.backgroundColor = '44474C';
 		td.style.color = '#888E8E';
@@ -516,21 +516,48 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 		td.style.color = '';
 	}
 
-	//set up tooltip
+	//sets up tooltip
 	if (td) {
 		(td as HTMLElement).title = cellProperties.description + " <type '" + cellProperties.cellType + "'>";
 	}
 	
-	//check column requirement
+	//checks column requirement
 	if(cellProperties.required && args[5]){
 		td.style.backgroundColor = '#45474a';
 	}
 	else if(cellProperties.required && args[5] !== null){
-		td.style.backgroundColor = '#EA2406';
-		td.style.color = '871907';
+		td.style.backgroundColor = '#fda398';
+		td.style.color = '#EA2406';
 	}
 
 	//TO DO - check type with switch and validate
+	//this should really go into a separate validator? do later...
+	switch(cellProperties.cellType){
+		case "integer":
+			if(isNaN(Number(value))){
+				//TO DO - check its an int not a float?
+				td.style.backgroundColor = '#fda398';
+				td.style.color = '#EA2406';
+			}
+			break;
+
+		case "number":
+			if(isNaN(Number(value))){
+				td.style.backgroundColor = '#fda398';
+				td.style.color = '#EA2406';
+			}
+			break;
+
+		case "boolean":
+			//this should be covered by handsontable?
+			//TO DO - check and fix later
+			if(value !== "true" && value !== "false"){
+				td.style.backgroundColor = '#fda398';
+				td.style.color = '#EA2406';
+			}
+			break;
+
+	}
 
 }
 
