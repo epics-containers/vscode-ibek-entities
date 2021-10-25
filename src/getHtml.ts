@@ -477,6 +477,17 @@ export function createEditorHtml(webview: vscode.Webview, context: vscode.Extens
 						</button>
 					</div>
 
+					<button style="margin-right: 1em" class="button is-outlined on-readonly-disable-btn" onclick="addTable()">
+						<span class="icon is-small">
+							<i class="fas fa-plus"></i>
+						</span>
+						<span>Add table</span>
+						<span class="tooltip mar-left-half is-tooltip-multiline is-tooltip-left"
+							data-tooltip="Creates and appends a new empty table to the end of the set.">
+							<i class="fas fa-question-circle"></i>
+						</span>
+					</button>
+
 					<button id="btn-apply-changes-to-file-and-save" class="button is-outlined mar-left on-readonly-disable-btn" onclick="postApplyContent(true)">
 						<span class="icon is-small">
 							<i class="fas fa-save"></i>
@@ -524,17 +535,6 @@ export function createEditorHtml(webview: vscode.Webview, context: vscode.Extens
 								</span>
 							</button>
 						</div>
-
-						<button style="margin-right: 1em" class="button is-outlined on-readonly-disable-btn" onclick="trimAllCells()">
-							<span class="icon is-small">
-								<i class="fas fa-hand-scissors"></i>
-							</span>
-							<span>Trim</span>
-							<span class="tooltip mar-left-half is-tooltip-multiline is-tooltip-left"
-								data-tooltip="Trims every cell (including header row) in the table (removes leading and trailing spaces, tabs, ...). This will clear undo/redo stack!">
-								<i class="fas fa-question-circle"></i>
-							</span>
-						</button>
 
 						<button class="button is-outlined" onclick="toggleHelpModal(true)">
 							<span class="icon is-small">

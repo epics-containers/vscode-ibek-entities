@@ -1522,7 +1522,7 @@ function onResizeGrid() {
 		return
 	}
 
-	const width = parseInt(widthString.substring(0, widthString.length - 2))
+	const width = parseInt(widthString.substring(0, widthString.length - 2)) 
 	
 	//need to modify this for several tables
 	const heightString = getComputedStyle(csvEditorWrapper).height
@@ -2483,6 +2483,45 @@ function toggleReadonlyMode() {
 }
 
 /**
+ * creates an empty template table upon button press
+ * TO DO - allow adding columns
+ * TO DO future ? - allow user to select ioc type (or custom and specify row/col count)
+ * and then populate table with template
+ */
+function addTable(){
+	let counter: number = HotRegisterer.counter
+	let container = createHtmlContainer(counter, "New Table"+counter)
+	if (container){
+		let tableKey: string = "table" + counter
+		let columnOptions: any[] = [{title: "col 1"}, {title: "col 2"}, {title: "col 3"}]
+		//need to create a row of placeholder data
+		let tableData = [[0, 0, 0]]
+		HotRegisterer.register(tableKey, container, tableData, columnOptions, [])
+	}
+	else{
+		console.log("couldn't find html to create table")
+		//TO DO - better error/exception handling here
+	}
+	HotRegisterer.counter = counter+1
+
+	onResizeGrid()
+}
+
+/**
+ * called when a table is manually deleted
+ */
+function removeTable(container: HTMLElement){
+	if(hot && container){
+		hot.destroy()
+		hot = null
+		let key: string = (container.id).substr((container.id).length -1)
+		HotRegisterer.removeKey("table"+key)
+		deleteHtmlContainer("container"+key)
+	}
+	onResizeGrid()
+}
+
+/**
  * creates HOT instances and adds their references to a bucket so can be identified.
  * might need to be moved elsewhere as is not a type declaration
  * @param counter keeps track of how many previous instances created in order to
@@ -2551,6 +2590,12 @@ let HotRegisterer: HotRegister = {
 							}
 	
 							return hot!.countRows() === 1 || allRowsAreSelected
+						},
+					},
+					'remove_table': {
+						name: "Delete table",
+						callback: function () { //key, selection, clickEvent
+							removeTable(container)
 						},
 					},
 					'---------3': {

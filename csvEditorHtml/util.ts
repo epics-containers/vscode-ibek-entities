@@ -451,7 +451,6 @@ function removeColumn(index: number) {
 
 }
 
-
 /**
  * called on every render...
  * so we only need to add the css rule and never remove it
