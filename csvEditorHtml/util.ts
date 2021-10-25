@@ -491,6 +491,51 @@ function commentValueRenderer(instance: Handsontable, td: HTMLTableDataCellEleme
 
 (Handsontable.renderers as any).registerRenderer('commentValueRenderer', commentValueRenderer);
 
+/**
+ * custom rendering for cells
+ * @param instance 
+ * @param td 
+ * @param row 
+ * @param column 
+ * @param prop 
+ * @param value 
+ * @param cellProperties 
+ */
+function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, row: number, col: number, prop: any, value: string | null, cellProperties: any) {
+	const args = arguments;
+	//@ts-ignore
+	Handsontable.renderers.TextRenderer.apply(this, args);
+
+	//checks if cell is empty, fills in default
+	if(args[5] === null || args[5] === ""){
+		td.style.backgroundColor = '44474C';
+		td.style.color = '#888E8E';
+		td.innerText = cellProperties.default;
+	}
+	else{
+		td.style.color = '';
+	}
+
+	//set up tooltip
+	if (td) {
+		(td as HTMLElement).title = cellProperties.description + " <type '" + cellProperties.cellType + "'>";
+	}
+	
+	//check column requirement
+	if(cellProperties.required && args[5]){
+		td.style.backgroundColor = '#45474a';
+	}
+	else if(cellProperties.required && args[5] !== null){
+		td.style.backgroundColor = '#EA2406';
+		td.style.color = '871907';
+	}
+
+	//TO DO - check type with switch and validate
+
+}
+
+(Handsontable.renderers as any).registerRenderer('customRenderer', customRenderer);
+
 // function invisiblesCellValueRenderer(instance: Handsontable, td: HTMLTableDataCellElement, row: number, col: number, prop: any, value: string | null, cellProperties: any) {
 // 	//@ts-ignore
 // 	const val = Handsontable.helper.stringify(value);

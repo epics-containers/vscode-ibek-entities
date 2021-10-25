@@ -569,7 +569,7 @@ type ColumnObject = {
 type HotRegister = {
 	counter: number
 	bucket: {[key: string]: any}
-	register: (key: string,container: HTMLElement, tableData: any[], tableColumns: any[]) => void
+	register: (key: string,container: HTMLElement, tableData: any[], columnOps: any[], tableColumns: any[]) => void
 	getInstance: (key: string) => Handsontable | null
 	removeKey: (key: string) => void
 }

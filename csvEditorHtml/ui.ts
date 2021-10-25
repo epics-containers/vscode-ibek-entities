@@ -494,7 +494,7 @@ function displayYamlData(this: any, yamlDataTables: any[][], yamlTableHeaders: s
 			let tableKey: string = "table" + counter
 			let tableIdx: number = getMatchingColumns(yamlTableHeaders[index], yamlTableColumns)
 			let columnOptions = setColumnOptions(yamlTableColumns[tableIdx])
-			HotRegisterer.register(tableKey, container, tableData, columnOptions)
+			HotRegisterer.register(tableKey, container, tableData, columnOptions, yamlTableColumns[tableIdx])
 		}
 		else{
 			console.log("couldn't find html to create table")
@@ -2490,11 +2490,12 @@ function toggleReadonlyMode() {
  * @param register used to create a new HOT instance and register it in the bucket
  * @param getInstance used to select a particular table instance
  * @param bucket a bucket to store all the keys to hot instances in
+ * @param removeKey removes deleted instances from bucket
  */
 let HotRegisterer: HotRegister = {
 	counter: 0,
     bucket: {},
-	register: function(key, container, tableData, tableColumns) {
+	register: function(key, container, tableData, columnOpt, tableColumns) {
 		//reset header row
 		headerRowWithIndex = null
 
@@ -2515,7 +2516,7 @@ let HotRegisterer: HotRegister = {
 				autoInsertRow: false
 			},
 			undo: true,
-			columns: tableColumns,
+			columns: columnOpt,
 			contextMenu: {
 				items: {
 					'row_above': {
@@ -2583,9 +2584,19 @@ let HotRegisterer: HotRegister = {
 				else{
 					return true
 				}
+			},
+			cells: function (row, col) {
+				var cellProperties: GridSettings = {};
+				//let metadata = this.getCellMeta(row,col)
+				//cellProperties.renderer = "customRenderer"
+				return cellProperties
 			}
-		
 		})
+
+		//bit hacky but iterates over and sets metadata for all columns
+		for(let row =0; row < hot.countRows(); row++){
+			setColumnMetadata(row, tableColumns)
+		}
 
 		//@ts-ignore
 		Handsontable.dom.addEvent(window as any, 'resize', throttle(onResizeGrid, 200))
@@ -2657,7 +2668,7 @@ function setColumnOptions(tableColumns: any[]){
 		}
 		if(column.name !== "type"){
 			//don't want type to be accepted column
-			let _tmpObj = {data: column.name, title: column.name}
+			let _tmpObj = {data: column.name, title: column.name, renderer: customRenderer}
 			columnOptions.push(_tmpObj)
 		}
 	})	
@@ -2679,4 +2690,20 @@ function getMatchingColumns(tableName: string, yamlTableColumns: any[][]){
 		})
 	})
 	return idx
+}
+
+/**
+ * uses json schema to set cell metadata
+ * @param tableColumns 
+ */
+function setColumnMetadata(row: number, tableColumns: any[]){
+	tableColumns.forEach((column, idx) => {
+		if(hot){
+			//TO DO - descriptions are off by 1 or 2 index, need to fix
+			hot.setCellMeta(row, idx, "description", column.description)
+			hot.setCellMeta(row, idx, "default", column.default)
+			hot.setCellMeta(row, idx, "required", column.required)
+			hot.setCellMeta(row, idx, "cellType", column.type)
+		}
+	})
 }
