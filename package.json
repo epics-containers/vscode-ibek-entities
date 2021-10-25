@@ -430,7 +430,8 @@
 		"node-fetch": "^3.0.0",
 		"require-from-url": "^3.1.3",
 		"requirejs": "^2.3.6",
-		"sync-fetch": "^0.3.1"
+		"sync-fetch": "^0.3.1",
+		"yawn-yaml": "^1.5.0"
 	},
 	"devDependencies": {
 		"@sweetalert2/theme-dark": "^3.2.0",
