@@ -28,7 +28,8 @@ html, body {
 }
 
 .csv-editor-wrapper {
-	overflow: scroll;
+	overflow-x: hidden;
+	overflow-y: scroll;
 	flex: 1;
 }
 

@@ -1522,7 +1522,7 @@ function onResizeGrid() {
 		return
 	}
 
-	const width = parseInt(widthString.substring(0, widthString.length - 2)) 
+	const width = parseInt(widthString.substring(0, widthString.length - 10)) //takes scrollbar width into account
 	
 	//need to modify this for several tables
 	const heightString = getComputedStyle(csvEditorWrapper).height
