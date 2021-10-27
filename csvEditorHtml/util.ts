@@ -579,6 +579,16 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 
 (Handsontable.renderers as any).registerRenderer('customRenderer', customRenderer);
 
+/**
+ * defining custom editor to return empty stringed cells as null
+ * otherwise any empty cell double clicked on returns empty string to file
+ */
+class CustomEditor extends Handsontable.editors.TextEditor {
+	getValue() {
+		return this.TEXTAREA.value === "" ? null : this.TEXTAREA.value;
+	}
+}
+
 // function invisiblesCellValueRenderer(instance: Handsontable, td: HTMLTableDataCellElement, row: number, col: number, prop: any, value: string | null, cellProperties: any) {
 // 	//@ts-ignore
 // 	const val = Handsontable.helper.stringify(value);

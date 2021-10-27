@@ -2715,11 +2715,11 @@ function setColumnOptions(tableColumns: any[]){
 		if(column.name !== "type"){
 			//don't want type to be accepted column
 			if(_type === "numeric"){
-				let _tmpObj = {data: column.name, title: column.name, type: _type, numericFormat: {pattern: "0", culture: "en-GB"}, renderer: customRenderer}
+				let _tmpObj = {data: column.name, title: column.name, type: _type, numericFormat: {pattern: "0", culture: "en-GB"}, editor: CustomEditor, renderer: customRenderer}
 				columnOptions.push(_tmpObj)
 			}
 			else{
-				let _tmpObj = {data: column.name, title: column.name, type: _type, source: _source, renderer: customRenderer}
+				let _tmpObj = {data: column.name, title: column.name, type: _type, source: _source, editor: CustomEditor, renderer: customRenderer}
 				columnOptions.push(_tmpObj)
 			}
 
