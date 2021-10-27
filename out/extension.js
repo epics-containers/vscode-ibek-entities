@@ -1,15 +1,4 @@
 "use strict";
-var __rest = (this && this.__rest) || function (s, e) {
-    var t = {};
-    for (var p in s) if (Object.prototype.hasOwnProperty.call(s, p) && e.indexOf(p) < 0)
-        t[p] = s[p];
-    if (s != null && typeof Object.getOwnPropertySymbols === "function")
-        for (var i = 0, p = Object.getOwnPropertySymbols(s); i < p.length; i++) {
-            if (e.indexOf(p[i]) < 0 && Object.prototype.propertyIsEnumerable.call(s, p[i]))
-                t[p[i]] = s[p[i]];
-        }
-    return t;
-};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.deactivate = exports.activate = exports.editorUriScheme = void 0;
 const vscode = require("vscode");
@@ -23,6 +12,7 @@ const yaml = require('js-yaml');
 const fs = require('fs');
 const Validator = require("jsonschema").Validator;
 const fetch = require('sync-fetch');
+const YAWN = require('yawn-yaml/cjs');
 // const debounceDocumentChangeInMs = 1000
 //for a full list of context keys see https://code.visualstudio.com/docs/getstarted/keybindings#_when-clause-contexts
 /**
@@ -327,7 +317,7 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
         switch (message.command) {
             case 'ready': {
                 util_1.debugLog('received ready from webview');
-                let data = parseYaml(activeTextEditor.document.uri.fsPath);
+                let data = parseYaml(activeTextEditor.document.uri.fsPath, instance);
                 instance.hasChanges = false;
                 setEditorHasChanges(instance, false);
                 let funcSendContent = (initialText) => {
@@ -347,10 +337,10 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
 
                         panel.webview.postMessage(msg)
                     }*/
-                    //new yaml data message
+                    //new yaml data message, sends data as json string
                     const msg = {
                         command: "yamlUpdate",
-                        yamlContent: data
+                        yamlContent: JSON.stringify(data)
                     };
                     panel.webview.postMessage(msg);
                 };
@@ -418,9 +408,15 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
                 }
                 break;
             }
+            /*
             case "apply": {
-                const { csvContent, saveSourceFile } = message;
-                applyContent(instance, csvContent, saveSourceFile, config.openSourceFileAfterApply);
+                const { csvContent, saveSourceFile } = message
+                applyContent(instance, csvContent, saveSourceFile, config.openSourceFileAfterApply)
+                break
+            }*/
+            case "apply": {
+                const { yamlContent, saveSourceFile } = message;
+                applyYamlContent(instance, yamlContent, saveSourceFile, config.openSourceFileAfterApply);
                 break;
             }
             case "copyToClipboard": {
@@ -463,19 +459,115 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
 /**
  * tries to apply (replace the whole file content) with the new content
  */
-function applyContent(instance, newContent, saveSourceFile, openSourceFileAfterApply) {
+/*
+function applyContent(instance: Instance, newContent: string, saveSourceFile: boolean, openSourceFileAfterApply: boolean) {
+
     vscode.workspace.openTextDocument(instance.sourceUri)
         .then(document => {
+
+            const edit = new vscode.WorkspaceEdit()
+
+            var firstLine = document.lineAt(0);
+            var lastLine = document.lineAt(document.lineCount - 1);
+            var textRange = new vscode.Range(0,
+                firstLine.range.start.character,
+                document.lineCount - 1,
+                lastLine.range.end.character);
+
+            //don't apply if the content didn't change
+            if (document.getText() === newContent) {
+                debugLog(`content didn't change`)
+                return
+            }
+
+            edit.replace(document.uri, textRange, newContent)
+            vscode.workspace.applyEdit(edit)
+                .then(
+                    editsApplied => {
+                        _afterEditsApplied(instance, document, editsApplied, saveSourceFile, openSourceFileAfterApply)
+                    },
+                    (reason) => {
+                        console.warn(`Error applying edits`)
+                        console.warn(reason)
+                        vscode.window.showErrorMessage(`Error applying edits`)
+                    })
+
+            // vscode.window.showTextDocument(document)
+            // 	.then(editor => {
+            // 		editor.edit((builder) => {
+            // 			var firstLine = document.lineAt(0);
+            // 			var lastLine = document.lineAt(document.lineCount - 1);
+            // 			var textRange = new vscode.Range(0,
+            // 				firstLine.range.start.character,
+            // 				document.lineCount - 1,
+            // 				lastLine.range.end.character);
+
+            // 			builder.replace(textRange, newContent)
+            // 		})
+            // 			.then(editsApplied => {
+            // 				_afterEditsApplied(document, editsApplied, saveSourceFile)
+            // 			})
+            // 	})
+
+        },
+            (reason) => {
+
+                //maybe the source file was deleted...
+                //see https://github.com/microsoft/vscode-extension-samples/pull/195/files
+
+                console.warn(`Could not find the source file, trying to access it and create a temp file with the same path...`)
+                console.warn(reason)
+
+                vscode.workspace.fs.stat(instance.sourceUri).
+                    then(fileStat => {
+                        //file exists and can be accessed
+                        vscode.window.showErrorMessage(`Could apply changed because the source file could not be found`)
+
+                    }, error => {
+
+                        //file is probably deleted
+                        // vscode.window.showWarningMessageMessage(`The source file could not be found and was probably deleted.`)
+                        createNewSourceFile(instance, newContent, openSourceFileAfterApply, saveSourceFile)
+                    })
+
+            })
+}*/
+/**
+ * tries to apply (replace the whole file content) with the new content, using yawn-yaml
+ */
+function applyYamlContent(instance, newContent, saveSourceFile, openSourceFileAfterApply) {
+    vscode.workspace.openTextDocument(instance.sourceUri)
+        .then(document => {
+        //TO DO - currently lots of files being loaded unnecessarily, should streamline?
+        //fetch the old (saved) version
+        let yamlData = yaml.load(fs.readFileSync(document.uri.fsPath, 'utf8'));
+        //testing using yawn yaml to preserve comments
+        let yawn = new YAWN(fs.readFileSync(document.uri.fsPath, 'utf8'));
+        //parse string back to json object
+        let newData = JSON.parse(newContent);
+        //want to iterate over every array in array in tablesArray
+        let index = 0;
+        newData.tablesArray.forEach((array) => {
+            array.forEach((entity) => {
+                yamlData.entities[index] = entity;
+                index += 1;
+            });
+        });
+        //update yawn yaml with new data
+        yawn.json = yamlData;
+        let yamlString = yawn.yaml;
+        //let yamlString = yaml.dump(yamlData)
         const edit = new vscode.WorkspaceEdit();
         var firstLine = document.lineAt(0);
         var lastLine = document.lineAt(document.lineCount - 1);
         var textRange = new vscode.Range(0, firstLine.range.start.character, document.lineCount - 1, lastLine.range.end.character);
         //don't apply if the content didn't change
-        if (document.getText() === newContent) {
+        // TO DO - won't work for yaml
+        if (document.getText() === yamlString) {
             util_1.debugLog(`content didn't change`);
             return;
         }
-        edit.replace(document.uri, textRange, newContent);
+        edit.replace(document.uri, textRange, yamlString);
         vscode.workspace.applyEdit(edit)
             .then(editsApplied => {
             _afterEditsApplied(instance, document, editsApplied, saveSourceFile, openSourceFileAfterApply);
@@ -484,21 +576,6 @@ function applyContent(instance, newContent, saveSourceFile, openSourceFileAfterA
             console.warn(reason);
             vscode.window.showErrorMessage(`Error applying edits`);
         });
-        // vscode.window.showTextDocument(document)
-        // 	.then(editor => {
-        // 		editor.edit((builder) => {
-        // 			var firstLine = document.lineAt(0);
-        // 			var lastLine = document.lineAt(document.lineCount - 1);
-        // 			var textRange = new vscode.Range(0,
-        // 				firstLine.range.start.character,
-        // 				document.lineCount - 1,
-        // 				lastLine.range.end.character);
-        // 			builder.replace(textRange, newContent)
-        // 		})
-        // 			.then(editsApplied => {
-        // 				_afterEditsApplied(document, editsApplied, saveSourceFile)
-        // 			})
-        // 	})
     }, (reason) => {
         //maybe the source file was deleted...
         //see https://github.com/microsoft/vscode-extension-samples/pull/195/files
@@ -649,13 +726,14 @@ function onSourceFileChanged(path, instance) {
 * @param {string} content
 * @returns {[string[], string[][], string[]]| null} [0] comments before, [1] csv data, [2] comments after
 */
-function parseYaml(yamlPath) {
-    let jsonSchema = fetchSchema(yamlPath);
+function parseYaml(yamlPath, instance) {
+    let jsonSchema = fetchSchema(instance);
     let tableHeaders = []; //array of header titles
     let tablesArray = []; //array of each data array for every table
     let tableColumns = []; //array of arrays of object, where each array of objects is one set of columns
+    let parseResult;
     try {
-        const parseResult = yaml.load(fs.readFileSync(yamlPath, 'utf8'));
+        parseResult = yaml.load(fs.readFileSync(yamlPath, 'utf8'));
         let yamlIsValid = validateYaml(parseResult, jsonSchema);
         if (yamlIsValid) {
             createTableData(parseResult, tableHeaders, tablesArray);
@@ -672,34 +750,55 @@ function parseYaml(yamlPath) {
 /**
  * check if yaml file specifies schema in first-line comment
  * if it does, check it exists and fetch it
- * @param yamlPath
+ * @param instance
  */
-function fetchSchema(yamlPath) {
-    //TO DO -read first line comment of yaml file, check it exists
+function fetchSchema(instance) {
     //TO DO AT LATER DATE - check if json schema is local file or linking to url to change method
-    //TO DO - extract link from first line comment
-    //if yaml file doesn't link to a schema:
-    vscode.window.showWarningMessage("Please specify a JSON schema to validate by in the YAML file. This should be the first line of the file, in the format:\n" +
-        "'# yaml-language-server: $schema=<json schema here>'");
-    //if schema link doesn't work
-    vscode.window.showErrorMessage("Could not fetch JSON schema to validate YAML file. Please check that the path to the schema is correct.");
-    const jsonSchema = fetch('https://raw.githubusercontent.com/epics-containers/ibek/master/tests/samples/schemas/pmac.schema.json').json();
-    return jsonSchema;
+    let document = instance.document;
+    if (document) {
+        let firstLine = document.lineAt(0).text;
+        //checks if first line is schema in comment
+        if (firstLine.indexOf("# yaml-language-server: $schema=") !== -1) {
+            let schemaPath = firstLine.split('=')[1];
+            const jsonSchema = fetch(schemaPath).json();
+            if (jsonSchema) {
+                return jsonSchema;
+            }
+            else {
+                //TO DO - need proper exception handling?
+                vscode.window.showErrorMessage("Could not fetch JSON schema to validate YAML file. Please check that the path to the schema is correct.");
+            }
+        }
+        else {
+            //if yaml file doesn't link to a schema:
+            vscode.window.showWarningMessage("Please specify a JSON schema to validate by in the YAML file. This should be the first line of the file, in the format:\n" +
+                "'# yaml-language-server: $schema=<json schema here>'");
+        }
+    }
+    else {
+        //TO DO - Better error handling?
+        vscode.window.showErrorMessage("No active text document open.");
+    }
 }
 /*
 * using json-schema, validate the yaml file against the given json schema
 */
 function validateYaml(parsedYaml, schema) {
     const validator = new Validator();
-    const validation = validator.validate(parsedYaml, schema);
-    if (validation.errors.length) {
-        //const errors = validation.errors.map(e => `${e.property} ${e.message}`).join("\n");
-        //throw new Error(errors);
-        return false;
+    if (parsedYaml && schema) {
+        const validation = validator.validate(parsedYaml, schema);
+        if (validation.errors.length) {
+            //const errors = validation.errors.map(e => `${e.property} ${e.message}`).join("\n");
+            //throw new Error(errors);
+            return false;
+        }
+        else {
+            return true;
+        }
     }
     else {
-        console.log("No errors validating YAML against JSON schema.");
-        return true;
+        vscode.window.showErrorMessage("Error validating YAML against schema.");
+        return false;
     }
 }
 /*
@@ -715,9 +814,8 @@ function createTableData(parseResult, tableHeaders, tablesArray) {
             //takes first "type" value and adds to array of headers
             if (key === "type") {
                 // currently this is an object
+                let _tempObject = parseResult.entities[entity];
                 //let {type, ..._tempObject} = parseResult.entities[entity]
-                //let _tempObject: {} = parseResult.entities[entity]
-                let _a = parseResult.entities[entity], { type } = _a, _tempObject = __rest(_a, ["type"]);
                 if (tableHeaders.indexOf(parseResult.entities[entity][key]) > -1) {
                     //do nothing to list of headers, because header already exists
                     let index = tableHeaders.indexOf(parseResult.entities[entity][key]); //get index of existing header
@@ -732,10 +830,10 @@ function createTableData(parseResult, tableHeaders, tablesArray) {
             }
         }
     }
-    tableHeaders.forEach((value, index) => {
-        console.log(value);
-        console.log(tablesArray[index]);
-    });
+    //tableHeaders.forEach((value, index) => {
+    //console.log(value)
+    //console.log(tablesArray[index])
+    //});
 }
 ;
 /**
