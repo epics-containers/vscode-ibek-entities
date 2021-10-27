@@ -2690,6 +2690,7 @@ let HotRegisterer: HotRegister = {
 
 /**
  * takes the json schema column objects and modifies for processing by handsontable
+ * TO DO - here is where would add in object type referencing other table columns as source data
  * @param tableColumns 
  */
 function setColumnOptions(tableColumns: any[]){
@@ -2713,8 +2714,15 @@ function setColumnOptions(tableColumns: any[]){
 		}
 		if(column.name !== "type"){
 			//don't want type to be accepted column
-			let _tmpObj = {data: column.name, title: column.name, renderer: customRenderer}
-			columnOptions.push(_tmpObj)
+			if(_type = "numeric"){
+				let _tmpObj = {data: column.name, title: column.name, type: _type, numericFormat: {pattern: "0", culture: "en-GB"}, renderer: customRenderer}
+				columnOptions.push(_tmpObj)
+			}
+			else{
+				let _tmpObj = {data: column.name, title: column.name, type: _type, source: _source, renderer: customRenderer}
+				columnOptions.push(_tmpObj)
+			}
+
 		}
 	})	
 	return columnOptions
