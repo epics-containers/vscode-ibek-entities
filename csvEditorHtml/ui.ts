@@ -2714,7 +2714,7 @@ function setColumnOptions(tableColumns: any[]){
 		}
 		if(column.name !== "type"){
 			//don't want type to be accepted column
-			if(_type = "numeric"){
+			if(_type === "numeric"){
 				let _tmpObj = {data: column.name, title: column.name, type: _type, numericFormat: {pattern: "0", culture: "en-GB"}, renderer: customRenderer}
 				columnOptions.push(_tmpObj)
 			}

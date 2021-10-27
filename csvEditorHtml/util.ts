@@ -556,14 +556,12 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 			if(isNaN(Number(value))){
 				//TO DO - check its an int not a float?
 				td.style.backgroundColor = '#fda398';
-				td.style.color = '#EA2406';
 			}
 			break;
 
 		case "number":
 			if(isNaN(Number(value))){
 				td.style.backgroundColor = '#fda398';
-				td.style.color = '#EA2406';
 			}
 			break;
 
@@ -575,7 +573,6 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 				td.style.color = '#EA2406';
 			}
 			break;
-
 	}
 
 }
