@@ -1005,11 +1005,11 @@ function createTableData(parseResult: any, tableHeaders: string[], tablesArray: 
               	}
             }
         } 
-    }
-  	tableHeaders.forEach((value, index) => {
-    	console.log(value)
-    	console.log(tablesArray[index])
-  	});
+	}
+	//tableHeaders.forEach((value, index) => {
+    	//console.log(value)
+    	//console.log(tablesArray[index])
+  	//});
 };
 
 /** 
