@@ -2812,6 +2812,7 @@ let HotRegisterer: HotRegister = {
 	
 			},
 			afterUndo: function (action: any) {
+				onResizeGrid()
 	
 				// console.log(`afterUndo`, action)
 				// //this is the case when we have a header row -> undo -> then we should have no header row
@@ -2885,8 +2886,20 @@ let HotRegisterer: HotRegister = {
 			}
 			},
 			afterRedo: function(action: any) {
-				setColumnMetadata(action.index, tableColumns)
-				hot!.render()
+				//need to reset metadata because undo/redo gets rid of it
+				//ensure have correct hot instance or overwrites last created table metadata
+				for(let key in HotRegisterer.bucket){
+					let _hot = HotRegisterer.bucket[key]
+					const selections = _hot.getSelected()
+					if (selections){
+						hot = _hot
+					}
+				}
+				if (!hot) throw new Error('table was null')
+
+				let rowMeta = hot.getCellMetaAtRow(0)
+				setColumnMetadata(action.index, rowMeta)
+				onResizeGrid()
 			},
 			afterRowMove: function (startRow: number, endRow: number) {
 				if (!hot) throw new Error('table was null')
@@ -2928,26 +2941,6 @@ let HotRegisterer: HotRegister = {
 				//also it's not needed as handsontable already handles this internally
 				// updateFixedRowsCols()
 			},
-			rowHeights: function (visualRowIndex: number) {
-
-				//see https://handsontable.com/docs/6.2.2/Options.html#rowHeights
-				let defaultHeight = 23
-	
-				if (!hot) return defaultHeight
-	
-				const actualPhysicalIndex = hot.toPhysicalRow(visualRowIndex)
-	
-				//some hack so that the renderer still respects the row... (also see http://embed.plnkr.co/lBmuxU/)
-				//this is needed else we render all hidden rows as blank spaces (we see a scrollbar but not rows/cells)
-				//but this means we will lose performance because hidden rows are still managed and rendered (even if not visible)
-				if (hiddenPhysicalRowIndices.includes(actualPhysicalIndex)) {
-					//sub 1 height is treated by the virtual renderer as height 0??
-					//we better add some more zeros
-					return 0.000001
-				}
-	
-				return defaultHeight
-			} as any,
 			beforeKeyDown: function (event: KeyboardEvent) {
 
 				//we need this because when editing header cell the hot instance thinks some editor is active and would pass the inputs to the next cell...
