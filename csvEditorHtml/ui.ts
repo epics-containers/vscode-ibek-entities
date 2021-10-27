@@ -2511,6 +2511,16 @@ function addTable(){
  * called when a table is manually deleted
  */
 function removeTable(container: HTMLElement){
+	//get current hot instance
+	for(let key in HotRegisterer.bucket){
+		let _hot = HotRegisterer.bucket[key]
+		const selections = _hot.getSelected()
+		if (selections){
+			hot = _hot
+		}
+	}
+	if (!hot) throw new Error('table was null')
+	
 	if(hot && container){
 		hot.destroy()
 		hot = null
@@ -2595,7 +2605,16 @@ let HotRegisterer: HotRegister = {
 						disabled: function () {
 	
 							if (isReadonlyMode) return true
-	
+							
+							for(let key in HotRegisterer.bucket){
+								let _hot = HotRegisterer.bucket[key]
+								const selections = _hot.getSelected()
+								if (selections){
+									hot = _hot
+								}
+							}
+							if (!hot) throw new Error('table was null')
+
 							const selection = hot!.getSelected()
 							let allRowsAreSelected = false
 							if (selection) {
@@ -2937,6 +2956,7 @@ let HotRegisterer: HotRegister = {
 				}
 	
 				onAnyChange()
+				onResizeGrid()
 				//dont' call this as it corrupts hot index mappings (because all other hooks need to finish first before we update hot settings)
 				//also it's not needed as handsontable already handles this internally
 				// updateFixedRowsCols()
