@@ -520,7 +520,16 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 	if(args[5] === null || args[5] === ""){
 		td.style.backgroundColor = '44474C';
 		td.style.color = '#888E8E';
-		td.innerText = cellProperties.default;
+		if(cellProperties.default == ""){
+			td.innerText = '" "';
+			td.style.textAlign = "center"
+		}
+		else if(!cellProperties.default){
+			td.innerText = "None"
+		}
+		else{
+			td.innerText = cellProperties.default;
+		}
 	}
 	else{
 		td.style.color = '';
