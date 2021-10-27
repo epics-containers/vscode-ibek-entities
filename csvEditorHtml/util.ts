@@ -246,11 +246,16 @@ function addRow(selectNewRow = true) {
 	}
 
 	if (!hot) throw new Error('table was null')
+	//fetch metadata from selected row
+	let rowMeta = hot.getCellMetaAtRow(0)
 
 	// const headerCells = hot.getColHeader()
 	const numRows = hot.countRows()
 	hot.alter('insert_row', numRows) //inserted data contains null but papaparse correctly unparses it as ''
 	// hot.populateFromArray(numRows, 0, [headerCells.map(p => '')])
+
+	//set new row metadata
+	setColumnMetadata(numRows, rowMeta)
 
 	if (selectNewRow) {
 		hot.selectCell(numRows, 0)
@@ -345,9 +350,15 @@ function _insertRowInternal(belowCurrRow: boolean) {
 	const currColIndex = _getSelectedVisualColIndex()
 	if (currRowIndex === null || currColIndex === null) return
 
+	//fetch metadata from selected row
+	let rowMeta = hot.getCellMetaAtRow(currRowIndex)
+
 	const targetRowIndex = currRowIndex + (belowCurrRow ? 1 : 0)
 	// const test = hot.toPhysicalRow(targetRowIndex) //also not working when rows are reordered...
 	hot.alter('insert_row', targetRowIndex)
+
+	//set new row metadata
+	setColumnMetadata(targetRowIndex, rowMeta)
 
 	//undefined should not happen but just in case
 	const focusBehavior = initialConfig?.insertRowBehavior ?? 'focusFirstCellNewRow'
