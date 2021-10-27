@@ -2549,13 +2549,30 @@ let HotRegisterer: HotRegister = {
 
 		hot = new Handsontable(container, {
 			data: tableData,
+			readOnly: isReadonlyMode,
+			renderAllRows: false, //use false and small table size for fast initial render, see https://handsontable.com/docs/7.0.2/Options.html#renderAllRows
 			afterChange: onAnyChange, //only called when cell value changed (e.g. not when col/row removed)
 			fillHandle: {
 				direction: 'vertical',
 				autoInsertRow: false
 			},
 			undo: true,
+					//plugins
+			comments: false,
+			search: {
+				queryMethod: customSearchMethod,
+				searchResultClass: 'search-result-cell',
+			} as any, //typing is wrong, see https://handsontable.com/docs/6.2.2/demo-searching.html
+			wordWrap: enableWrapping,
+			autoColumnSize: initialColumnWidth > 0 ? {
+				maxColumnWidth: initialColumnWidth
+			} : true,
+			manualRowMove: true,
+			manualRowResize: true,
+			manualColumnMove: true,
+			manualColumnResize: true,
 			columns: columnOpt,
+			currentColClassName: 'foo', //actually used to overwrite highlighting
 			contextMenu: {
 				items: {
 					'row_above': {
@@ -2574,9 +2591,6 @@ let HotRegisterer: HotRegister = {
 							return isReadonlyMode
 						}
 					},
-					'---------': {
-						name: '---------'
-					},
 					'remove_row': {
 						disabled: function () {
 	
@@ -2592,16 +2606,25 @@ let HotRegisterer: HotRegister = {
 							return hot!.countRows() === 1 || allRowsAreSelected
 						},
 					},
+					'---------': {
+						name: '---------'
+					},
+					'undo': {
+						name: "Undo (Ctrl + Z)"
+					},
+					'redo': {
+						name: "Redo (Ctrl + Y)"
+					},
+					'alignment': {},
+					'---------3': {
+						name: '---------'
+					},
 					'remove_table': {
 						name: "Delete table",
 						callback: function () { //key, selection, clickEvent
 							removeTable(container)
 						},
 					},
-					'---------3': {
-						name: '---------'
-					},
-					'alignment': {},
 				}
 			} as ContextMenuSettings,
 			afterOnCellMouseUp: function () {
@@ -2635,7 +2658,320 @@ let HotRegisterer: HotRegister = {
 				//let metadata = this.getCellMeta(row,col)
 				//cellProperties.renderer = "customRenderer"
 				return cellProperties
+			},
+			beforeColumnResize: function (oldSize, newSize, isDoubleClick) { //after change but before render
+
+				if (oldSize === newSize) {
+					//e.g. we have a large column and the auto size is too large...
+					if (initialConfig) {
+						return initialConfig.doubleClickColumnHandleForcedWith
+					} else {
+						console.log(`initialConfig is falsy`)
+					}
+				}
+			},
+			afterColumnResize: function () {
+				// syncColWidths() //covered by afterRender
+			},
+			afterPaste: function () {
+				//could create new columns
+				// syncColWidths() //covered by afterRender
+			},
+			enterMoves: function (event: KeyboardEvent) {
+
+				if (!hot) throw new Error('table was null')
+	
+				lastHandsonMoveWas = 'enter'
+	
+				const selection = hot.getSelected()
+				const _default = {
+					row: 1,
+					col: 0
+				}
+	
+				if (!initialConfig || initialConfig.lastRowEnterBehavior !== 'createRow') return _default
+	
+				if (!selection || selection.length === 0) return _default
+	
+				if (selection.length > 1) return _default
+	
+				const rowCount = hot.countRows()
+	
+				//see https://handsontable.com/docs/3.0.0/Core.html#getSelected
+				//[startRow, startCol, endRow, endCol].
+				const selected = selection[0]
+				if (selected[0] !== selected[2] || selected[0] !== rowCount - 1) return _default
+	
+				if (event.key.toLowerCase() === 'enter' && event.shiftKey === false) {
+					addRow(false)
+				}
+				return _default
+			},
+			tabMoves: function (event: KeyboardEvent) {
+
+				if (!hot) throw new Error('table was null')
+	
+				lastHandsonMoveWas = 'tab'
+	
+				const selection = hot.getSelected()
+				const _default = {
+					row: 0,
+					col: 1
+				}
+	
+				// console.log(initialConfig.lastColumnTabBehavior);
+	
+				if (!initialConfig || initialConfig.lastColumnTabBehavior !== 'createColumn') return _default
+	
+				if (!selection || selection.length === 0) return _default
+	
+				if (selection.length > 1) return _default
+	
+				const colCount = hot.countCols()
+	
+				//see https://handsontable.com/docs/3.0.0/Core.html#getSelected
+				//[startRow, startCol, endRow, endCol]
+				const selected = selection[0]
+				if (selected[1] !== selected[3] || selected[1] !== colCount - 1) return _default
+	
+				if (event.key.toLowerCase() === 'tab' && event.shiftKey === false) {
+					addColumn(false)
+				}
+				return _default
+			},
+			afterBeginEditing: function () {
+
+				if (!initialConfig || !initialConfig.selectTextAfterBeginEditCell) return
+	
+				const textarea = document.getElementsByClassName("handsontableInput")
+				if (!textarea || textarea.length === 0 || textarea.length > 1) return
+	
+				const el = textarea.item(0) as HTMLTextAreaElement | null
+				if (!el) return
+	
+				el.setSelectionRange(0, el.value.length)
+			},
+			// data -> [[1, 2, 3], [4, 5, 6]]
+			//coords -> [{startRow: 0, startCol: 0, endRow: 1, endCol: 2}]
+			beforeCopy: function (data, coords) {
+				//we could change data to 1 element array containing the finished data? log to console then step until we get to SheetClip.stringify
+				// console.log('data');
+			},
+			beforeUndo: function (_action: EditHeaderCellAction | RemoveColumnAction | InsertColumnAction | any) {
+
+				let __action = _action as EditHeaderCellAction | RemoveColumnAction | InsertColumnAction
+	
+				//when we change has header this is not a prolbem because the undo stack is cleared when we toggle has header
+				if (__action.actionType === 'changeHeaderCell' && headerRowWithIndex) {
+					let action = __action as EditHeaderCellAction
+					let visualColIndex: number = action.change[1]
+					let beforeValue = action.change[2]
+	
+					let undoPlugin = (hot as any).undoRedo
+					let undoneStack = undoPlugin.undoneActions as any[]
+					undoneStack.push(action)
+	
+					headerRowWithIndex.row[visualColIndex] = beforeValue
+					setTimeout(() => {
+						hot!.render()
+					}, 0)
+					return false
+	
+				} else if (__action.actionType === 'remove_col' && headerRowWithIndex) {
+					// let action = __action as RemoveColumnAction
+					
+					let lastAction = headerRowWithIndexUndoStack.pop()
+					if (lastAction && lastAction.action === "removed") {
+		
+						headerRowWithIndex.row.splice(lastAction.visualIndex,0, ...lastAction.headerData)
+	
+						headerRowWithIndexRedoStack.push({
+							action: 'removed',
+							visualIndex: lastAction.visualIndex,
+							headerData: lastAction.headerData
+						})
+	
+					}
+	
+				} else if (__action.actionType === 'insert_col' && headerRowWithIndex) {
+					// let action = __action as InsertColumnAction
+					
+					let lastAction = headerRowWithIndexUndoStack.pop()
+					if (lastAction && lastAction.action === "added") {
+		
+						headerRowWithIndex.row.splice(lastAction.visualIndex,lastAction.headerData.length)
+	
+						headerRowWithIndexRedoStack.push({
+							action: 'added',
+							visualIndex: lastAction.visualIndex,
+							headerData: lastAction.headerData
+						})
+	
+					}
+				}
+	
+			},
+			afterUndo: function (action: any) {
+	
+				// console.log(`afterUndo`, action)
+				// //this is the case when we have a header row -> undo -> then we should have no header row
+				// if (headerRowWithIndex && action.actionType === 'remove_row' && action.index === headerRowWithIndex.physicalIndex) {
+				// 	//remove header row
+	
+				// 	//set all settings manually because we don't use much of applyHasHeader
+				// 	//because this would insert/remove the header row but this is already done by the undo/redo
+				// 	defaultCsvReadOptions._hasHeader = false
+				// 	const el = _getById('has-header') as HTMLInputElement
+				// 	const elWrite = _getById('has-header-write') as HTMLInputElement
+				// 	el.checked = false
+				// 	elWrite.checked = false
+				// 	headerRowWithIndex = null
+	
+				// 	applyHasHeader(true, true)
+				// }
+	
+				//could remove columns
+				// syncColWidths() //covered by afterRender
+			},
+			beforeRedo: function (_action: EditHeaderCellAction | RemoveColumnAction | InsertColumnAction | any) {
+	
+				let __action = _action as EditHeaderCellAction | RemoveColumnAction | InsertColumnAction
+	
+				//when we change has header this is not a prolbem because the undo stack is cleared when we toggle has header
+				if (__action.actionType === 'changeHeaderCell' && headerRowWithIndex) {
+	
+					let action = __action as EditHeaderCellAction
+					let visualColIndex: number = action.change[1]
+					let afterValue = action.change[3]
+	
+					let undoPlugin = (hot as any).undoRedo
+					let doneStack = undoPlugin.doneActions as any[]
+					doneStack.push(action)
+	
+					headerRowWithIndex.row[visualColIndex] = afterValue
+					setTimeout(() => {
+						hot!.render()
+					}, 0)
+					return false
+	
+				} else if (__action.actionType === 'remove_col' && headerRowWithIndex) {
+				// let action = __action as RemoveColumnAction
+				
+				let lastAction = headerRowWithIndexRedoStack.pop()
+				if (lastAction && lastAction.action === "removed") {
+	
+					headerRowWithIndex.row.splice(lastAction.visualIndex, lastAction.headerData.length)
+	
+					headerRowWithIndexUndoStack.push({
+						action: 'removed',
+						visualIndex: lastAction.visualIndex,
+						headerData: lastAction.headerData
+					})
+				}
+			} else if (__action.actionType === 'insert_col' && headerRowWithIndex) {
+	
+				let lastAction = headerRowWithIndexRedoStack.pop()
+				if (lastAction && lastAction.action === "added") {
+	
+					headerRowWithIndex.row.splice(lastAction.visualIndex, 0, ...lastAction.headerData)
+	
+					headerRowWithIndexUndoStack.push({
+						action: 'added',
+						visualIndex: lastAction.visualIndex,
+						headerData: lastAction.headerData
+					})
+				}
+	
 			}
+			},
+			afterRedo: function(action: any) {
+				setColumnMetadata(action.index, tableColumns)
+				hot!.render()
+			},
+			afterRowMove: function (startRow: number, endRow: number) {
+				if (!hot) throw new Error('table was null')
+				onAnyChange()
+			},
+			afterCreateRow: function (visualRowIndex, amount) {
+				//added below
+				//critical because we could update hot settings here
+				pre_afterCreateRow(visualRowIndex, amount)
+	
+				//don't do this as we are inside a hook and the next listerners will change the indices and when we call
+				//hot.updateSettings (inside this func) the plugin internal states are changed and the indices/mappings are corrupted
+				// updateFixedRowsCols()
+			},
+			afterRemoveRow: function (visualRowIndex, amount) {
+				//we need to modify some or all hiddenPhysicalRowIndices...
+				if (!hot) return
+	
+				for (let i = 0; i < hiddenPhysicalRowIndices.length; i++) {
+					const hiddenPhysicalRowIndex = hiddenPhysicalRowIndices[i];
+	
+					if (hiddenPhysicalRowIndex >= visualRowIndex) {
+						hiddenPhysicalRowIndices[i] -= amount
+					}
+				}
+	
+				//when we have a header row and the original index was 10 and now we have only 5 rows... change index to be the last row
+				//so that when we disable has header we insert it correctly
+				// const physicalIndex = hot.toPhysicalRow(visualRowIndex)
+				if (headerRowWithIndex) {
+					const lastValidIndex = hot.countRows()
+					if (headerRowWithIndex.physicalIndex > lastValidIndex) {
+						headerRowWithIndex.physicalIndex = lastValidIndex
+					}
+				}
+	
+				onAnyChange()
+				//dont' call this as it corrupts hot index mappings (because all other hooks need to finish first before we update hot settings)
+				//also it's not needed as handsontable already handles this internally
+				// updateFixedRowsCols()
+			},
+			rowHeights: function (visualRowIndex: number) {
+
+				//see https://handsontable.com/docs/6.2.2/Options.html#rowHeights
+				let defaultHeight = 23
+	
+				if (!hot) return defaultHeight
+	
+				const actualPhysicalIndex = hot.toPhysicalRow(visualRowIndex)
+	
+				//some hack so that the renderer still respects the row... (also see http://embed.plnkr.co/lBmuxU/)
+				//this is needed else we render all hidden rows as blank spaces (we see a scrollbar but not rows/cells)
+				//but this means we will lose performance because hidden rows are still managed and rendered (even if not visible)
+				if (hiddenPhysicalRowIndices.includes(actualPhysicalIndex)) {
+					//sub 1 height is treated by the virtual renderer as height 0??
+					//we better add some more zeros
+					return 0.000001
+				}
+	
+				return defaultHeight
+			} as any,
+			beforeKeyDown: function (event: KeyboardEvent) {
+
+				//we need this because when editing header cell the hot instance thinks some editor is active and would pass the inputs to the next cell...
+				if (editHeaderCellTextInputEl) {
+					event.stopImmediatePropagation()
+					return
+				}
+	
+				//NOTE that this can prevent all vs code shortcuts... e.g. cmd+p (on mac)!!!
+				if (event.ctrlKey && event.shiftKey && event.altKey && event.key === 'ArrowDown') {
+					event.stopImmediatePropagation()
+					insertRowBelow()
+				} else if (event.ctrlKey && event.shiftKey && event.altKey && event.key === 'ArrowUp') {
+					event.stopImmediatePropagation()
+					insertRowAbove()
+				} else if (event.ctrlKey && event.shiftKey && event.altKey && event.key === 'ArrowLeft') {
+					event.stopImmediatePropagation()
+					insertColLeft()
+				} else if (event.ctrlKey && event.shiftKey && event.altKey && event.key === 'ArrowRight') {
+					event.stopImmediatePropagation()
+					insertColRight()
+				}
+	
+			} as any,
 		})
 
 		//bit hacky but iterates over and sets metadata for all columns
