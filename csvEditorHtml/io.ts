@@ -112,10 +112,18 @@ function getYamlData(): any[][] {
 	for(let key in HotRegisterer.bucket){
 		let _hot = HotRegisterer.bucket[key]
 		if (!_hot) throw new Error('table was null')
-		let _tableData = _hot.getSourceData()
+		let _tableData: any[] = []
+		let rowNum = _hot.countRows()
+		//getting data row-by-row gets rid of empty rows
+		for(let i=0; i < rowNum; i++){
+			let _isEmpty = _hot.isEmptyRow(i)
+			if(!_isEmpty){
+				let _rowData= _hot.getSourceDataAtRow(i)
+				_tableData.push(_rowData)
+			}
+		}
 		allData.push(_tableData)
 	}
-
 	return allData
 }
 
