@@ -526,6 +526,9 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 		}
 		else if(!cellProperties.default){
 			td.innerText = "None"
+			if(cellProperties.required){
+				td.innerText = "(Required)"
+			}
 		}
 		else{
 			td.innerText = cellProperties.default;
@@ -545,8 +548,12 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 		td.style.backgroundColor = '#45474a';
 	}
 	else if(cellProperties.required && args[5] !== null){
-		td.style.backgroundColor = '#fda398';
-		td.style.color = '#EA2406';
+		td.style.backgroundColor = '#f34f38';
+		td.style.color = '';
+	}
+	else if(cellProperties.required && !args[5] && !instance.isEmptyRow(row)){
+		td.style.backgroundColor = '#f34f38';
+		td.style.color = ''
 	}
 
 	//TO DO - check type with switch and validate
