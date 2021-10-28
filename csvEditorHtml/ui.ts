@@ -1726,6 +1726,20 @@ function toggleAskReloadFileModalDiv(isVisible: boolean) {
 }
 
 /**
+ * displays or hides the ask read file gain modal
+ * @param isVisible 
+ */
+function toggleAskDeleteTableModalDiv(isVisible: boolean) {
+
+	if (isVisible) {
+		askDeleteTableModalDiv.classList.add('is-active')
+		return
+	}
+
+	askDeleteTableModalDiv.classList.remove('is-active')
+}
+
+/**
  * displays or hides the source file changed modal
  * @param isVisible 
  */
@@ -2510,17 +2524,21 @@ function addTable(){
 /**
  * called when a table is manually deleted
  */
-function removeTable(container: HTMLElement){
+function removeTable(){
+	toggleAskDeleteTableModalDiv(false)
 	//get current hot instance
+	let tableKey: string = ""
 	for(let key in HotRegisterer.bucket){
 		let _hot = HotRegisterer.bucket[key]
 		const selections = _hot.getSelected()
 		if (selections){
 			hot = _hot
+			tableKey = key
 		}
 	}
 	if (!hot) throw new Error('table was null')
 	
+	let container: HTMLElement | null = document.getElementById(tableKey)
 	if(hot && container){
 		hot.destroy()
 		hot = null
@@ -2641,7 +2659,8 @@ let HotRegisterer: HotRegister = {
 					'remove_table': {
 						name: "Delete table",
 						callback: function () { //key, selection, clickEvent
-							removeTable(container)
+							toggleAskDeleteTableModalDiv(true)
+							//removeTable(container)
 						},
 					},
 				}

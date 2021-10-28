@@ -192,6 +192,7 @@ const csvEditorDiv = _getById('csv-editor')
 const helModalDiv = _getById('help-modal')
 const askReadAgainModalDiv = _getById('ask-read-again-modal')
 const askReloadFileModalDiv = _getById('ask-reload-file-modal')
+const askDeleteTableModalDiv = _getById('ask-delete-table-modal')
 const sourceFileChangedDiv = _getById('source-file-changed-modal')
 
 //we also have some css that rely on these ids
