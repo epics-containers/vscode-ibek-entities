@@ -670,6 +670,15 @@ function applyYamlContent(instance: Instance, newContent: string, saveSourceFile
 			let yamlString = yawn.yaml
 			//let yamlString = yaml.dump(yamlData)
 
+			//validate new yaml file content against schema
+			const jsonSchema = fetchSchema(instance)
+			let yamlIsValid: boolean = validateYaml(yamlData, jsonSchema)
+			if(!yamlIsValid){
+				vscode.window.showErrorMessage("Edits not applied to file: YAML content could not be validated by JSON schema. " +
+				"Please ensure that all table data is of valid type and content.")
+				return
+			}
+
 			const edit = new vscode.WorkspaceEdit()
 
 			var firstLine = document.lineAt(0);
