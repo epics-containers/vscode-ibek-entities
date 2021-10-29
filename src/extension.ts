@@ -659,6 +659,7 @@ function applyYamlContent(instance: Instance, newContent: string, saveSourceFile
 			let newData: ReturnDataObject = JSON.parse(newContent)
 			//want to iterate over every array in array in tablesArray
 			let index = 0
+			yamlData.entities = []
 			newData.tablesArray.forEach((array) => {
 				array.forEach((entity) => {
 					yamlData.entities[index] = entity
