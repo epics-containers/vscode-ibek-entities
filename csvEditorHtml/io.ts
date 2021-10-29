@@ -73,9 +73,9 @@ function parseCsv(content: string, csvReadOptions: CsvReadOptions): ExtendedCsvP
 
 	defaultCsvWriteOptions.delimiter = parseResult.meta.delimiter
 	newLineFromInput = parseResult.meta.linebreak
-	updateNewLineSelect()
+	//updateNewLineSelect()
 
-	readDelimiterTooltip.setAttribute('data-tooltip', `${readDelimiterTooltipText} (detected: ${defaultCsvWriteOptions.delimiter.replace("\t", "⇥")})`)
+	//readDelimiterTooltip.setAttribute('data-tooltip', `${readDelimiterTooltipText} (detected: ${defaultCsvWriteOptions.delimiter.replace("\t", "⇥")})`)
 
 	return {
 		data: parseResult.data,
@@ -86,9 +86,10 @@ function parseCsv(content: string, csvReadOptions: CsvReadOptions): ExtendedCsvP
 /*+
 * updates the new line select option (same as input) {@link newlineSameSsInputOption} from {@link newLineFromInput}
 */
+/*
 function updateNewLineSelect() {
 	newlineSameSsInputOption.innerText = `${newlineSameSsInputOptionText} (${newLineFromInput === `\n` ? 'LF' : 'CRLF'})`
-}
+}*/
 
 
 /**
@@ -541,13 +542,14 @@ function startRenderData(){
 	//TODO as we don't longer use undo/redo with has header option this might not be necessary any longer...
 	//we need to change defaultCsvReadOptions because the undo/redo might mess up our
 	//defaultCsvReadOptions._hasHeader state... so ensure it's in sync with the ui
+	/*
 	if (hasHeaderReadOptionInput.checked) {
 		isFirstHasHeaderChangedEvent = true
 		defaultCsvReadOptions._hasHeader = true
 	} else {
 		isFirstHasHeaderChangedEvent = false
 		defaultCsvReadOptions._hasHeader = false
-	}
+	}*/
 
 
 	call_after_DOM_updated(() => {

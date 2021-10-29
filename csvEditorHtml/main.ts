@@ -196,14 +196,14 @@ const askDeleteTableModalDiv = _getById('ask-delete-table-modal')
 const sourceFileChangedDiv = _getById('source-file-changed-modal')
 
 //we also have some css that rely on these ids
-const readContent = _getById('read-options-content')
-const writeContent = _getById('write-options-content')
-const previewContent = _getById('preview-content')
+//const readContent = _getById('read-options-content')
+//const writeContent = _getById('write-options-content')
+//const previewContent = _getById('preview-content')
 
 const btnApplyChangesToFileAndSave = _getById(`btn-apply-changes-to-file-and-save`)
 
-const readDelimiterTooltip = _getById('read-delimiter-tooltip')
-const readDelimiterTooltipText = "Empty to auto detect"
+//const readDelimiterTooltip = _getById('read-delimiter-tooltip')
+//const readDelimiterTooltipText = "Empty to auto detect"
 
 const receivedCsvProgBar = _getById('received-csv-prog-bar') as HTMLProgressElement
 const receivedCsvProgBarWrapper = _getById('received-csv-prog-bar-wrapper') as HTMLDivElement
@@ -220,9 +220,9 @@ const fixedColumnsTopText = _getById('fixed-columns-text') as HTMLSpanElement
 const showCommentsBtn = _getById('show-comments-btn') as HTMLButtonElement
 const hideCommentsBtn = _getById('hide-comments-btn') as HTMLButtonElement
 
-const newlineSameSsInputOption = _getById('newline-same-as-input-option') as HTMLOptionElement
-const newlineSameSsInputOptionText = `Same as input`
-updateNewLineSelect()
+//const newlineSameSsInputOption = _getById('newline-same-as-input-option') as HTMLOptionElement
+//const newlineSameSsInputOptionText = `Same as input`
+//updateNewLineSelect()
 
 //add this to the first wrong column
 const warningTooltipTextWhenCommentRowNotFirstCellIsUsed = `Please use only the first cell in comment row (others are not exported)`
@@ -233,8 +233,8 @@ const reloadFileSpan = _getById('reload-file') as HTMLSpanElement //reread the f
 const sourceFileUnwatchedIndicator = _getById('source-file-unwatched-indicator') as HTMLSpanElement
 
 
-const hasHeaderReadOptionInput = _getById('has-header') as HTMLInputElement
-const hasHeaderLabel = _getById(`has-header-label`) as HTMLLabelElement
+//const hasHeaderReadOptionInput = _getById('has-header') as HTMLInputElement
+//const hasHeaderLabel = _getById(`has-header-label`) as HTMLLabelElement
 
 const leftSidePanelToggle = document.getElementById('left-panel-toggle')
 if (vscode && !leftSidePanelToggle) throw new Error(`element with id 'left-panel-toggle' not found`) //null is ok for browser
@@ -266,8 +266,8 @@ setupSideBarResizeHandle()
 /* main */
 
 //set defaults when we are in browser
-setCsvReadOptionsInitial(defaultCsvReadOptions)
-setCsvWriteOptionsInitial(defaultCsvWriteOptions)
+//setCsvReadOptionsInitial(defaultCsvReadOptions)
+//setCsvWriteOptionsInitial(defaultCsvWriteOptions)
 
 if (typeof initialContent === 'undefined') {
 	// tslint:disable-next-line:no-duplicate-variable

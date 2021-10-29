@@ -63,6 +63,7 @@ function toggleOptionsBar(shouldCollapse?: boolean) {
  * 
  * @param fromUndo true: only update col headers, do not change the table data (will be done by undo/redo), false: normal
  */
+/*
 function _applyHasHeader(displayRenderInformation: boolean, fromUndo = false) {
 
 	const el = hasHeaderReadOptionInput //or defaultCsvReadOptions._hasHeader
@@ -191,11 +192,12 @@ function _applyHasHeader(displayRenderInformation: boolean, fromUndo = false) {
 
 	func()
 
-}
+}*/
 
 /**
  * sets or removes if the has header should be applies automatically (not applies, only sets flag and ui)
  */
+/*
 function setShouldAutpApplyHasHeader(shouldSet: boolean) {
 
 	if (shouldSet) {
@@ -207,23 +209,25 @@ function setShouldAutpApplyHasHeader(shouldSet: boolean) {
 		shouldApplyHasHeaderAfterRowsAdded = false
 		hasHeaderLabel.title = ``
 	}
-}
+}*/
 
 /**
  * checks if {@link shouldApplyHasHeaderAfterRowsAdded} is set and if so, tries to apply it
  */
+/*
 function checkAutoApplyHasHeader() {
 
 	if (!shouldApplyHasHeaderAfterRowsAdded) return
 
 	tryApplyHasHeader()
-}
+}*/
 
 /**
  * tries to set the has header read option
  * can fail if we have only 1 row
  *   in this case we set {@link shouldApplyHasHeaderAfterRowsAdded} so we know we need to watch if rows are added and then apply it afterwards
  */
+/*
 function tryApplyHasHeader() {
 
 	if (!hot) return
@@ -248,7 +252,7 @@ function tryApplyHasHeader() {
 
 	//else just apply
 	_applyHasHeader(true, false)
-}
+}*/
 
 
 function setDelimiterString() {
@@ -1438,6 +1442,7 @@ function displayData(this: any, csvParseResult: ExtendedCsvParseResult | null, c
 
 	hot.addHook('afterRender', afterRenderForced as any)
 
+	/*
 	const oldShouldApplyHeaderReadOption = defaultCsvReadOptions._hasHeader
 	const settingsApplied = checkIfHasHeaderReadOptionIsAvailable(true)
 
@@ -1455,7 +1460,7 @@ function displayData(this: any, csvParseResult: ExtendedCsvParseResult | null, c
 			//set auto enable if we have enough rows
 			setShouldAutpApplyHasHeader(true)
 		}
-	}
+	}*/
 
 	isInitialHotRender = false
 	if (allColWidths && allColWidths.length > 0) {
@@ -2343,7 +2348,7 @@ function afterCreateRow(visualRowIndex: number, amount: number) {
 	//also it's not needed as handsontable already handles this internally
 	// updateFixedRowsCols()
 
-	checkAutoApplyHasHeader()
+	//checkAutoApplyHasHeader()
 }
 
 function showColHeaderNameEditor(visualColIndex: number) {

@@ -218,7 +218,7 @@ function addColumn(selectNewColumn = true) {
 	//in hooks we insert a null column in the header
 
 	//we could get 0 cols...
-	checkIfHasHeaderReadOptionIsAvailable(false)
+	//checkIfHasHeaderReadOptionIsAvailable(false)
 
 	const pos = hot.getSelected() //undefined or [[startRow, startCol, endRow, endCol], ...] (could select not connected cells...)
 	if (pos && pos.length === 1) { //only 1 row selected
@@ -261,7 +261,7 @@ function addRow(selectNewRow = true) {
 		hot.selectCell(numRows, 0)
 	}
 
-	checkAutoApplyHasHeader()
+	//checkAutoApplyHasHeader()
 	onResizeGrid()
 }
 
@@ -377,7 +377,7 @@ function _insertRowInternal(belowCurrRow: boolean) {
 		default: notExhaustiveSwitch(focusBehavior)
 	}
 
-	checkAutoApplyHasHeader()
+	//checkAutoApplyHasHeader()
 	onResizeGrid()
 }
 
@@ -439,7 +439,7 @@ function removeRow(index: number) {
 	if (!hot) throw new Error('table was null')
 
 	hot.alter('remove_row', index)
-	checkIfHasHeaderReadOptionIsAvailable(false)
+	//checkIfHasHeaderReadOptionIsAvailable(false)
 }
 
 /**
@@ -458,7 +458,7 @@ function removeColumn(index: number) {
 	//this is done in the hooks
 
 	//we could get 0 cols...
-	checkIfHasHeaderReadOptionIsAvailable(false)
+	//checkIfHasHeaderReadOptionIsAvailable(false)
 
 }
 
@@ -714,6 +714,7 @@ function setCsvWriteOptionsInitial(options: CsvWriteOptions) {
  * seems like with default headers it's not possible to only have headers?
  * @returns false: force changes (settings want headers but is not possible with data), true: all ok
  */
+/*
 function checkIfHasHeaderReadOptionIsAvailable(isInitialRender: boolean): boolean {
 
 	const data = getData() //this also includes header rows
@@ -753,7 +754,7 @@ function checkIfHasHeaderReadOptionIsAvailable(isInitialRender: boolean): boolea
 	}
 
 	return true
-}
+}*/
 
 //from https://stackoverflow.com/questions/27078285/simple-throttle-in-js ... from underscore
 function throttle(func: Function, wait: number) {
@@ -812,6 +813,7 @@ function _error(text: string) {
  * some options have impact e.g. on how to parse the data...
  * some options depend on the state after parse ... e.g. has before/after comments?
  */
+
 function setupAndApplyInitialConfigPart1(initialConfig: CsvEditSettings | undefined, initialVars: InitialVars) {
 
 
@@ -851,7 +853,7 @@ function setupAndApplyInitialConfigPart1(initialConfig: CsvEditSettings | undefi
 	changeFontSizeInPx(initialConfig.fontSizeInPx)
 
 	//apply settings from extension
-
+	/*
 	const copyReadOptions = {
 		...defaultCsvReadOptions
 	}
@@ -889,6 +891,7 @@ function setupAndApplyInitialConfigPart1(initialConfig: CsvEditSettings | undefi
 		retainQuoteInformation: initialConfig.retainQuoteInformation,
 		quoteEmptyOrNullFields: initialConfig.quoteEmptyOrNullFields === 'true' ? true : false,
 	})
+	
 
 	switch (initialConfig.optionsBarAppearance) {
 		case 'expanded': {
@@ -909,6 +912,7 @@ function setupAndApplyInitialConfigPart1(initialConfig: CsvEditSettings | undefi
 			break;
 		}
 	}
+	*/
 
 	if (initialConfig.initiallyHideComments) {
 		showCommentsBtn.style.display = 'initial'
