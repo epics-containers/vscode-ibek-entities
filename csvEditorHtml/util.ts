@@ -561,7 +561,6 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 	switch(cellProperties.cellType){
 		case "integer":
 			if(isNaN(Number(value))){
-				//TO DO - check its an int not a float?
 				td.style.backgroundColor = '#fda398';
 			}
 			break;
@@ -589,9 +588,14 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 /**
  * defining custom editor to return empty stringed cells as null
  * otherwise any empty cell double clicked on returns empty string to file
+ * also converts floats to ints
  */
 class CustomEditor extends Handsontable.editors.TextEditor {
 	getValue() {
+		//@ts-ignore
+		if(this.cellProperties.cellType === "integer" && !isNaN(Number(this.TEXTAREA.value))){
+			return Math.round(Number(this.TEXTAREA.value)) 
+		}
 		return this.TEXTAREA.value === "" ? null : this.TEXTAREA.value;
 	}
 }
