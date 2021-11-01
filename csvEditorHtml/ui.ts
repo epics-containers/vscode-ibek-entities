@@ -1510,6 +1510,7 @@ function onAnyChange(changes?: CellChanges[] | null, reason?: string) {
 		findWidgetInstance.showOrHideOutdatedSearchIndicator(true)
 	}
 
+	postApplyContent(false)
 	postSetEditorHasChanges(true)
 }
 
@@ -1527,7 +1528,7 @@ function onResizeGrid() {
 		return
 	}
 
-	const width = parseInt(widthString.substring(0, widthString.length - 10)) //takes scrollbar width into account
+	const width = parseInt(widthString.substring(0, widthString.length - 2)) -10 //takes scrollbar width into account
 	
 	//need to modify this for several tables
 	const heightString = getComputedStyle(csvEditorWrapper).height
@@ -1553,9 +1554,9 @@ function onResizeGrid() {
 					//height: height,
 					height: tableEl.offsetHeight + 10,
 				}, false)
+				syncColWidths(hot)
 			}
 		}
-		syncColWidths()
 	}
 	/*
 	hot.updateSettings({
@@ -1577,7 +1578,7 @@ function applyColWidths() {
 		let hot = HotRegisterer.getInstance("table"+j)
 		if(hot){
 			hot.getSettings().manualColumnResize = false
-			let autoSizedWidths = _getColWidths()
+			let autoSizedWidths = _getColWidths(hot)
 
 			//maybe the user removed columns so we don't have all widths... e.g. remove cols then reset data...
 			//we keep the col widths we have and add the auto size ones for the columns where we don't have old sizes...
@@ -1624,14 +1625,14 @@ function applyColWidths() {
 /**
  * syncs the {@link allColWidths} with the ui/handsonable state
  */
-function syncColWidths() {
+function syncColWidths(hot?: Handsontable) {
 	//allColWidths = _getColWidths()
 	allColWidths.push(_getColWidths())
 	// console.log('col widths synced', allColWidths);
 
 }
 
-function _getColWidths(): number[] {
+function _getColWidths(hot?: Handsontable): number[] {
 	if (!hot) return []
 	//@ts-ignore
 	return hot.getColHeader().map(function (header, index) {

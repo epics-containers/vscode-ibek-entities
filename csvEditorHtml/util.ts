@@ -261,6 +261,9 @@ function addRow(selectNewRow = true) {
 		hot.selectCell(numRows, 0)
 	}
 
+	//need to set type cell value for new row
+	let typeCell = hot.getDataAtRowProp(numRows-1, "type")
+	hot.setDataAtRowProp(numRows, "type", typeCell)
 	//checkAutoApplyHasHeader()
 	onResizeGrid()
 }
@@ -352,6 +355,7 @@ function _insertRowInternal(belowCurrRow: boolean) {
 
 	//fetch metadata from selected row
 	let rowMeta = hot.getCellMetaAtRow(currRowIndex)
+	let typeCell = hot.getDataAtRowProp(currRowIndex, "type")
 
 	const targetRowIndex = currRowIndex + (belowCurrRow ? 1 : 0)
 	// const test = hot.toPhysicalRow(targetRowIndex) //also not working when rows are reordered...
@@ -376,6 +380,9 @@ function _insertRowInternal(belowCurrRow: boolean) {
 		}
 		default: notExhaustiveSwitch(focusBehavior)
 	}
+
+	//need to set type cell value for new row
+	hot.setDataAtRowProp(targetRowIndex, "type", typeCell)
 
 	//checkAutoApplyHasHeader()
 	onResizeGrid()
