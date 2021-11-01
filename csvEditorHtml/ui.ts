@@ -2862,6 +2862,19 @@ let HotRegisterer: HotRegister = {
 	
 			},
 			afterUndo: function (action: any) {
+				//need to reset metadata because undo/redo gets rid of it
+				//ensure have correct hot instance or overwrites last created table metadata
+				for(let key in HotRegisterer.bucket){
+					let _hot = HotRegisterer.bucket[key]
+					const selections = _hot.getSelected()
+					if (selections){
+						hot = _hot
+					}
+				}
+				if (!hot) throw new Error('table was null')
+
+				let rowMeta = hot.getCellMetaAtRow(0)
+				setColumnMetadata(action.index, rowMeta)
 				onResizeGrid()
 	
 				// console.log(`afterUndo`, action)
