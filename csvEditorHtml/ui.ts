@@ -1732,7 +1732,7 @@ function toggleAskReloadFileModalDiv(isVisible: boolean) {
 }
 
 /**
- * displays or hides the ask read file gain modal
+ * displays or hides the ask delete table modal
  * @param isVisible 
  */
 function toggleAskDeleteTableModalDiv(isVisible: boolean) {
@@ -2525,6 +2525,7 @@ function addTable(){
 	HotRegisterer.counter = counter+1
 
 	onResizeGrid()
+	onAnyChange()
 }
 
 /**
@@ -2553,6 +2554,7 @@ function removeTable(){
 		deleteHtmlContainer("container"+key)
 	}
 	onResizeGrid()
+	onAnyChange()
 }
 
 /**
