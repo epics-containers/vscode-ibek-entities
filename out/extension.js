@@ -6,6 +6,7 @@ const path = require("path");
 const util_1 = require("./util");
 const getHtml_1 = require("./getHtml");
 const instanceManager_1 = require("./instanceManager");
+//import { InstanceManager, Instance, SomeInstance, InstanceWorkspaceSourceFile } from './instanceManager';
 const configurationHelper_1 = require("./configurationHelper");
 const chokidar = require("chokidar");
 const yaml = require('js-yaml');
@@ -178,6 +179,35 @@ function activate(context) {
             instance.panel.dispose();
         }
     });
+    //this is used to track changes in text file to editor constantly
+    //TO DO - only send changes over if file is valid yaml
+    //TO DO - implement something like setTimeout
+    //TO DO - get rid of all these instance errors...
+    const onDidChangeTextDocument = vscode.workspace.onDidChangeTextDocument((e) => {
+        //testing changes output
+        let changes = e.contentChanges;
+        let message = "Changed: " + changes[0].text + "\nAt: " + changes[0].range.start.line + "." + changes[0].range.start.character + " to " + changes[0].range.end.line + "." + changes[0].range.end.character;
+        vscode.window.showInformationMessage(message);
+        if (vscode.window.activeTextEditor) {
+            const uri = vscode.window.activeTextEditor.document.uri;
+            const instance = instanceManager.findInstanceBySourceUri(uri);
+            if (instance) {
+                let data = parseYaml(e.document.getText(), instance);
+                let jsonSchema = fetchSchema(instance);
+                let parseResult = yaml.load(e.document.getText());
+                let yamlIsValid = validateYaml(parseResult, jsonSchema);
+                instance.hasChanges = false;
+                setEditorHasChanges(instance, false);
+                if (yamlIsValid) {
+                    const msg = {
+                        command: "yamlUpdate",
+                        yamlContent: JSON.stringify(data)
+                    };
+                    instance.panel.webview.postMessage(msg);
+                }
+            }
+        }
+    });
     //not needed because this changes only initial configuration...
     // vscode.workspace.onDidChangeConfiguration((args) => {
     // })
@@ -190,6 +220,7 @@ function activate(context) {
     context.subscriptions.push(onDidOpenTextDocumentHandler);
     context.subscriptions.push(onDidCloseTextDocumentHandler);
     context.subscriptions.push(onDidChangeConfigurationHandler);
+    context.subscriptions.push(onDidChangeTextDocument);
 }
 exports.activate = activate;
 // this method is called when your extension is deactivated
@@ -317,7 +348,7 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
         switch (message.command) {
             case 'ready': {
                 util_1.debugLog('received ready from webview');
-                let data = parseYaml(activeTextEditor.document.uri.fsPath, instance);
+                let data = parseYaml(activeTextEditor.document.getText(), instance);
                 instance.hasChanges = false;
                 setEditorHasChanges(instance, false);
                 let funcSendContent = (initialText) => {
@@ -735,18 +766,22 @@ function onSourceFileChanged(path, instance) {
 * @param {string} content
 * @returns {[string[], string[][], string[]]| null} [0] comments before, [1] csv data, [2] comments after
 */
-function parseYaml(yamlPath, instance) {
+function parseYaml(yamlString, instance) {
     let jsonSchema = fetchSchema(instance);
     let tableHeaders = []; //array of header titles
     let tablesArray = []; //array of each data array for every table
     let tableColumns = []; //array of arrays of object, where each array of objects is one set of columns
     let parseResult;
     try {
-        parseResult = yaml.load(fs.readFileSync(yamlPath, 'utf8'));
+        //parseResult = yaml.load(fs.readFileSync(yamlPath, 'utf8'));
+        parseResult = new YAWN(yamlString).json;
         let yamlIsValid = validateYaml(parseResult, jsonSchema);
         if (yamlIsValid) {
             createTableData(parseResult, tableHeaders, tablesArray);
             createColumnData(tableColumns, jsonSchema);
+        }
+        else {
+            return;
         }
     }
     catch (e) {

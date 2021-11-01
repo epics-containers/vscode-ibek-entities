@@ -3,6 +3,7 @@ import * as path from "path";
 import { isYamlFile, getCurrentViewColumn, debugLog} from './util';
 import { createEditorHtml } from './getHtml';
 import { InstanceManager, Instance, SomeInstance } from './instanceManager';
+//import { InstanceManager, Instance, SomeInstance, InstanceWorkspaceSourceFile } from './instanceManager';
 import { getExtensionConfiguration } from './configurationHelper';
 import * as chokidar from "chokidar";
 const yaml = require('js-yaml');
@@ -230,6 +231,40 @@ export function activate(context: vscode.ExtensionContext) {
 			instance.panel.dispose()
 		}
 	})
+
+	//this is used to track changes in text file to editor constantly
+	//TO DO - only send changes over if file is valid yaml
+	//TO DO - implement something like setTimeout
+	//TO DO - get rid of all these instance errors...
+	const onDidChangeTextDocument = vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
+		//testing changes output
+		let changes = e.contentChanges
+		let message = "Changed: " + changes[0].text + "\nAt: " + changes[0].range.start.line + "." + changes[0].range.start.character + " to " + changes[0].range.end.line + "." + changes[0].range.end.character
+		vscode.window.showInformationMessage(message)
+		
+		if(vscode.window.activeTextEditor){
+			const uri = vscode.window.activeTextEditor.document.uri
+			const instance = instanceManager.findInstanceBySourceUri(uri)
+			if(instance){
+				let data = parseYaml(e.document.getText(), instance)
+				let jsonSchema = fetchSchema(instance)
+				let parseResult = yaml.load(e.document.getText());
+				let yamlIsValid: boolean = validateYaml(parseResult, jsonSchema)
+				instance.hasChanges = false
+				setEditorHasChanges(instance, false)
+				if(yamlIsValid){
+					const msg: ReceivedMessageFromVsCode = {
+						command: "yamlUpdate",
+						yamlContent: JSON.stringify(data)
+						}
+					instance.panel.webview.postMessage(msg)
+				}
+	
+			}	
+		}	
+				
+	})
+
 	//not needed because this changes only initial configuration...
 	// vscode.workspace.onDidChangeConfiguration((args) => {
 	// })
@@ -243,6 +278,7 @@ export function activate(context: vscode.ExtensionContext) {
 	context.subscriptions.push(onDidOpenTextDocumentHandler)
 	context.subscriptions.push(onDidCloseTextDocumentHandler)
 	context.subscriptions.push(onDidChangeConfigurationHandler)
+	context.subscriptions.push(onDidChangeTextDocument)
 }
 
 // this method is called when your extension is deactivated
@@ -401,7 +437,7 @@ function createNewEditorInstance(context: vscode.ExtensionContext, activeTextEdi
 			case 'ready': {
 
 				debugLog('received ready from webview')
-				let data = parseYaml(activeTextEditor.document.uri.fsPath, instance)
+				let data = parseYaml(activeTextEditor.document.getText(), instance)
 
 				instance.hasChanges = false
 				setEditorHasChanges(instance, false)
@@ -563,6 +599,8 @@ function createNewEditorInstance(context: vscode.ExtensionContext, activeTextEdi
 	panel.webview.html = createEditorHtml(panel.webview, context, {
 		isWatchingSourceFile: instance.supportsAutoReload
 	})
+
+
 
 }
 
@@ -907,18 +945,22 @@ function onSourceFileChanged(path: string, instance: Instance) {
 * @returns {[string[], string[][], string[]]| null} [0] comments before, [1] csv data, [2] comments after
 */
 
-function parseYaml(yamlPath: string, instance: Instance){
+function parseYaml(yamlString: string, instance: Instance){
 	let jsonSchema = fetchSchema(instance)
 	let tableHeaders: string[] = [] //array of header titles
 	let tablesArray: any[][] = [] //array of each data array for every table
 	let tableColumns: any[][] = [] //array of arrays of object, where each array of objects is one set of columns
 	let parseResult: any
 	try {
-		parseResult = yaml.load(fs.readFileSync(yamlPath, 'utf8'));
+		//parseResult = yaml.load(fs.readFileSync(yamlPath, 'utf8'));
+		parseResult = new YAWN(yamlString).json
 		let yamlIsValid: boolean = validateYaml(parseResult, jsonSchema)
 		if (yamlIsValid){
 			createTableData(parseResult, tableHeaders, tablesArray) 
 			createColumnData(tableColumns, jsonSchema)
+		}
+		else{
+			return
 		}
 	}catch (e) {
 		console.log(e); //TO DO: do something if error loading file
