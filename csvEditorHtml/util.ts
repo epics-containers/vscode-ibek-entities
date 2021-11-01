@@ -941,7 +941,7 @@ function setupAndApplyInitialConfigPart1(initialConfig: CsvEditSettings | undefi
 	isReadonlyMode = initialConfig.initiallyIsInReadonlyMode
 	_updateToggleReadonlyModeUi()
 
-	setNumbersStyleUi(initialConfig.initialNumbersStyle)
+	//setNumbersStyleUi(initialConfig.initialNumbersStyle)
 }
 
 
@@ -1073,18 +1073,18 @@ function afterHandsontableCreated(hot: Handsontable) {
 			}
 		}
 
-		if (getIsSidePanelCollapsed()) {
+		//if (getIsSidePanelCollapsed()) {
 			//not update stats (might be costly and we don't display stats anyway)
-		} else {
-			calculateStats(row, column, row2, column2)
-		}
+		//} else {
+			//calculateStats(row, column, row2, column2)
+		//}
 	}
 
 	hot.addHook('afterSelection', afterSelectionHandler as any)
 
 	const afterRowOrColsCountChangeHandler = () => {
-		statRowsCount.innerText = `${hot.countRows()}`
-		statColsCount.innerText = `${hot.countCols()}`
+		//statRowsCount.innerText = `${hot.countRows()}`
+		//statColsCount.innerText = `${hot.countCols()}`
 	}
 
 	hot.addHook('afterRemoveRow', afterRowOrColsCountChangeHandler)
@@ -1092,18 +1092,19 @@ function afterHandsontableCreated(hot: Handsontable) {
 	hot.addHook('afterCreateCol', afterRowOrColsCountChangeHandler)
 	hot.addHook('afterRemoveCol', afterRowOrColsCountChangeHandler)
 
-	statSelectedRows.innerText = `${0}`
-	statSelectedCols.innerText = `${0}`
-	statSelectedNotEmptyCells.innerText = `${0}`
-	statSumOfNumbers.innerText = `${0}`
-	statSelectedCellsCount.innerText = `${0}`
-	statRowsCount.innerText = `${hot.countRows()}`
-	statColsCount.innerText = `${hot.countCols()}`
+	//statSelectedRows.innerText = `${0}`
+	//statSelectedCols.innerText = `${0}`
+	//statSelectedNotEmptyCells.innerText = `${0}`
+	//statSumOfNumbers.innerText = `${0}`
+	//statSelectedCellsCount.innerText = `${0}`
+	//statRowsCount.innerText = `${hot.countRows()}`
+	//statColsCount.innerText = `${hot.countCols()}`
 }
 
 /**
  * recalculates the stats (even if they are not visible)
  */
+/*
 function recalculateStats() {
 	const selectedRanges = hot!.getSelected()
 
@@ -1112,7 +1113,7 @@ function recalculateStats() {
 	const firstRange = selectedRanges[0]
 
 	calculateStats(...firstRange)
-}
+}*/
 
 /**
  * the stats calculation func
@@ -1121,6 +1122,7 @@ function recalculateStats() {
  * @param row2 
  * @param column2 
  */
+/*
 function _calculateStats(row: number, column: number, row2: number, column2: number) {
 
 	let numbersStyleToUse = getNumbersStyleFromUi()
@@ -1176,6 +1178,7 @@ function _calculateStats(row: number, column: number, row2: number, column2: num
 }
 
 const calculateStats = throttle(_calculateStats, 300) as typeof _calculateStats
+*/
 
 
 /**
@@ -1237,6 +1240,7 @@ const knownNumberStylesMap: KnownNumberStylesMap = {
 /**
  * sets the number style ui from the given nubmer style
  */
+/*
 function setNumbersStyleUi(numbersStyleToUse: CsvEditSettings["initialNumbersStyle"]) {
 
 	numbersStyleEnRadio.checked = false
@@ -1256,11 +1260,12 @@ function setNumbersStyleUi(numbersStyleToUse: CsvEditSettings["initialNumbersSty
 		default:
 			notExhaustiveSwitch(numbersStyleToUse)
 	}
-}
+}*/
 
 /**
  * returns the number style from the ui
  */
+/*
 function getNumbersStyleFromUi(): NumbersStyle {
 
 
@@ -1271,7 +1276,7 @@ function getNumbersStyleFromUi(): NumbersStyle {
 	postVsWarning(`Got unknown numbers style from ui, defaulting to 'en'`)
 
 	return knownNumberStylesMap['en']
-}
+}*/
 
 //don't know how to type this properly without typeof ...
 const b = new Big(1)
@@ -1315,6 +1320,7 @@ function createHtmlContainer(counter: number, tableHeader: string){
 	let _containerEl: HTMLElement = document.createElement("div")
 	_containerEl.className = "class"+counter
 	_containerEl.id = "container"+counter
+	_containerEl.draggable = true
 
 	//header div
 	let _headerEl: HTMLElement = document.createElement("h1")

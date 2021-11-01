@@ -236,12 +236,13 @@ const sourceFileUnwatchedIndicator = _getById('source-file-unwatched-indicator')
 //const hasHeaderReadOptionInput = _getById('has-header') as HTMLInputElement
 //const hasHeaderLabel = _getById(`has-header-label`) as HTMLLabelElement
 
-const leftSidePanelToggle = document.getElementById('left-panel-toggle')
-if (vscode && !leftSidePanelToggle) throw new Error(`element with id 'left-panel-toggle' not found`) //null is ok for browser
-const leftPanelToggleIconExpand = document.getElementById(`left-panel-toggle-icon-expand`) as HTMLElement //<i>
-if (vscode && !leftPanelToggleIconExpand) throw new Error(`element with id 'left-panel-toggle-icon-expand' not found`) //null is ok for browser
-const sideBarResizeHandle = _getById(`side-panel-resize-handle`) as HTMLDivElement
+//const leftSidePanelToggle = document.getElementById('left-panel-toggle')
+//if (vscode && !leftSidePanelToggle) throw new Error(`element with id 'left-panel-toggle' not found`) //null is ok for browser
+//const leftPanelToggleIconExpand = document.getElementById(`left-panel-toggle-icon-expand`) as HTMLElement //<i>
+//if (vscode && !leftPanelToggleIconExpand) throw new Error(`element with id 'left-panel-toggle-icon-expand' not found`) //null is ok for browser
+//const sideBarResizeHandle = _getById(`side-panel-resize-handle`) as HTMLDivElement
 //--- side stats
+/*
 const sidePanel = _getById(`side-panel`) as HTMLDivElement
 const statSelectedRows = _getById(`stat-selected-rows`) as HTMLDivElement
 const statSelectedCols = _getById(`stat-selected-cols`) as HTMLDivElement
@@ -253,6 +254,7 @@ const statSumOfNumbers = _getById(`stat-sum-of-numbers`) as HTMLDivElement
 
 const numbersStyleEnRadio = _getById(`numbers-style-en`) as HTMLInputElement //radio
 const numbersStyleNonEnRadio = _getById(`numbers-style-non-en`) as HTMLInputElement //radio
+*/
 
 const isReadonlyModeToggleSpan = _getById(`is-readonly-mode-toggle`) as HTMLSpanElement
 
@@ -260,7 +262,7 @@ const isReadonlyModeToggleSpan = _getById(`is-readonly-mode-toggle`) as HTMLSpan
 
 const findWidgetInstance = new FindWidget()
 
-setupSideBarResizeHandle()
+//setupSideBarResizeHandle()
 
 
 /* main */

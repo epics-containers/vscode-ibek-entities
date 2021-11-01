@@ -215,13 +215,6 @@ function createEditorHtml(webview, context, initialVars) {
 			<div class="table-action-buttons">
 
 				<div class="separated-btns">
-
-					<div class="side-panel-toggle-wrapper">
-						<div id="left-panel-toggle" class="clickable" onclick="toggleSidePanel()">
-							<i id="left-panel-toggle-icon-expand" class="fas fa-chevron-right left-panel-toggle-icon-expand"></i>
-							<i class="fas fa-chevron-down left-panel-toggle-icon-collapse"></i>
-						</div>
-					</div>
 					
 					<button id="add-row-btn" class="button is-outlined on-readonly-disable-btn" onclick="addRow()">
 						<span class="icon is-small">
@@ -329,110 +322,7 @@ function createEditorHtml(webview, context, initialVars) {
 
 			<!-- main editor/grid area -->
 			<div class="side-paneled">
-				<div id="side-panel" class="side-panel">
-
-					<div id="side-panel-inner">
-
-						<div class="stat">
-							<div>Numbers sum
-								<span class="tooltip is-tooltip-right is-tooltip-multiline"
-									data-tooltip="The sum of numbers in the selected cells (only connected cells). Only the first number of a cell is used. Arbitrary-precision is powered by big.js">
-									<i class="far fa-question-circle"></i>
-								</span>
-							</div>
-							<div id="stat-sum-of-numbers">000</div>
-						</div>
-
-						<div class="stat">
-							<div>Selected cells
-								<span class="tooltip is-tooltip-right" data-tooltip="The number of selected cells">
-									<i class="far fa-question-circle"></i>
-								</span>
-							</div>
-							<div id="stat-selected-cells-count">000</div>
-						</div>
-
-						<div class="sub-stat">
-							<div>Not empty
-								<span class="tooltip is-tooltip-right is-tooltip-multiline" data-tooltip="The selected cells count where the value is not empty (whitespace is counted as value)">
-									<i class="far fa-question-circle"></i>
-								</span>
-							</div>
-							<div id="stat-selected-not-empty-cells">000</div>
-						</div>
-
-						<div class="stat">
-							<div>Selected rows
-								<span class="tooltip is-tooltip-right" data-tooltip="The selected rows count">
-									<i class="far fa-question-circle"></i>
-								</span>
-							</div>
-
-							<div id="stat-selected-rows">000</div>
-						</div>
-
-						<div class="stat">
-							<div>Selected cols
-								<span class="tooltip is-tooltip-right" data-tooltip="The selected columns count">
-									<i class="far fa-question-circle"></i>
-								</span>
-							</div>
-							<div id="stat-selected-cols">000</div>
-						</div>
-
-						<div class="stat divider"></div>
-
-						<div class="stat">
-							<div>Rows count</div>
-							<div id="stat-rows-count">000</div>
-						</div>
-
-						<div class="stat">
-							<div>Cols count</div>
-							<div id="stat-cols-count">000</div>
-						</div>
-
-						<div class="stat divider"></div>
-
-						<div class="stat">
-							<div>Numbers style
-								<span class="tooltip is-tooltip-right is-tooltip-multiline" data-tooltip="The number style only applies for the stats, does not affect sorting!!">
-									<i class="far fa-question-circle"></i>
-								</span>
-							</div>
-							<div class="control" style="padding-left: 0;">
-								<label class="radio">
-									<input id="numbers-style-en" type="radio" name="numbers-style">
-									en: 3.14 
-									<span class="tooltip is-tooltip-right is-tooltip-multiline" data-tooltip="Decimal separator: '.' Thousand separator: a single whitespace or ','">
-										<i class="far fa-question-circle"></i>
-									</span>
-								</label>
-								<br />
-								<label class="radio">
-									<input id="numbers-style-non-en" type="radio" name="numbers-style">
-									non-en: 3,14
-									<span class="tooltip is-tooltip-right is-tooltip-multiline" data-tooltip="Decimal separator: ',' Thousand separator: a single whitespace or '.'">
-										<i class="far fa-question-circle"></i>
-									</span>
-								</label>
-							</div>
-						</div>
-
-						<div class="stat divider"></div>
-						
-						<!-- some day an ad can be placed here -->
-						<!-- <div>
-							<div style="border: 1px solid black; height: 300px;">
-								AD HERE
-							</div>
-						</div> -->
-					</div>
-
-					<!-- place this inside to collapse this with the sidebar -->
-					<div id="side-panel-resize-handle"></div>
-				</div>
-
+				
 				<!-- main editor/grid area -->
 				<div id="csv-editor-wrapper" class="csv-editor-wrapper">
 					<div id="csv-editor">No data received</div>

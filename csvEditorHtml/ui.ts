@@ -2098,6 +2098,7 @@ const collapseSidePanelThreshold = 60 //if we drag the handle e.g. between left:
 /**
  * setsup the sidedbar resize handle events
  */
+/*
 function setupSideBarResizeHandle() {
 
 	let downX: number | null = null
@@ -2142,6 +2143,7 @@ function setupSideBarResizeHandle() {
 	})
 
 }
+*/
 
 function getHandsontableOverlayScrollLeft(): HTMLDivElement | null {
 	const overlayWrapper = document.querySelector(`#csv-editor-wrapper .ht_master .wtHolder`)
@@ -2174,6 +2176,7 @@ function _onTableScroll(e: Event) {
 /**
  * gets if the side panel is collapsed (true) or not (false)
  */
+/*
 function getIsSidePanelCollapsed(): boolean {
 
 	//only in vs code
@@ -2183,11 +2186,12 @@ function getIsSidePanelCollapsed(): boolean {
 
 	//panel cannot be collapsed in browser
 	return false
-}
+}*/
 
 /**
  * toggles the side panel
  */
+/*
 function toggleSidePanel(shouldCollapse?: boolean) {
 
 	//only in extension (not in browser)
@@ -2218,7 +2222,7 @@ function toggleSidePanel(shouldCollapse?: boolean) {
 		recalculateStats()
 	}
 
-}
+}*/
 
 // ------------------------------------------------------
 
