@@ -2456,7 +2456,7 @@ function showColHeaderNameEditor(visualColIndex: number) {
 
 function _updateToggleReadonlyModeUi() {
 
-	console.log(`asdasdasdas`)
+	//console.log(`asdasdasdas`)
 	//new state is isReadonlyMode
 	if (isReadonlyMode) {
 		isReadonlyModeToggleSpan.classList.add(`active`)
@@ -2492,16 +2492,20 @@ function _updateToggleReadonlyModeUi() {
 
 function toggleReadonlyMode() {
 
-	if (!hot) return
-
 	isReadonlyMode = !isReadonlyMode
 
-	hot.updateSettings({
-		readOnly: isReadonlyMode,
-		manualRowMove: !isReadonlyMode,
-		manualColumnMove: !isReadonlyMode,
-		undo: !isReadonlyMode
-	}, false)
+	for(let i=0; i < HotRegisterer.counter; i++){
+		let hot = HotRegisterer.getInstance("table"+i)
+		if(hot){
+			hot.updateSettings({
+				readOnly: isReadonlyMode,
+				manualRowMove: !isReadonlyMode,
+				manualColumnMove: !isReadonlyMode,
+				undo: !isReadonlyMode
+			}, false)
+		}
+	}
+	if (!hot) return
 	
 	_updateToggleReadonlyModeUi()
 }
