@@ -978,12 +978,27 @@ function parseYaml(yamlString: string, instance: Instance){
 function fetchSchema(instance: Instance){
 	//TO DO AT LATER DATE - check if json schema is local file or linking to url to change method
 	let document = instance.document
+	let jsonSchema: any
 	if(document){
 		let firstLine: string = document.lineAt(0).text
 		//checks if first line is schema in comment
 		if(firstLine.indexOf("# yaml-language-server: $schema=") !== -1){
 			let schemaPath: string = firstLine.split('=')[1]
-			const jsonSchema = fetch(schemaPath).json()
+			if(schemaPath.includes("http")){
+				//checks url and fetches
+				try{
+					jsonSchema = fetch(schemaPath).json()
+				}
+				catch(e){
+					vscode.window.showErrorMessage("Error: "+e)
+					return
+				}
+			}
+			else if(fs.existsSync(schemaPath)){
+				//checks valid filepath and loads
+				jsonSchema = JSON.parse(fs.readFileSync(schemaPath, "utf-8"));
+			}
+
 			if (jsonSchema){
 				return jsonSchema
 			}
