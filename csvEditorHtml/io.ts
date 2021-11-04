@@ -439,11 +439,9 @@ function handleVsCodeMessage(event: { data: ReceivedMessageFromVsCode }) {
 
 			if (!isReadonlyMode) {
 				//just relaod the file because we have no changes anyway...
-				reloadFileFromDisk()
 				return
 			}
 
-			toggleSourceFileChangedModalDiv(true)
 			break
 		}
 

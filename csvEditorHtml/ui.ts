@@ -926,9 +926,6 @@ function displayData(this: any, csvParseResult: ExtendedCsvParseResult | null, c
 			const selected = selection[0]
 			if (selected[1] !== selected[3] || selected[1] !== colCount - 1) return _default
 
-			if (event.key.toLowerCase() === 'tab' && event.shiftKey === false) {
-				addColumn(false)
-			}
 			return _default
 		},
 
@@ -1689,47 +1686,6 @@ function defaultColHeaderFunc(useLettersAsColumnNames: boolean, colIndex: number
 	return `${text} <span class="remove-col clickable" onclick="removeColumn(${visualIndex})"><i class="fas fa-trash"></i></span>`
 }
 
-/**
- * displays or hides the help modal
- * @param isVisible 
- */
-function toggleHelpModal(isVisible: boolean) {
-
-	if (isVisible) {
-		helModalDiv.classList.add('is-active')
-		return
-	}
-
-	helModalDiv.classList.remove('is-active')
-}
-
-/**
- * displays or hides the ask read again modal
- * @param isVisible 
- */
-function toggleAskReadAgainModal(isVisible: boolean) {
-
-	if (isVisible) {
-		askReadAgainModalDiv.classList.add('is-active')
-		return
-	}
-
-	askReadAgainModalDiv.classList.remove('is-active')
-}
-
-/**
- * displays or hides the ask read file gain modal
- * @param isVisible 
- */
-function toggleAskReloadFileModalDiv(isVisible: boolean) {
-
-	if (isVisible) {
-		askReloadFileModalDiv.classList.add('is-active')
-		return
-	}
-
-	askReloadFileModalDiv.classList.remove('is-active')
-}
 
 /**
  * displays or hides the ask delete table modal
@@ -1745,19 +1701,6 @@ function toggleAskDeleteTableModalDiv(isVisible: boolean) {
 	askDeleteTableModalDiv.classList.remove('is-active')
 }
 
-/**
- * displays or hides the source file changed modal
- * @param isVisible 
- */
-function toggleSourceFileChangedModalDiv(isVisible: boolean) {
-
-	if (isVisible) {
-		sourceFileChangedDiv.classList.add('is-active')
-		return
-	}
-
-	sourceFileChangedDiv.classList.remove('is-active')
-}
 
 
 /**
@@ -1771,7 +1714,6 @@ function resetData(content: string, csvReadOptions: CsvReadOptions) {
 
 	//might be bigger than the current view
 	onResizeGrid()
-	toggleAskReadAgainModal(false)
 }
 
 /**
@@ -1791,37 +1733,9 @@ function resetDataObject(_data: InitialDataObject) {
  */
 function resetDataFromResetDialog() {
 
-	toggleAskReadAgainModal(false)
-
 	startRenderData()
 }
 
-/**
- * we need this method first because in case we have unsaved changes we need to display a dialog
- * if all changes are written to the file we can proceed without displaying a dialog
- */
-function preReloadFileFromDisk() {
-
-
-	//const hasAnyChanges = getHasAnyChangesUi()
-
-	//if (hasAnyChanges) {
-		//toggleAskReloadFileModalDiv(true)
-		//return
-	//}
-
-	reloadFileFromDisk()
-}
-
-/**
- * reloads the file from disk
- */
-function reloadFileFromDisk() {
-	toggleAskReloadFileModalDiv(false)
-	toggleSourceFileChangedModalDiv(false)
-	//_setHasUnsavedChangesUiIndicator(false)
-	postReloadFile()
-}
 
 
 function startReceiveCsvProgBar() {
@@ -2649,9 +2563,6 @@ let HotRegisterer: HotRegister = {
 				const selected = selection[0]
 				if (selected[1] !== selected[3] || selected[1] !== colCount - 1) return _default
 	
-				if (event.key.toLowerCase() === 'tab' && event.shiftKey === false) {
-					addColumn(false)
-				}
 				return _default
 			},
 			afterBeginEditing: function () {

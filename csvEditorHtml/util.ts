@@ -197,31 +197,6 @@ function spreadsheetColumnLetterLabel(index: number) {
 // }
 
 /**
- * adds a new column at the end
- * @param {boolean} selectNewColumn true: scrolls to the new column
- */
-function addColumn(selectNewColumn = true) {
-
-	if (!hot) throw new Error('table was null')
-
-	const numCols = hot.countCols()
-	hot.alter('insert_col', numCols) //inserted data contains null but papaparse correctly unparses it as ''
-
-	//in hooks we insert a null column in the header
-
-	//we could get 0 cols...
-	//checkIfHasHeaderReadOptionIsAvailable(false)
-
-	const pos = hot.getSelected() //undefined or [[startRow, startCol, endRow, endCol], ...] (could select not connected cells...)
-	if (pos && pos.length === 1) { //only 1 row selected
-
-		if (selectNewColumn) {
-			hot.selectCell(pos[0][0], numCols)
-		}
-	}
-}
-
-/**
  * adds a new row at the end
  * @param {boolean} selectNewRow true: scrolls to the  new row
  */

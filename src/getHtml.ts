@@ -157,10 +157,6 @@ export function createEditorHtml(webview: vscode.Webview, context: vscode.Extens
 											<i id="force-column-resize-icon" class="fas fa-arrows-alt-h"></i>
 										</span>
 
-										<span id="reload-file" class="clickable" onclick="preReloadFileFromDisk()" style="margin-left: 2em;"
-											title="Reload the csv file content (from disk)">
-											<i class="fas fa-sync-alt"></i>
-										</span>
 										<!-- fixed columns left -->
 										<div class="flexed changeable-indicator" style="margin-left: 1em;">
 											<div>
@@ -203,21 +199,6 @@ export function createEditorHtml(webview: vscode.Webview, context: vscode.Extens
 						</button>
 					</div>
 
-					<button id="add-col-btn" class="button is-outlined on-readonly-disable-btn" onclick="addColumn()">
-						<span class="icon is-small">
-							<i class="fas fa-plus"></i>
-						</span>
-						<span>Add column</span>
-					</button>
-					<div class="row-col-insert-btns">
-						<button class="button is-outlined on-readonly-disable-btn" onclick="insertColLeft()" title="Insert column left to current column [ctrl+shift+alt+left]">
-							<i class="fas fas fa-caret-left"></i>
-						</button>
-						<button class="button is-outlined on-readonly-disable-btn" onclick="insertColRight()" title="Insert column right to current column [ctrl+shift+alt+right]">
-							<i class="fas fa-caret-right"></i>
-						</button>
-					</div>
-
 					<button style="margin-right: 1em" class="button is-outlined on-readonly-disable-btn" onclick="addTable()">
 						<span class="icon is-small">
 							<i class="fas fa-plus"></i>
@@ -256,152 +237,6 @@ export function createEditorHtml(webview: vscode.Webview, context: vscode.Extens
 		`
 	 }
 
-	let helpModalHtml = ``
-	{
-		helpModalHtml = `
-		<div id="help-modal" class="modal">
-		<div class="modal-background" onclick="toggleHelpModal(false)"></div>
-		<div class="modal-content">
-			<div class="box">
-
-				<h3 class="title is-3">Features/Shortcuts</h3>
-				<div class="content">
-					<ul>
-						<li>Undo/Redo</li>
-						<li>Click on column header text to sort</li>
-						<li>Click left next to the row/column header text to select then drag to rearrange</li>
-						<li>Resize row/column</li>
-						<li>
-							<div class="keys">Home</div> to move to the first cell in a row
-						</li>
-						<li>
-							<div class="keys">End</div> to move to the last cell in a row
-						</li>
-
-						<li>
-							<div class="keys">Ctrl</div>+<div class="keys">Home</div> to move to the first cell in a column
-						</li>
-						<li>
-							<div class="keys">Ctrl</div>+<div class="keys">End</div> to move to the last cell in a column
-						</li>
-						<li>
-							<div class="keys">Esc</div> to cancel editing and close cell editor
-						</li>
-						<li>
-							<div class="keys">Ctrl</div>+<div class="keys">Enter</div> to add a line break in a cell
-						</li>
-
-						<li>To delete a row/column hover over it and click the trash-icon</li>
-
-						<li>Double click on a column resize handle to fit content, double click on an auto sized column to set width
-							to
-							200px (good for very wide columns)</li>
-
-					</ul>
-
-					For a full list of shortcuts see <a target="_blank"
-						href="https://handsontable.com/docs/6.2.2/tutorial-keyboard-navigation.html">https://handsontable.com/docs/6.2.2/tutorial-keyboard-navigation.html</a>
-				</div>
-
-				<h3 class="title is-3">Hints</h3>
-				<div class="content">
-					<ul>
-					<!-- turns out handsontable checks if the values are isNaN and if both are numbers they are parsed as floats and compared as floats ... so comparing numbers or text should be fine here -->
-						<li>Sorting is not automatically updated after data has changed</li>
-						<li>Sorting state is exported</li>
-						<li>You can use ctrl/cmd click on a column header to sort by multiple columns</li>
-						<li>The unsaved changes indicator is display on any change (never cleared until you apply the changes, even if you revert manually)</li>
-						<li>When you see the unsaved changes indicator right after the table was loaded then some rows were expanded (to ensure all rows have the same length)</li>
-						<li>You can right-click on the table to get a context menu</li>
-						<li>Hidden rows are also exported</li>
-						<li>Comment rows will export only the first cell/column. If you use a cell other than the first for comments the cell color will indicate this. </li>
-						<li>If you edit an unnamed (csv) file and close it then the editor will be closed too (unsaved changes will
-							be lost)!</li>
-						<li>Copy & Past use tab (<div class="keys">⇥</div>) as separator (same as excel)</li>
-						<li>You cannot change the new line character (because vs code automatically converts it to the file setting
-							i think)
-						</li>
-						<li>If a row has more cell than the others empty cells are added to match the row with the highest cell
-							count</li>
-						<li>Extension configuration is only applied for new editors</li>
-						<li>You can delete multiple rows/cols by selecting them via shift and right click then remove</li>
-					</ul>
-				</div>
-
-
-			</div>
-		</div>
-		<button class="modal-close is-large" aria-label="close" onclick="toggleHelpModal(false)"></button>
-	</div>
-		`
-	}
-	
-	
-	let askReadAgainModalHtml = ``
-	{
-		askReadAgainModalHtml = `
-		<div id="ask-read-again-modal" class="modal modal-centered">
-		<div class="modal-background"></div>
-		<div class="modal-content">
-			<div class="box">
-				<h3 class="title is-3">Reset data and apply read options</h3>
-
-				<p>
-					Are you sure you want to overwrite the table with the initial content of the file? <br />
-					This will use the initial data (when you opened the csv editor) and discard all changes applied to the table! <br />
-					Note that this will not reread or reload the csv file content (a snapshot of the file was stored in memory when you opened the csv editor)!
-				</p>
-
-				<div style="margin-top: 1em">
-					<button class="button is-warning" onclick="resetDataFromResetDialog()">
-						<span>Reset</span>
-					</button>
-
-					<button style="margin-left: 0.5em" class="button is-outlined" onclick="toggleAskReadAgainModal(false)">
-						<span>Cancel</span>
-					</button>
-				</div>
-
-			</div>
-		</div>
-		<button class="modal-close is-large" aria-label="close" onclick="toggleAskReadAgainModal(false)"></button>
-	</div>
-	`
-	}
-
-	let askReloadFileModalHtml = ``
-	{
-		askReloadFileModalHtml =`
-		<div id="ask-reload-file-modal" class="modal modal-centered">
-		<div class="modal-background"></div>
-		<div class="modal-content">
-			<div class="box">
-				<h3 class="title is-3">Reload file content and discard changes</h3>
-
-				<p>
-					Are you sure you want to read the source file again? <br />
-					All changes to the table will be discarded! <br />
-					<br />
-					<i>This will also update the snapshot of the file that is used for the reset data feature.</i>
-				</p>
-
-				<div style="margin-top: 1em">
-					<button class="button is-warning" onclick="reloadFileFromDisk()">
-						<span>Reload</span>
-					</button>
-
-					<button style="margin-left: 0.5em" class="button is-outlined" onclick="toggleAskReloadFileModalDiv(false)">
-						<span>Cancel</span>
-					</button>
-				</div>
-
-			</div>
-		</div>
-		<button class="modal-close is-large" aria-label="close" onclick="toggleAskReloadFileModalDiv(false)"></button>
-	</div>
-		`
-	}
-
 	let askDeleteTableModalHtml = ``
 	{
 		askDeleteTableModalHtml =`
@@ -430,40 +265,6 @@ export function createEditorHtml(webview: vscode.Webview, context: vscode.Extens
 			</div>
 		</div>
 		<button class="modal-close is-large" aria-label="close" onclick="toggleAskDeleteTableModalDiv(false)"></button>
-	</div>
-		`
-	}
-
-	let sourceFileChangedModalHtml = ``
-	{
-		sourceFileChangedModalHtml = `
-		<div id="source-file-changed-modal" class="modal modal-centered">
-		<div class="modal-background"></div>
-		<div class="modal-content">
-			<div class="box">
-				<h3 class="title is-3">Source file changed</h3>
-
-				<p>
-					The source file changed, thus the tabel is not up-to-date. <br />
-					You can reload the file content which will discard all changes to the table! <br /><br />
-					Or you can ignore the changes. <br />
-					<br />
-					<i>This will also update the snapshot of the file that is used for the reset data feature.</i>
-				</p>
-
-				<div style="margin-top: 1em">
-					<button class="button is-warning" onclick="reloadFileFromDisk()">
-						<span>Reload</span>
-					</button>
-
-					<button style="margin-left: 0.5em" class="button is-outlined" onclick="toggleSourceFileChangedModalDiv(false)">
-						<span>Ignore</span>
-					</button>
-				</div>
-
-			</div>
-		</div>
-		<button class="modal-close is-large" aria-label="close" onclick="toggleSourceFileChangedModalDiv(false)"></button>
 	</div>
 		`
 	}
@@ -504,15 +305,8 @@ export function createEditorHtml(webview: vscode.Webview, context: vscode.Extens
 
 	${bodyPageHtml}
 
-	${helpModalHtml}
-
-	${askReadAgainModalHtml}
-
-	${askReloadFileModalHtml}
-
 	${askDeleteTableModalHtml}
 
-	${sourceFileChangedModalHtml}
 
 
 	<script src="${handsontableJs}"></script>

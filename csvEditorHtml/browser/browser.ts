@@ -373,7 +373,6 @@ function getReadOptionEncoding(): string {
  */
 function resetDataFromResetDialogWithEncoding() {
 
-	toggleAskReadAgainModal(false)
 
 	if (initialContentAsArrayBuffer === null) {
 		bulmaToast.toast({

@@ -189,11 +189,7 @@ let isInitialHotRender = true
 
 const csvEditorWrapper = _getById('csv-editor-wrapper')
 const csvEditorDiv = _getById('csv-editor')
-const helModalDiv = _getById('help-modal')
-const askReadAgainModalDiv = _getById('ask-read-again-modal')
-const askReloadFileModalDiv = _getById('ask-reload-file-modal')
 const askDeleteTableModalDiv = _getById('ask-delete-table-modal')
-const sourceFileChangedDiv = _getById('source-file-changed-modal')
 
 const receivedCsvProgBar = _getById('received-csv-prog-bar') as HTMLProgressElement
 const receivedCsvProgBarWrapper = _getById('received-csv-prog-bar-wrapper') as HTMLDivElement
@@ -206,7 +202,6 @@ const fixedColumnsTopText = _getById('fixed-columns-text') as HTMLSpanElement
 //add this to the first wrong column
 const warningTooltipTextWhenCommentRowNotFirstCellIsUsed = `Please use only the first cell in comment row (others are not exported)`
 
-const reloadFileSpan = _getById('reload-file') as HTMLSpanElement //reread the file content...
 
 
 
