@@ -1884,6 +1884,16 @@ function changeFontSizeInPx(fontSizeInPx: number) {
  */
 function updateFixedRowsCols() {
 
+	hot = null
+	//need to make sure it has correct hot instance
+	for(let key in HotRegisterer.bucket){
+		let _hot = HotRegisterer.bucket[key]
+		const _selections = _hot.getSelected()
+		if (_selections){
+			//this is the hot instance that is currently selected
+			hot = _hot
+		}
+	}
 	if (!hot) return
 
 	hot.updateSettings({
