@@ -361,54 +361,12 @@ function postCopyToClipboard(text: string) {
 }
 
 /**
- * called to change the editor title through vs code
- * @param text the new title
- */
-function postSetEditorHasChanges(hasChanges: boolean) {
-
-	_setHasUnsavedChangesUiIndicator(hasChanges)
-
-	if (!vscode) {
-		console.log(`postSetEditorHasChanges (but in browser)`)
-		return
-	}
-
-	vscode.postMessage({
-		command: 'setHasChanges',
-		hasChanges
-	})
-}
-
-/**
- * called to save the current edit state back to the file
- * @param csvContent 
- * @param saveSourceFile 
- */
-/*
-function _postApplyContent(csvContent: string, saveSourceFile: boolean) {
-
-	_setHasUnsavedChangesUiIndicator(false)
-
-	if (!vscode) {
-		console.log(`_postApplyContent (but in browser)`)
-		return
-	}
-
-	vscode.postMessage({
-		command: 'apply',
-		csvContent,
-		saveSourceFile
-	})
-}*/
-
-/**
  * called to save the current edit state back to the file
  * @param yamlContent 
  * @param saveSourceFile 
  */
 function _postApplyContent(yamlContent: string, saveSourceFile: boolean) {
 
-	_setHasUnsavedChangesUiIndicator(false)
 
 	if (!vscode) {
 		console.log(`_postApplyContent (but in browser)`)
@@ -479,9 +437,7 @@ function handleVsCodeMessage(event: { data: ReceivedMessageFromVsCode }) {
 
 		case 'sourceFileChanged': {
 
-			const hasAnyChanges = getHasAnyChangesUi()
-
-			if (!hasAnyChanges && !isReadonlyMode) {
+			if (!isReadonlyMode) {
 				//just relaod the file because we have no changes anyway...
 				reloadFileFromDisk()
 				return

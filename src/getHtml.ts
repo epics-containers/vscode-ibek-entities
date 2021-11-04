@@ -151,11 +151,6 @@ export function createEditorHtml(webview: vscode.Webview, context: vscode.Extens
 						<tr>
 							<th style="width: 100%;">
 								<div class="options-title">
-				
-										<span class="mar-left-half clickable" onclick="reRenderTable()" style="margin-left: 2em;"
-											title="Redraws the table. This can fix some measuring issues (e.g. after the font size changed)">
-											<i id="re-render-table-icon" class="fas fa-ruler-combined"></i>
-										</span>
 
 										<span class="mar-left-half clickable" onclick="forceResizeColumns()" style="margin-left: 0.5em;"
 											title="Resizes all column widths to match their content">
@@ -166,21 +161,6 @@ export function createEditorHtml(webview: vscode.Webview, context: vscode.Extens
 											title="Reload the csv file content (from disk)">
 											<i class="fas fa-sync-alt"></i>
 										</span>
-
-										<!-- fixed rows top -->
-										<div class="flexed changeable-indicator" style="margin-left: 2em;">
-											<div>
-												<span id="fixed-rows-icon" class="clickable" title="Set fixed rows top" onclick="_toggleFixedRowsText()">
-													<i class="rotated-90deg fas fa-align-left"></i>
-												</span>
-												<span id="fixed-rows-text" style="margin-left: 0.5rem;" class="dis-hidden">fixed rows:</span>
-											</div>
-											<div id="fixed-rows-top-info" class="text" style="margin-left: 0.5rem;">0</div>
-											<div class="changeable" style="margin-left: 0.5rem;">
-												<span class="clickable" onclick="incFixedRowsTop()"><i class="fas fa-chevron-up"></i></span>
-												<span class="clickable" onclick="decFixedRowsTop()"><i class="fas fa-chevron-down"></i></span>
-											</div>
-										</div>
 										<!-- fixed columns left -->
 										<div class="flexed changeable-indicator" style="margin-left: 1em;">
 											<div>
@@ -195,24 +175,6 @@ export function createEditorHtml(webview: vscode.Webview, context: vscode.Extens
 												<span class="clickable" onclick="decFixedColsLeft()"><i class="fas fa-chevron-down"></i></span>
 											</div>
 										</div>
-										<!-- toggle readonly mode -->
-										<div class="flexed toggle-btn clickable" style="margin-left: 1em;">
-											<span id="is-readonly-mode-toggle" onclick="toggleReadonlyMode()" 
-											title="Toggls the readonly table mode (SET IN CODE AT STARTUP)">
-												<i class="fas fa-pen"></i>
-												<i class="fas fa-slash"></i>
-												<i class="fas fa-slash"></i>
-											</span>
-										</div>
-
-										<span id="source-file-unwatched-indicator" class="hoverable tooltip op-hidden is-tooltip-left is-tooltip-multiline" style="float: right;margin-right: 5px;"
-											data-tooltip="The csv source file cannot be automatically reloaded if the file on disk is changed (because it's not in the current workspace). You will get notified if the file is changed but then you need to open/display the source csv file in vs code and manually refresh the table (refresh button). Alternatively just close this table and reopen it.">
-											<i class="fas fa-eye"></i>
-										</span>
-										<span id="unsaved-changes-indicator" class="hoverable unsaved-changes-indicator op-hidden tooltip is-tooltip-left" style="float: right;margin-right: 5px;"
-											data-tooltip="You might have unsaved changes">
-											<i class="fas fa-save"></i>
-										</span>
 								</div>
 							</th>
 						</tr>
@@ -267,61 +229,11 @@ export function createEditorHtml(webview: vscode.Webview, context: vscode.Extens
 						</span>
 					</button>
 
-					<button id="btn-apply-changes-to-file-and-save" class="button is-outlined mar-left on-readonly-disable-btn" onclick="postApplyContent(true)">
-						<span class="icon is-small">
-							<i class="fas fa-save"></i>
-						</span>
-						<span>Apply changes to file and save</span>
-						<span class="tooltip is-tooltip-multiline mar-left-half"
-							data-tooltip="Applies the csv content back to the source file and saves the source file (if something changed) [ctrl+s/cmd+s]">
-							<i class="fas fa-question-circle"></i>
-						</span>
-					</button>
-
-					<button id="btn-apply-changes-to-file" class="button is-outlined on-readonly-disable-btn" onclick="postApplyContent(false)">
-						<span class="icon is-small">
-							<i class="fas fa-reply"></i>
-						</span>
-						<span>Apply changes to file</span>
-						<span class="tooltip mar-left-half is-tooltip-multiline" data-tooltip="Applies the csv content back to the source file (if something changed). After this the editor has no unsaved changes.">
-							<i class="fas fa-question-circle"></i>
-						</span>
-					</button>
-
 					<div id="status-info-wrapper">
 						<div>
 							<span id="status-info"></span>
 						</div>
 					</div>			
-
-					<div class="flexed">
-
-						<div>
-							<button id="show-comments-btn" style="margin-right: 1em" class="button is-outlined" onclick="showOrHideAllComments(true)">
-								<span class="icon is-small">
-									<i class="far fa-comments"></i>
-								</span>
-								<span>Show comments</span>
-							</button>
-							<button id="hide-comments-btn" style="margin-right: 1em" class="button is-outlined" onclick="showOrHideAllComments(false)">
-								<span class="icon is-small">
-									<i class="fas fa-comments"></i>
-								</span>
-								<span>Hide comments</span>
-								<span class="tooltip mar-left-half is-tooltip-multiline is-tooltip-left"
-									data-tooltip="Hides rows starting with a comment. The row headers will display an indicator if a row above or below is hidden. Hidden rows are also exported!">
-									<i class="fas fa-question-circle"></i>
-								</span>
-							</button>
-						</div>
-
-						<button class="button is-outlined" onclick="toggleHelpModal(true)">
-							<span class="icon is-small">
-								<i class="fas fa-question"></i>
-							</span>
-							<span>Help</span>
-						</button>
-					</div>
 
 				</div>
 				<div id="received-csv-prog-bar-wrapper">

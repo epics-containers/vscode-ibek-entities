@@ -195,68 +195,20 @@ const askReloadFileModalDiv = _getById('ask-reload-file-modal')
 const askDeleteTableModalDiv = _getById('ask-delete-table-modal')
 const sourceFileChangedDiv = _getById('source-file-changed-modal')
 
-//we also have some css that rely on these ids
-//const readContent = _getById('read-options-content')
-//const writeContent = _getById('write-options-content')
-//const previewContent = _getById('preview-content')
-
-const btnApplyChangesToFileAndSave = _getById(`btn-apply-changes-to-file-and-save`)
-
-//const readDelimiterTooltip = _getById('read-delimiter-tooltip')
-//const readDelimiterTooltipText = "Empty to auto detect"
-
 const receivedCsvProgBar = _getById('received-csv-prog-bar') as HTMLProgressElement
 const receivedCsvProgBarWrapper = _getById('received-csv-prog-bar-wrapper') as HTMLDivElement
 const statusInfo = _getById('status-info') as HTMLSpanElement
-
-const fixedRowsTopInfoSpan = _getById('fixed-rows-top-info') as HTMLDivElement
-const fixedRowsTopIcon = _getById('fixed-rows-icon') as HTMLSpanElement
-const fixedRowsTopText = _getById('fixed-rows-text') as HTMLSpanElement
 
 const fixedColumnsTopInfoSpan = _getById('fixed-columns-top-info') as HTMLDivElement
 const fixedColumnsTopIcon = _getById('fixed-columns-icon') as HTMLSpanElement
 const fixedColumnsTopText = _getById('fixed-columns-text') as HTMLSpanElement
 
-const showCommentsBtn = _getById('show-comments-btn') as HTMLButtonElement
-const hideCommentsBtn = _getById('hide-comments-btn') as HTMLButtonElement
-
-//const newlineSameSsInputOption = _getById('newline-same-as-input-option') as HTMLOptionElement
-//const newlineSameSsInputOptionText = `Same as input`
-//updateNewLineSelect()
-
 //add this to the first wrong column
 const warningTooltipTextWhenCommentRowNotFirstCellIsUsed = `Please use only the first cell in comment row (others are not exported)`
 
-const unsavedChangesIndicator = _getById('unsaved-changes-indicator') as HTMLSpanElement
 const reloadFileSpan = _getById('reload-file') as HTMLSpanElement //reread the file content...
 
-const sourceFileUnwatchedIndicator = _getById('source-file-unwatched-indicator') as HTMLSpanElement
 
-
-//const hasHeaderReadOptionInput = _getById('has-header') as HTMLInputElement
-//const hasHeaderLabel = _getById(`has-header-label`) as HTMLLabelElement
-
-//const leftSidePanelToggle = document.getElementById('left-panel-toggle')
-//if (vscode && !leftSidePanelToggle) throw new Error(`element with id 'left-panel-toggle' not found`) //null is ok for browser
-//const leftPanelToggleIconExpand = document.getElementById(`left-panel-toggle-icon-expand`) as HTMLElement //<i>
-//if (vscode && !leftPanelToggleIconExpand) throw new Error(`element with id 'left-panel-toggle-icon-expand' not found`) //null is ok for browser
-//const sideBarResizeHandle = _getById(`side-panel-resize-handle`) as HTMLDivElement
-//--- side stats
-/*
-const sidePanel = _getById(`side-panel`) as HTMLDivElement
-const statSelectedRows = _getById(`stat-selected-rows`) as HTMLDivElement
-const statSelectedCols = _getById(`stat-selected-cols`) as HTMLDivElement
-const statRowsCount = _getById(`stat-rows-count`) as HTMLDivElement
-const statColsCount = _getById(`stat-cols-count`) as HTMLDivElement
-const statSelectedCellsCount = _getById(`stat-selected-cells-count`) as HTMLDivElement
-const statSelectedNotEmptyCells = _getById(`stat-selected-not-empty-cells`) as HTMLDivElement
-const statSumOfNumbers = _getById(`stat-sum-of-numbers`) as HTMLDivElement
-
-const numbersStyleEnRadio = _getById(`numbers-style-en`) as HTMLInputElement //radio
-const numbersStyleNonEnRadio = _getById(`numbers-style-non-en`) as HTMLInputElement //radio
-*/
-
-const isReadonlyModeToggleSpan = _getById(`is-readonly-mode-toggle`) as HTMLSpanElement
 
 //--- find widget controls
 

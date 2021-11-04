@@ -50,7 +50,6 @@ function _normalizeDataArray(csvParseResult: ExtendedCsvParseResult, csvReadConf
 
 	const maxCols = csvParseResult.data.reduce((prev, curr) => curr.length > prev ? curr.length : prev, 0)
 
-	let someRowWasExpanded = false
 	let firstRealRowExpandedWasFound = false
 
 	for (let i = 0; i < csvParseResult.data.length; i++) {
@@ -75,9 +74,6 @@ function _normalizeDataArray(csvParseResult: ExtendedCsvParseResult, csvReadConf
 
 			//comment rows are also expanded...
 			//but comment rows only export the first cell so they are not really affect the expanded state
-			if (row.length > 0 && isCommentCell(row[0], csvReadConfig) === false) {
-				someRowWasExpanded = true
-			}
 		}
 
 		//because we mutate the array the csv parse result will be changed...
@@ -93,10 +89,6 @@ function _normalizeDataArray(csvParseResult: ExtendedCsvParseResult, csvReadConf
 		// 	}
 		// }
 
-	}
-
-	if (someRowWasExpanded) {
-		postSetEditorHasChanges(true)
 	}
 
 }
@@ -261,7 +253,7 @@ function addRow(selectNewRow = true) {
 
 			//need to set type cell value for new row
 			let typeCell = hot.getDataAtRowProp(numRows-1, "type")
-			hot.setDataAtRowProp(numRows, "type", typeCell)
+			//hot.setDataAtRowProp(numRows, "type", typeCell)
 		}
 	}
 	//checkAutoApplyHasHeader()
@@ -801,21 +793,11 @@ function _error(text: string) {
 
 function setupAndApplyInitialConfigPart1(initialConfig: CsvEditSettings | undefined, initialVars: InitialVars) {
 
-
-	//first apply the initial vars
-	{
-		_setIsWatchingSourceFileUiIndicator(initialVars.isWatchingSourceFile)
-	}
-
-
 	if (initialConfig === undefined) {
 
 		//probably in browser here...
 
 		toggleOptionsBar(true)
-
-		showCommentsBtn.style.display = 'none'
-		hideCommentsBtn.style.display = 'initial'
 
 		return
 	}
@@ -837,85 +819,10 @@ function setupAndApplyInitialConfigPart1(initialConfig: CsvEditSettings | undefi
 
 	changeFontSizeInPx(initialConfig.fontSizeInPx)
 
-	//apply settings from extension
-	/*
-	const copyReadOptions = {
-		...defaultCsvReadOptions
-	}
-
-	let _readOption_hasHeader = initialConfig.readOption_hasHeader === 'true' ? true : false
-
-	if (_readOption_hasHeader) {
-		isFirstHasHeaderChangedEvent = true
-	} else {
-		//when this is not initially set then we don't want to clear the undo after we enabled this option
-		isFirstHasHeaderChangedEvent = false
-	}
-
-	setCsvReadOptionsInitial({
-		...copyReadOptions,
-		delimiter: initialConfig.readOption_delimiter,
-		comments: initialConfig.readOption_comment,
-		_hasHeader: _readOption_hasHeader,
-		escapeChar: initialConfig.readOption_escapeChar,
-		quoteChar: initialConfig.readOption_quoteChar
-	})
-
-	const copyWriteOptions = {
-		...defaultCsvReadOptions
-	}
-
-	setCsvWriteOptionsInitial({
-		...copyWriteOptions,
-		comments: initialConfig.writeOption_comment,
-		delimiter: initialConfig.writeOption_delimiter,
-		header: initialConfig.writeOption_hasHeader === 'true' ? true : false,
-		escapeChar: initialConfig.writeOption_escapeChar,
-		quoteChar: initialConfig.writeOption_quoteChar,
-		quoteAllFields: initialConfig.quoteAllFields,
-		retainQuoteInformation: initialConfig.retainQuoteInformation,
-		quoteEmptyOrNullFields: initialConfig.quoteEmptyOrNullFields === 'true' ? true : false,
-	})
-	
-
-	switch (initialConfig.optionsBarAppearance) {
-		case 'expanded': {
-			toggleOptionsBar(false)
-			break
-		}
-		case 'collapsed': {
-			toggleOptionsBar(true)
-			break
-		}
-		// case 'remember': {
-		// 	toggleOptionsBar(true)
-		// 	break
-		// }
-		default: {
-			_error(`unknown optionsBarAppearance: ${initialConfig.optionsBarAppearance}`)
-			notExhaustiveSwitch(initialConfig.optionsBarAppearance)
-			break;
-		}
-	}
-	*/
-
-	if (initialConfig.initiallyHideComments) {
-		showCommentsBtn.style.display = 'initial'
-		hideCommentsBtn.style.display = 'none'
-	}
-	else {
-		showCommentsBtn.style.display = 'none'
-		hideCommentsBtn.style.display = 'initial'
-	}
-
 	//--- other options
-	fixedRowsTopInfoSpan.innerText = fixedRowsTop + ''
 	fixedColumnsTopInfoSpan.innerText = fixedColumnsLeft + ''
 
 	isReadonlyMode = initialConfig.initiallyIsInReadonlyMode
-	_updateToggleReadonlyModeUi()
-
-	//setNumbersStyleUi(initialConfig.initialNumbersStyle)
 }
 
 

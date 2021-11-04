@@ -1511,7 +1511,7 @@ function onAnyChange(changes?: CellChanges[] | null, reason?: string) {
 	}
 
 	postApplyContent(false)
-	postSetEditorHasChanges(true)
+
 }
 
 /**
@@ -1793,8 +1793,6 @@ function resetDataFromResetDialog() {
 
 	toggleAskReadAgainModal(false)
 
-	postSetEditorHasChanges(false)
-
 	startRenderData()
 }
 
@@ -1805,12 +1803,12 @@ function resetDataFromResetDialog() {
 function preReloadFileFromDisk() {
 
 
-	const hasAnyChanges = getHasAnyChangesUi()
+	//const hasAnyChanges = getHasAnyChangesUi()
 
-	if (hasAnyChanges) {
-		toggleAskReloadFileModalDiv(true)
-		return
-	}
+	//if (hasAnyChanges) {
+		//toggleAskReloadFileModalDiv(true)
+		//return
+	//}
 
 	reloadFileFromDisk()
 }
@@ -1821,7 +1819,7 @@ function preReloadFileFromDisk() {
 function reloadFileFromDisk() {
 	toggleAskReloadFileModalDiv(false)
 	toggleSourceFileChangedModalDiv(false)
-	_setHasUnsavedChangesUiIndicator(false)
+	//_setHasUnsavedChangesUiIndicator(false)
 	postReloadFile()
 }
 
@@ -1943,53 +1941,6 @@ function trimAllCells() {
 
 }
 
-function showOrHideAllComments(show: boolean) {
-
-	if (show) {
-		showCommentsBtn.style.display = 'none'
-		hideCommentsBtn.style.display = 'initial'
-
-		hiddenPhysicalRowIndices = []
-	}
-	else {
-		showCommentsBtn.style.display = 'initial'
-		hideCommentsBtn.style.display = 'none'
-
-		if (hot) {
-			hiddenPhysicalRowIndices = _getCommentIndices(getData(), defaultCsvReadOptions)
-			hiddenPhysicalRowIndices = hiddenPhysicalRowIndices.map(p => hot!.toPhysicalRow(p))
-		}
-	}
-
-	if (!hot) return
-
-	hot.render()
-}
-
-function getAreCommentsDisplayed(): boolean {
-	return showCommentsBtn.style.display === 'none'
-}
-
-function _setHasUnsavedChangesUiIndicator(hasUnsavedChanges: boolean) {
-	if (hasUnsavedChanges) {
-		unsavedChangesIndicator.classList.remove('op-hidden')
-	} else {
-		unsavedChangesIndicator.classList.add('op-hidden')
-	}
-}
-
-function getHasAnyChangesUi(): boolean {
-	return unsavedChangesIndicator.classList.contains("op-hidden") === false
-}
-
-function _setIsWatchingSourceFileUiIndicator(isWatching: boolean) {
-	if (isWatching) {
-		sourceFileUnwatchedIndicator.classList.add('op-hidden')
-	} else {
-		sourceFileUnwatchedIndicator.classList.remove('op-hidden')
-	}
-}
-
 /**
  * changes to font size via updating the css variable and applying css classes
  * also re renders the table to update the column widths (manually changed column width will stay the same (tested) on rerender)
@@ -2025,39 +1976,6 @@ function updateFixedRowsCols() {
 		fixedRowsTop: Math.max(fixedRowsTop, 0),
 		fixedColumnsLeft: Math.max(fixedColumnsLeft, 0),
 	}, false)
-}
-
-/**
- * increments the {@link fixedRowsTop} by 1
- */
-function incFixedRowsTop() {
-	_changeFixedRowsTop(fixedRowsTop + 1)
-}
-/**
- * decrements the {@link fixedRowsTop} by 1
- */
-function decFixedRowsTop() {
-	_changeFixedRowsTop(fixedRowsTop - 1)
-}
-/**
- * no use this directly in the ui as {@link fixedRowsTop} name could change
- * @param newVal 
- */
-function _changeFixedRowsTop(newVal: number) {
-	fixedRowsTop = Math.max(newVal, 0)
-	fixedRowsTopInfoSpan.innerText = fixedRowsTop.toString()
-	updateFixedRowsCols()
-}
-
-function _toggleFixedRowsText() {
-
-	const isHidden = fixedRowsTopText.classList.contains('dis-hidden')
-
-	if (isHidden) {
-		fixedRowsTopText.classList.remove('dis-hidden')
-	} else {
-		fixedRowsTopText.classList.add('dis-hidden')
-	}
 }
 
 /**
@@ -2451,63 +2369,6 @@ function showColHeaderNameEditor(visualColIndex: number) {
 		// input.select()
 	})
 
-}
-
-
-function _updateToggleReadonlyModeUi() {
-
-	//console.log(`asdasdasdas`)
-	//new state is isReadonlyMode
-	if (isReadonlyMode) {
-		isReadonlyModeToggleSpan.classList.add(`active`)
-		isReadonlyModeToggleSpan.title = `Sets the table to edit mode`
-
-		//disable edit ui
-		const btnEditableUi = document.querySelectorAll(`.on-readonly-disable-btn`)
-		for (let i = 0; i < btnEditableUi.length; i++) {
-			btnEditableUi.item(i).setAttribute('disabled','true')
-		}
-
-		const divEditableUi = document.querySelectorAll(`.on-readonly-disable-div`)
-		for (let i = 0; i < divEditableUi.length; i++) {
-			divEditableUi.item(i).classList.add('div-readonly-disabled')
-		}
-
-	} else {
-		isReadonlyModeToggleSpan.classList.remove(`active`)
-		isReadonlyModeToggleSpan.title = `Sets the table to readonly mode`
-
-			//enable edit ui
-			const btnEditableUi = document.querySelectorAll(`.on-readonly-disable-btn`)
-			for (let i = 0; i < btnEditableUi.length; i++) {
-				btnEditableUi.item(i).removeAttribute('disabled')
-			}
-
-			const divEditableUi = document.querySelectorAll(`.on-readonly-disable-div`)
-			for (let i = 0; i < divEditableUi.length; i++) {
-				divEditableUi.item(i).classList.remove('div-readonly-disabled')
-			}
-	}
-}
-
-function toggleReadonlyMode() {
-
-	isReadonlyMode = !isReadonlyMode
-
-	for(let i=0; i < HotRegisterer.counter; i++){
-		let hot = HotRegisterer.getInstance("table"+i)
-		if(hot){
-			hot.updateSettings({
-				readOnly: isReadonlyMode,
-				manualRowMove: !isReadonlyMode,
-				manualColumnMove: !isReadonlyMode,
-				undo: !isReadonlyMode
-			}, false)
-		}
-	}
-	if (!hot) return
-	
-	_updateToggleReadonlyModeUi()
 }
 
 /**

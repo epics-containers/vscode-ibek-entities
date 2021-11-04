@@ -383,7 +383,6 @@ function resetDataFromResetDialogWithEncoding() {
 		return
 	}
 
-	postSetEditorHasChanges(false)
 
 	const encoding = getReadOptionEncoding()
 
