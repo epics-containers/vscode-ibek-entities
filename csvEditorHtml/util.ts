@@ -562,32 +562,6 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 		td.style.backgroundColor = '#f34f38';
 		td.style.color = ''
 	}
-
-	//TO DO - check type with switch and validate
-	//this should really go into a separate validator? do later...
-	switch(cellProperties.cellType){
-		case "integer":
-			if(isNaN(Number(value))){
-				td.style.backgroundColor = '#fda398';
-			}
-			break;
-
-		case "number":
-			if(isNaN(Number(value))){
-				td.style.backgroundColor = '#fda398';
-			}
-			break;
-
-		case "boolean":
-			//this should be covered by handsontable?
-			//TO DO - check and fix later
-			if(value !== "true" && value !== "false"){
-				td.style.backgroundColor = '#fda398';
-				td.style.color = '#EA2406';
-			}
-			break;
-	}
-
 }
 
 (Handsontable.renderers as any).registerRenderer('customRenderer', customRenderer);
