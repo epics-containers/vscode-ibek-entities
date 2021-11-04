@@ -673,11 +673,12 @@ class FindWidget {
 			return true
 
 		} catch (error) {
-			console.log(`error:`, error.message)
-			this.findWidgetCurrRegex = null
-			this.findWWidgetErrorMessage.innerText = error.message
-			this.findWidgetInput.classList.add('error-input')
-
+			if(error instanceof Error){
+				console.log(`error:`, error.message)
+				this.findWidgetCurrRegex = null
+				this.findWWidgetErrorMessage.innerText = error.message
+				this.findWidgetInput.classList.add('error-input')
+			}
 			return false
 		}
 	}

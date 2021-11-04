@@ -125,7 +125,7 @@ switch (detectedOs) {
 	default: notExhaustiveSwitch(detectedOs)
 }
 
-updateNewLineSelect()
+//updateNewLineSelect()
 
 //--- END set the preferred end of line terminator
 
