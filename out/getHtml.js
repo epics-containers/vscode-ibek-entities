@@ -147,6 +147,18 @@ function createEditorHtml(webview, context, initialVars) {
 											<i id="force-column-resize-icon" class="fas fa-arrows-alt-h"></i>
 										</span>
 
+										<!-- move rows up and down-->
+										<span class="mar-left-half clickable" onclick="moveRowUp()" style="margin-left: 0.5em;"
+											title="Shift row up">
+											<i id="move-row-up-icon" class="fas fa-chevron-circle-up"></i>
+										</span>
+
+										<span class="mar-left-half clickable" onclick="moveRowDown()" style="margin-left: 0.5em;"
+											title="Shift row down">
+											<i id="move-row-down-icon" class="fas fa-chevron-circle-down"></i>
+										</span>
+
+
 										<!-- fixed columns left -->
 										<div class="flexed changeable-indicator" style="margin-left: 1em;">
 											<div>
@@ -191,13 +203,9 @@ function createEditorHtml(webview, context, initialVars) {
 
 					<button style="margin-right: 1em" class="button is-outlined on-readonly-disable-btn" onclick="addTable()">
 						<span class="icon is-small">
-							<i class="fas fa-plus"></i>
+							<i class="fas fa-table"></i>
 						</span>
 						<span>Add table</span>
-						<span class="tooltip mar-left-half is-tooltip-multiline is-tooltip-left"
-							data-tooltip="Creates and appends a new empty table to the end of the set.">
-							<i class="fas fa-question-circle"></i>
-						</span>
 					</button>
 
 					<div id="status-info-wrapper">

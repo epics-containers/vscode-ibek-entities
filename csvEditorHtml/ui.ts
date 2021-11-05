@@ -1935,6 +1935,63 @@ function _toggleFixedColumnsText() {
 	}
 }
 
+/**
+ * moves selected row up
+ */
+function moveRowUp(){
+	hot = null
+	let selectedRowIndex: number = 0
+	//need to make sure it has correct hot instance
+	for(let key in HotRegisterer.bucket){
+		let _hot = HotRegisterer.bucket[key]
+		const _selections = _hot.getSelected()
+		if (_selections){
+			//this is the hot instance that is currently selected
+			hot = _hot
+			selectedRowIndex = _selections[0][0]
+
+		}
+	}
+	if (!hot) return
+	_moveRows(selectedRowIndex, selectedRowIndex - 1, hot)
+}
+
+/**
+ * moves selected row down
+ */
+function moveRowDown(){
+	hot = null
+	let selectedRowIndex: number = 0
+	//need to make sure it has correct hot instance
+	for(let key in HotRegisterer.bucket){
+		let _hot = HotRegisterer.bucket[key]
+		const _selections = _hot.getSelected()
+		if (_selections){
+			//this is the hot instance that is currently selected
+			hot = _hot
+			selectedRowIndex = _selections[0][0]
+
+		}
+	}
+	if (!hot) return
+	_moveRows(selectedRowIndex, selectedRowIndex + 1, hot)
+}
+
+/**
+ * does the actual moving of rows
+ * @param newRowIdx index we are trying to move our row to
+ */
+function _moveRows(oldRowIndex: number, newRowIndex: number, hot: Handsontable){
+	if(!hot) return
+	if(newRowIndex < 0 || newRowIndex > hot.countRows()){
+		return
+	}
+	let plugin = hot.getPlugin('manualRowMove')
+	plugin.moveRow(oldRowIndex, newRowIndex)
+	hot.selectCell(newRowIndex, 0)
+	hot.render()
+}
+
 const minSidebarWidthInPx = 150
 const collapseSidePanelThreshold = 60 //if we drag the handle e.g. between left: [0, 80] we collapse the side panel, so this is the left space to the left window border
 /**
@@ -2379,6 +2436,19 @@ let HotRegisterer: HotRegister = {
 		hot = new Handsontable(container, {
 			data: tableData,
 			readOnly: isReadonlyMode,
+			rowHeaders: function (row: number) { //the visual row index
+				let text = (row + 1).toString()
+	
+				if (tableData.length === 1 || isReadonlyMode) {
+					return `${text} <span class="remove-row clickable" onclick="removeRow(${row})" style="visibility: hidden"><i class="fas fa-trash"></i></span>`
+				}
+	
+				return `${text} <span class="remove-row clickable" onclick="removeRow(${row})"><i class="fas fa-trash"></i></span>`
+				//why we would always disallow to remove first row?
+				// return row !== 0
+				// 	? `${text} <span class="remove-row clickable" onclick="removeRow(${row})"><i class="fas fa-trash"></i></span>`
+				// 	: `${text} <span class="remove-row clickable" onclick="removeRow(${row})" style="visibility: hidden"><i class="fas fa-trash"></i></span>`
+			} as any,
 			renderAllRows: false, //use false and small table size for fast initial render, see https://handsontable.com/docs/7.0.2/Options.html#renderAllRows
 			afterChange: onAnyChange, //only called when cell value changed (e.g. not when col/row removed)
 			fillHandle: {
@@ -2397,11 +2467,12 @@ let HotRegisterer: HotRegister = {
 				maxColumnWidth: initialColumnWidth
 			} : true,
 			manualRowMove: true,
-			manualRowResize: true,
+			manualRowResize: false,
 			manualColumnMove: true,
 			manualColumnResize: true,
 			columns: columnOpt,
 			currentColClassName: 'foo', //actually used to overwrite highlighting
+			currentRowClassName: 'foo', //actually used to overwrite highlighting
 			contextMenu: {
 				items: {
 					'row_above': {
