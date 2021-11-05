@@ -7,6 +7,7 @@ import { InstanceManager, Instance, SomeInstance } from './instanceManager';
 import { getExtensionConfiguration } from './configurationHelper';
 import * as chokidar from "chokidar";
 const yaml = require('js-yaml');
+const YAML = require('yaml')
 const fs   = require('fs');
 const Validator = require("jsonschema").Validator;
 const fetch = require('sync-fetch')
@@ -113,7 +114,9 @@ export function activate(context: vscode.ExtensionContext) {
 		try {
 			instance = instanceManager.getActiveEditorInstance()
 		} catch (error) {
-			vscode.window.showErrorMessage(`Could not find the source file for the editor (no instance found), error: ${error.message}`)
+			if(error instanceof Error){
+				vscode.window.showErrorMessage(`Could not find the source file for the editor (no instance found), error: ${error.message}`)
+			}
 			return
 		}
 		vscode.workspace.openTextDocument(instance.sourceUri)
@@ -252,13 +255,14 @@ export function activate(context: vscode.ExtensionContext) {
 				let yamlIsValid: boolean = validateYaml(parseResult, jsonSchema)
 				instance.hasChanges = false
 				setEditorHasChanges(instance, false)
-				if(yamlIsValid){
-					const msg: ReceivedMessageFromVsCode = {
-						command: "yamlUpdate",
-						yamlContent: JSON.stringify(data)
-						}
-					instance.panel.webview.postMessage(msg)
+				if(!yamlIsValid){
+					vscode.window.showWarningMessage("Warning: YAML file contents are not valid against schema. This may cause errors in displaying file or tables.")
 				}
+				const msg: ReceivedMessageFromVsCode = {
+					command: "yamlUpdate",
+					yamlContent: JSON.stringify(data)
+					}
+				instance.panel.webview.postMessage(msg)
 	
 			}	
 		}	
@@ -414,7 +418,9 @@ function createNewEditorInstance(context: vscode.ExtensionContext, activeTextEdi
 	try {
 		instanceManager.addInstance(instance)
 	} catch (error) {
-		vscode.window.showErrorMessage(`Could not create an editor instance, error: ${error.message}`)
+		if(error instanceof Error){
+			vscode.window.showErrorMessage(`Could not create an editor instance, error: ${error.message}`)
+		}
 
 		if (instance.kind === 'workspaceFile') {
 			instance.sourceFileWatcher?.dispose()
@@ -545,15 +551,17 @@ function createNewEditorInstance(context: vscode.ExtensionContext, activeTextEdi
 				}
 				break
 			}
-			/*
-			case "apply": {
-				const { csvContent, saveSourceFile } = message
-				applyContent(instance, csvContent, saveSourceFile, config.openSourceFileAfterApply)
-				break
-			}*/
+			
 			case "apply": {
 				const { yamlContent, saveSourceFile } = message
 				applyYamlContent(instance, yamlContent, saveSourceFile, config.openSourceFileAfterApply)
+				break
+			}
+
+			case "modify": {
+				const { changeType, changeContent } = message
+				let changeObject: ReturnChangeObject = JSON.parse(changeContent)
+				//applyYamlChanges(instance, changeType, changeObject, config.openSourceFileAfterApply)
 				break
 			}
 
@@ -580,7 +588,9 @@ function createNewEditorInstance(context: vscode.ExtensionContext, activeTextEdi
 		try {
 			instanceManager.removeInstance(instance)
 		} catch (error) {
-			vscode.window.showErrorMessage(`Could not destroy an editor instance, error: ${error.message}`);
+			if(error instanceof Error){
+				vscode.window.showErrorMessage(`Could not destroy an editor instance, error: ${error.message}`);
+			}
 		}
 
 		try {
@@ -591,7 +601,9 @@ function createNewEditorInstance(context: vscode.ExtensionContext, activeTextEdi
 				instance.sourceFileWatcher?.close()
 			}
 		} catch (error) {
-			vscode.window.showErrorMessage(`Could not dispose source file watcher for file ${instance.document.uri.fsPath}, error: ${error.message}`);
+			if(error instanceof Error){
+				vscode.window.showErrorMessage(`Could not dispose source file watcher for file ${instance.document.uri.fsPath}, error: ${error.message}`);
+			}
 		}
 
 	}, null, context.subscriptions)
@@ -713,9 +725,7 @@ function applyYamlContent(instance: Instance, newContent: string, saveSourceFile
 			const jsonSchema = fetchSchema(instance)
 			let yamlIsValid: boolean = validateYaml(yamlData, jsonSchema)
 			if(!yamlIsValid){
-				vscode.window.showErrorMessage("Edits not applied to file: YAML content could not be validated by JSON schema. " +
-				"Please ensure that all table data is of valid type and content.")
-				return
+				vscode.window.showWarningMessage("Warning: YAML file contents are not valid against schema. This may cause errors in displaying file or tables.")
 			}
 
 			const edit = new vscode.WorkspaceEdit()
@@ -890,7 +900,9 @@ function getActiveEditorInstance(instanceManager: InstanceManager): Instance | n
 	try {
 		instance = instanceManager.getActiveEditorInstance()
 	} catch (error) {
-		vscode.window.showErrorMessage(`Could not find the editor instance, error: ${error.message}`)
+		if(error instanceof Error){
+			vscode.window.showErrorMessage(`Could not find the editor instance, error: ${error.message}`)
+		}
 		return null
 	}
 
@@ -952,16 +964,14 @@ function parseYaml(yamlString: string, instance: Instance){
 	let tableColumns: any[][] = [] //array of arrays of object, where each array of objects is one set of columns
 	let parseResult: any
 	try {
-		//parseResult = yaml.load(fs.readFileSync(yamlPath, 'utf8'));
-		parseResult = new YAWN(yamlString).json
+		//parseResult = new YAWN(yamlString).json
+		parseResult = YAML.parse(yamlString)
 		let yamlIsValid: boolean = validateYaml(parseResult, jsonSchema)
-		if (yamlIsValid){
-			createTableData(parseResult, tableHeaders, tablesArray) 
-			createColumnData(tableColumns, jsonSchema)
+		if (!yamlIsValid){
+			vscode.window.showWarningMessage("Warning: YAML content could not be validated against schema.This may result in error displaying tables.")
 		}
-		else{
-			return
-		}
+		createTableData(parseResult, tableHeaders, tablesArray) 
+		createColumnData(tableColumns, jsonSchema)
 	}catch (e) {
 		console.log(e); //TO DO: do something if error loading file
 	}

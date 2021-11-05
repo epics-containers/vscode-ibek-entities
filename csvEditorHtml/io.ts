@@ -117,11 +117,8 @@ function getYamlData(): any[][] {
 		let rowNum = _hot.countRows()
 		//getting data row-by-row gets rid of empty rows
 		for(let i=0; i < rowNum; i++){
-			let _isEmpty = _hot.isEmptyRow(i)
-			if(!_isEmpty){
-				let _rowData= _hot.getSourceDataAtRow(i)
-				_tableData.push(_rowData)
-			}
+			let _rowData= _hot.getSourceDataAtRow(i)
+			_tableData.push(_rowData)
 		}
 		allData.push(_tableData)
 	}

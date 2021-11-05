@@ -10,6 +10,7 @@ const instanceManager_1 = require("./instanceManager");
 const configurationHelper_1 = require("./configurationHelper");
 const chokidar = require("chokidar");
 const yaml = require('js-yaml');
+const YAML = require('yaml');
 const fs = require('fs');
 const Validator = require("jsonschema").Validator;
 const fetch = require('sync-fetch');
@@ -64,7 +65,7 @@ function activate(context) {
         }
         //vscode.window.activeTextEditor will be undefined if file is too large...
         //see https://github.com/Microsoft/vscode/blob/master/src/vs/editor/common/model/textModel.ts
-        if (!vscode.window.activeTextEditor || !util_1.isYamlFile(vscode.window.activeTextEditor.document)) {
+        if (!vscode.window.activeTextEditor || !(0, util_1.isYamlFile)(vscode.window.activeTextEditor.document)) {
             vscode.window.showInformationMessage("Open a csv file first to show the yaml editor");
             return;
         }
@@ -90,7 +91,9 @@ function activate(context) {
             instance = instanceManager.getActiveEditorInstance();
         }
         catch (error) {
-            vscode.window.showErrorMessage(`Could not find the source file for the editor (no instance found), error: ${error.message}`);
+            if (error instanceof Error) {
+                vscode.window.showErrorMessage(`Could not find the source file for the editor (no instance found), error: ${error.message}`);
+            }
             return;
         }
         vscode.workspace.openTextDocument(instance.sourceUri)
@@ -155,7 +158,7 @@ function activate(context) {
         //when we save an unnamed (temp file) file a new file with the new uri is opened and saved
         //TODO i don't think we can get the old/new name of the file os wait for 
         //so just filter for csv file and show it 
-        if (args.isUntitled || util_1.isYamlFile(args) === false || args.version !== 1)
+        if (args.isUntitled || (0, util_1.isYamlFile)(args) === false || args.version !== 1)
             return;
         //this will display the new file (after unnamed was saved) but the reference is still broken...
         //also this would show almost every opened csv file (even if we don't wan to display it e.g. only for silent editing from other extensions)
@@ -172,7 +175,7 @@ function activate(context) {
         if (args.uri.scheme === exports.editorUriScheme)
             return; //closed an editor nothing to do here... onDispose will handle it
         // console.log(`onDidCloseTextDocument ${args.uri.toString()}`);
-        if (util_1.isYamlFile(args) && args.isUntitled && args.uri.scheme === "untitled") {
+        if ((0, util_1.isYamlFile)(args) && args.isUntitled && args.uri.scheme === "untitled") {
             const instance = instanceManager.findInstanceBySourceUri(args.uri);
             if (!instance)
                 return;
@@ -198,13 +201,14 @@ function activate(context) {
                 let yamlIsValid = validateYaml(parseResult, jsonSchema);
                 instance.hasChanges = false;
                 setEditorHasChanges(instance, false);
-                if (yamlIsValid) {
-                    const msg = {
-                        command: "yamlUpdate",
-                        yamlContent: JSON.stringify(data)
-                    };
-                    instance.panel.webview.postMessage(msg);
+                if (!yamlIsValid) {
+                    vscode.window.showWarningMessage("Warning: YAML file contents are not valid against schema. This may cause errors in displaying file or tables.");
                 }
+                const msg = {
+                    command: "yamlUpdate",
+                    yamlContent: JSON.stringify(data)
+                };
+                instance.panel.webview.postMessage(msg);
             }
         }
     });
@@ -233,7 +237,7 @@ exports.deactivate = deactivate;
  */
 function onDidChangeConfiguration(instanceManager, e) {
     if (e === null || e.affectsConfiguration('csv-edit.fontSizeInPx')) {
-        const newFontSize = configurationHelper_1.getExtensionConfiguration().fontSizeInPx;
+        const newFontSize = (0, configurationHelper_1.getExtensionConfiguration)().fontSizeInPx;
         const instances = instanceManager.getAllInstances();
         for (let i = 0; i < instances.length; i++) {
             const instance = instances[i];
@@ -251,7 +255,7 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
     var _a, _b;
     const uri = activeTextEditor.document.uri;
     const title = getEditorTitle(activeTextEditor.document);
-    let panel = vscode.window.createWebviewPanel('csv-editor', title, util_1.getCurrentViewColumn(), {
+    let panel = vscode.window.createWebviewPanel('csv-editor', title, (0, util_1.getCurrentViewColumn)(), {
         enableFindWidget: false,
         enableCommandUris: true,
         enableScripts: true,
@@ -259,7 +263,7 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
     });
     //check if the file is in the current workspace
     let isInCurrentWorkspace = activeTextEditor.document.uri.fsPath !== vscode.workspace.asRelativePath(activeTextEditor.document.uri.fsPath);
-    const config = configurationHelper_1.getExtensionConfiguration();
+    const config = (0, configurationHelper_1.getExtensionConfiguration)();
     //a file watcher works when the file is in the current workspace (folder) even if it's not opened
     //it also works when we open any file (not in the workspace) and 
     //	we edit the file inside vs code
@@ -277,10 +281,10 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
             watcher.onDidChange((e) => {
                 if (instance.ignoreNextChangeEvent) {
                     instance.ignoreNextChangeEvent = false;
-                    util_1.debugLog(`source file changed: ${e.fsPath}, ignored`);
+                    (0, util_1.debugLog)(`source file changed: ${e.fsPath}, ignored`);
                     return;
                 }
-                util_1.debugLog(`source file changed: ${e.fsPath}`);
+                (0, util_1.debugLog)(`source file changed: ${e.fsPath}`);
                 onSourceFileChanged(e.fsPath, instance);
             });
         }
@@ -307,10 +311,10 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
             watcher.on('change', (path) => {
                 if (instance.ignoreNextChangeEvent) {
                     instance.ignoreNextChangeEvent = false;
-                    util_1.debugLog(`source file (external) changed: ${path}, ignored`);
+                    (0, util_1.debugLog)(`source file (external) changed: ${path}, ignored`);
                     return;
                 }
-                util_1.debugLog(`source file (external) changed: ${path}`);
+                (0, util_1.debugLog)(`source file (external) changed: ${path}`);
                 onSourceFileChanged(path, instance);
             });
         }
@@ -333,7 +337,9 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
         instanceManager.addInstance(instance);
     }
     catch (error) {
-        vscode.window.showErrorMessage(`Could not create an editor instance, error: ${error.message}`);
+        if (error instanceof Error) {
+            vscode.window.showErrorMessage(`Could not create an editor instance, error: ${error.message}`);
+        }
         if (instance.kind === 'workspaceFile') {
             (_a = instance.sourceFileWatcher) === null || _a === void 0 ? void 0 : _a.dispose();
         }
@@ -347,7 +353,7 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
     panel.webview.onDidReceiveMessage((message) => {
         switch (message.command) {
             case 'ready': {
-                util_1.debugLog('received ready from webview');
+                (0, util_1.debugLog)('received ready from webview');
                 let data = parseYaml(activeTextEditor.document.getText(), instance);
                 instance.hasChanges = false;
                 setEditorHasChanges(instance, false);
@@ -419,7 +425,7 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
                     //let initialText = activeTextEditor.document.getText()
                     funcSendContent(activeTextEditor.document.uri.fsPath);
                 }
-                util_1.debugLog('finished sending csv content to webview');
+                (0, util_1.debugLog)('finished sending csv content to webview');
                 break;
             }
             case "msgBox": {
@@ -439,15 +445,15 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
                 }
                 break;
             }
-            /*
-            case "apply": {
-                const { csvContent, saveSourceFile } = message
-                applyContent(instance, csvContent, saveSourceFile, config.openSourceFileAfterApply)
-                break
-            }*/
             case "apply": {
                 const { yamlContent, saveSourceFile } = message;
                 applyYamlContent(instance, yamlContent, saveSourceFile, config.openSourceFileAfterApply);
+                break;
+            }
+            case "modify": {
+                const { changeType, changeContent } = message;
+                let changeObject = JSON.parse(changeContent);
+                //applyYamlChanges(instance, changeType, changeObject, config.openSourceFileAfterApply)
                 break;
             }
             case "copyToClipboard": {
@@ -464,12 +470,14 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
     }, undefined, context.subscriptions);
     panel.onDidDispose(() => {
         var _a, _b;
-        util_1.debugLog(`dispose csv editor panel (webview)`);
+        (0, util_1.debugLog)(`dispose csv editor panel (webview)`);
         try {
             instanceManager.removeInstance(instance);
         }
         catch (error) {
-            vscode.window.showErrorMessage(`Could not destroy an editor instance, error: ${error.message}`);
+            if (error instanceof Error) {
+                vscode.window.showErrorMessage(`Could not destroy an editor instance, error: ${error.message}`);
+            }
         }
         try {
             if (instance.kind === 'workspaceFile') {
@@ -480,10 +488,12 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
             }
         }
         catch (error) {
-            vscode.window.showErrorMessage(`Could not dispose source file watcher for file ${instance.document.uri.fsPath}, error: ${error.message}`);
+            if (error instanceof Error) {
+                vscode.window.showErrorMessage(`Could not dispose source file watcher for file ${instance.document.uri.fsPath}, error: ${error.message}`);
+            }
         }
     }, null, context.subscriptions);
-    panel.webview.html = getHtml_1.createEditorHtml(panel.webview, context, {
+    panel.webview.html = (0, getHtml_1.createEditorHtml)(panel.webview, context, {
         isWatchingSourceFile: instance.supportsAutoReload
     });
 }
@@ -593,9 +603,7 @@ function applyYamlContent(instance, newContent, saveSourceFile, openSourceFileAf
         const jsonSchema = fetchSchema(instance);
         let yamlIsValid = validateYaml(yamlData, jsonSchema);
         if (!yamlIsValid) {
-            vscode.window.showErrorMessage("Edits not applied to file: YAML content could not be validated by JSON schema. " +
-                "Please ensure that all table data is of valid type and content.");
-            return;
+            vscode.window.showWarningMessage("Warning: YAML file contents are not valid against schema. This may cause errors in displaying file or tables.");
         }
         const edit = new vscode.WorkspaceEdit();
         var firstLine = document.lineAt(0);
@@ -604,7 +612,7 @@ function applyYamlContent(instance, newContent, saveSourceFile, openSourceFileAf
         //don't apply if the content didn't change
         // TO DO - won't work for yaml
         if (document.getText() === yamlString) {
-            util_1.debugLog(`content didn't change`);
+            (0, util_1.debugLog)(`content didn't change`);
             return;
         }
         edit.replace(document.uri, textRange, yamlString);
@@ -685,10 +693,10 @@ function createNewSourceFile(instance, newContent, openSourceFileAfterApply, sav
         edit.insert(newSourceFile, new vscode.Position(0, 0), newContent);
         vscode.workspace.applyEdit(edit).then(success => {
             if (!success) {
-                util_1.debugLog('could not created new source file because old was deleted');
+                (0, util_1.debugLog)('could not created new source file because old was deleted');
                 return;
             }
-            util_1.debugLog('created new source file because old was deleted');
+            (0, util_1.debugLog)('created new source file because old was deleted');
             if (openSourceFileAfterApply) {
                 vscode.window.showTextDocument(newFile);
             }
@@ -725,7 +733,9 @@ function getActiveEditorInstance(instanceManager) {
         instance = instanceManager.getActiveEditorInstance();
     }
     catch (error) {
-        vscode.window.showErrorMessage(`Could not find the editor instance, error: ${error.message}`);
+        if (error instanceof Error) {
+            vscode.window.showErrorMessage(`Could not find the editor instance, error: ${error.message}`);
+        }
         return null;
     }
     return instance;
@@ -773,16 +783,14 @@ function parseYaml(yamlString, instance) {
     let tableColumns = []; //array of arrays of object, where each array of objects is one set of columns
     let parseResult;
     try {
-        //parseResult = yaml.load(fs.readFileSync(yamlPath, 'utf8'));
-        parseResult = new YAWN(yamlString).json;
+        //parseResult = new YAWN(yamlString).json
+        parseResult = YAML.parse(yamlString);
         let yamlIsValid = validateYaml(parseResult, jsonSchema);
-        if (yamlIsValid) {
-            createTableData(parseResult, tableHeaders, tablesArray);
-            createColumnData(tableColumns, jsonSchema);
+        if (!yamlIsValid) {
+            vscode.window.showWarningMessage("Warning: YAML content could not be validated against schema.This may result in error displaying tables.");
         }
-        else {
-            return;
-        }
+        createTableData(parseResult, tableHeaders, tablesArray);
+        createColumnData(tableColumns, jsonSchema);
     }
     catch (e) {
         console.log(e); //TO DO: do something if error loading file

@@ -219,6 +219,9 @@ function addRow(selectNewRow = true) {
 			hot.alter('insert_row', numRows) //inserted data contains null but papaparse correctly unparses it as ''
 			// hot.populateFromArray(numRows, 0, [headerCells.map(p => '')])
 
+			//need to set type cell value for new row
+			let typeCell = hot.getDataAtRowProp(numRows-1, "type")
+			hot.setDataAtRowProp(numRows, "type", typeCell)
 			//set new row metadata
 			setColumnMetadata(numRows, rowMeta)
 
@@ -226,9 +229,7 @@ function addRow(selectNewRow = true) {
 				hot.selectCell(numRows, 0)
 			}
 
-			//need to set type cell value for new row
-			let typeCell = hot.getDataAtRowProp(numRows-1, "type")
-			//hot.setDataAtRowProp(numRows, "type", typeCell)
+
 		}
 	}
 	//checkAutoApplyHasHeader()

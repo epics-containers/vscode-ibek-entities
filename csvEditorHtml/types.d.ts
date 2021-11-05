@@ -396,6 +396,12 @@ type OverwriteFileMessage = {
 	saveSourceFile: boolean
 }
 
+type ModifyFileMessage = {
+	command: 'modify'
+	changeType: string
+	changeContent: string
+}
+
 type CopyToClipboardMessage = {
 	command: 'copyToClipboard'
 	text: string
@@ -406,7 +412,7 @@ type SetEditorHasChangesMessage = {
 	hasChanges: boolean
 }
 
-type PostMessage = ReadyMessage | DisplayMessageBoxMessage | OverwriteFileMessage | CopyToClipboardMessage | SetEditorHasChangesMessage
+type PostMessage = ReadyMessage | DisplayMessageBoxMessage | OverwriteFileMessage | ModifyFileMessage | CopyToClipboardMessage | SetEditorHasChangesMessage
 
 type VsState = {
 	readOptionIsCollapsed: boolean
@@ -582,4 +588,12 @@ type InitialDataObject = {
 
 type ReturnDataObject = {
 	tablesArray: any[][]
+}
+
+type ReturnChangeObject = {
+	tableName: string
+	columnName?: string
+	cellValue?: string | number
+	rowIndex?: number
+	tableData?: [][]
 }
