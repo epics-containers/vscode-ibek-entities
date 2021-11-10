@@ -773,8 +773,6 @@ function setupAndApplyInitialConfigPart1(initialConfig: CsvEditSettings | undefi
 
 		//probably in browser here...
 
-		toggleOptionsBar(true)
-
 		return
 	}
 

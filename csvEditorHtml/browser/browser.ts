@@ -273,7 +273,7 @@ function bindEvent(eventNames: string, handler: Function) {
 function openCsvText(text: string) {
 
 	initialContent = text
-	resetDataFromResetDialog()
+	//resetDataFromResetDialog()
 
 }
 
