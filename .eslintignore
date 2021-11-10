@@ -1,0 +1,16 @@
+*.map
+csvEditorHtml/out/
+node_modules
+TODO.md
+.vscode-test
+scripts.md
+backup
+*.vsix
+out
+cypress
+thirdParty
+csvEditorHtml/browser/dist
+csvEditorHtml/browser/imgs/private
+images
+.vscode-test-web/*
+.vscode
