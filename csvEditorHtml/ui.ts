@@ -5,256 +5,7 @@ type GridSettings = import("../thirdParty/handsontable/handsontable").GridSettin
 
 /* --- common helpers --- */
 
-
-
-/**
- * displayed or hides the options bar content
- * @param shouldCollapse 
- */
-function toggleOptionsBar(shouldCollapse?: boolean) {
-	const el = _getById('options-bar-icon')
-
-	if (shouldCollapse === undefined) {
-		if (el.classList.contains('fa-chevron-down')) {
-			//down is expanded and we want to toggle
-			shouldCollapse = true
-		} else {
-			shouldCollapse = false
-		}
-	}
-
-	document.documentElement.style
-		.setProperty('--extension-options-bar-display', shouldCollapse ? `none` : `block`)
-
-	if (vscode) {
-		const lastState = _getVsState()
-		vscode.setState({
-			...lastState,
-			previewIsCollapsed: shouldCollapse
-		})
-	}
-
-	if (shouldCollapse) {
-		el.classList.remove('fa-chevron-down')
-		el.classList.add('fa-chevron-right')
-
-
-		onResizeGrid()
-
-		_setPreviewCollapsedVsState(shouldCollapse)
-		return
-	}
-
-	el.classList.add('fa-chevron-down')
-	el.classList.remove('fa-chevron-right')
-
-
-	onResizeGrid()
-
-	_setPreviewCollapsedVsState(shouldCollapse)
-}
-
-
-/* --- read options --- */
-/**
- * if input value is set programmatically this is NOT called
- * 
- * when the settings apply header {@link startRenderData} we need to reset the status text here
- * 
- * @param fromUndo true: only update col headers, do not change the table data (will be done by undo/redo), false: normal
- */
 /*
-function _applyHasHeader(displayRenderInformation: boolean, fromUndo = false) {
-
-	const el = hasHeaderReadOptionInput //or defaultCsvReadOptions._hasHeader
-
-	const autoApplyHasHeader = shouldApplyHasHeaderAfterRowsAdded
-	setShouldAutpApplyHasHeader(false)
-
-	const elWrite = _getById('has-header-write') as HTMLInputElement //or defaultCsvWriteOptions.header
-
-	let func = () => {
-
-		if (!hot) throw new Error('table was null')
-
-		if (el.checked || autoApplyHasHeader) {
-
-			//this checked state is set from csvReadOptions._hasHeader
-			const dataWithIndex = getFirstRowWithIndex()
-
-			if (dataWithIndex === null) {
-				//disable input...
-				const el3 = _getById('has-header') as HTMLInputElement
-				el3.checked = false
-				headerRowWithIndex = null
-				return
-			}
-
-			if (fromUndo) return
-
-			headerRowWithIndex = dataWithIndex
-			el.checked = true //sync ui in case we get here via autoApplyHasHeader
-
-			hot.updateSettings({
-				fixedRowsTop: 0,
-				fixedColumnsLeft: 0,
-			}, false)
-
-			let hasAnyChangesBefore = getHasAnyChangesUi()
-
-			hot.alter('remove_row', headerRowWithIndex.physicalIndex)
-
-			elWrite.checked = true
-			defaultCsvWriteOptions.header = true
-			defaultCsvReadOptions._hasHeader = true
-
-			if (isFirstHasHeaderChangedEvent) {
-
-				if (hasAnyChangesBefore === false) {
-					_setHasUnsavedChangesUiIndicator(false)
-				}
-
-				isFirstHasHeaderChangedEvent = false
-			}
-
-			//we now always clear the undo after changing the read has header option
-			//because it's too complicated to get this right...
-			//@ts-ignore
-			let undoPlugin = hot.undoRedo
-			undoPlugin.clear()
-
-			//maybe we don't need this... worked without...
-			hot.render()
-			return
-		}
-
-		if (fromUndo) return
-
-		if (headerRowWithIndex === null) {
-			throw new Error('could not insert header row')
-		}
-
-		let hasAnyChangesBefore = getHasAnyChangesUi()
-
-		hot.alter('insert_row', headerRowWithIndex.physicalIndex)
-		const visualRow = hot.toVisualRow(headerRowWithIndex.physicalIndex)
-		const visualCol = hot.toVisualColumn(0)
-		//see https://handsontable.com/docs/6.2.2/Core.html#populateFromArray
-		hot.populateFromArray(visualRow, visualCol, [[...headerRowWithIndex.row]])
-
-		headerRowWithIndex = null
-
-		elWrite.checked = false
-		defaultCsvWriteOptions.header = false
-		defaultCsvReadOptions._hasHeader = false
-
-		hot.updateSettings({
-			fixedRowsTop: fixedRowsTop,
-			fixedColumnsLeft: fixedColumnsLeft,
-		}, false)
-
-		if (isFirstHasHeaderChangedEvent) {
-
-			if (hasAnyChangesBefore === false) {
-				_setHasUnsavedChangesUiIndicator(false)
-			}
-
-			isFirstHasHeaderChangedEvent = false
-		}
-
-		//we now always clear the undo after changing the read has header option
-		//because it's too complicated to get this right...
-		//@ts-ignore
-		let undoPlugin = hot.undoRedo
-		undoPlugin.clear()
-
-		//we changed headerRowWithIndex / header row so force a re-render so that hot calls defaultColHeaderFunc again
-		hot.render()
-
-
-	}
-
-	if (displayRenderInformation) {
-		statusInfo.innerText = `Rendering table...`
-
-		call_after_DOM_updated(() => {
-
-			func()
-
-			setTimeout(() => {
-				statusInfo.innerText = '';
-			}, 0)
-
-		})
-
-		return
-	}
-
-	func()
-
-}*/
-
-/**
- * sets or removes if the has header should be applies automatically (not applies, only sets flag and ui)
- */
-/*
-function setShouldAutpApplyHasHeader(shouldSet: boolean) {
-
-	if (shouldSet) {
-		shouldApplyHasHeaderAfterRowsAdded = true
-		hasHeaderReadOptionInput.classList.add(`toggle-auto-future`)
-		hasHeaderLabel.title = `Activated automatically, if table has >= 2 rows`
-	} else {
-		hasHeaderReadOptionInput.classList.remove(`toggle-auto-future`)
-		shouldApplyHasHeaderAfterRowsAdded = false
-		hasHeaderLabel.title = ``
-	}
-}*/
-
-/**
- * checks if {@link shouldApplyHasHeaderAfterRowsAdded} is set and if so, tries to apply it
- */
-/*
-function checkAutoApplyHasHeader() {
-
-	if (!shouldApplyHasHeaderAfterRowsAdded) return
-
-	tryApplyHasHeader()
-}*/
-
-/**
- * tries to set the has header read option
- * can fail if we have only 1 row
- *   in this case we set {@link shouldApplyHasHeaderAfterRowsAdded} so we know we need to watch if rows are added and then apply it afterwards
- */
-/*
-function tryApplyHasHeader() {
-
-	if (!hot) return
-
-	const uiShouldApply = hasHeaderReadOptionInput.checked
-	//this might also change the (ui) option
-	const canApply = checkIfHasHeaderReadOptionIsAvailable(false)
-
-	if (uiShouldApply) {
-		if (!canApply) {
-
-			if (shouldApplyHasHeaderAfterRowsAdded) {
-				//toggle to false (not auto apply)
-				setShouldAutpApplyHasHeader(false)
-				return
-			}
-
-			setShouldAutpApplyHasHeader(true)
-			return
-		}
-	}
-
-	//else just apply
-	_applyHasHeader(true, false)
-}*/
-
-
 function setDelimiterString() {
 	const el = _getById('delimiter-string') as HTMLInputElement
 	defaultCsvReadOptions.delimiter = el.value
@@ -279,7 +30,7 @@ function setEscapeCharString() {
 	ensuredSingleCharacterString(el)
 
 	defaultCsvReadOptions.escapeChar = el.value
-}
+}*/
 
 /**
  * @deprecated not longer supported
@@ -370,31 +121,6 @@ function setWriteDelimiter(delimiter: string) {
 }
 
 
-/* --- preview --- */
-
-/**
- * updates the preview
- */
-function generateCsvPreview() {
-	const value = getDataAsCsv(defaultCsvReadOptions, defaultCsvWriteOptions)
-
-	const el = _getById('csv-preview') as HTMLTextAreaElement
-	el.value = value
-
-	//open preview
-	toggleOptionsBar(false)
-}
-
-function copyPreviewToClipboard() {
-
-	generateCsvPreview()
-
-	const el = _getById('csv-preview') as HTMLTextAreaElement
-
-	postCopyToClipboard(el.value)
-
-}
-
 /**
  * renders the hot table again
  */
@@ -467,7 +193,6 @@ function forceResizeColumns() {
 /**
  * display the yaml data objects in several tables.
  * uses json schema information to fill in column metadata
- * @param this 
  * @param yamlDataTables an array containing arrays of table datasets
  * @param yamlTableHeaders an array containing the header names for tables
  * @param yamlTableColumns an array containing arrays of column objects for each table
@@ -505,57 +230,6 @@ function displayYamlData(this: any, yamlDataTables: any[][], yamlTableHeaders: s
 		}
 		HotRegisterer.counter = counter+1
 	})
-
-
-
-	//reset header row
-	//headerRowWithIndex = null
-
-	// if (data.length > 0) {
-	// 	headerRowWithIndex = getFirstRowWithIndexByData(data)
-	// }
-	/*
-	const container = csvEditorDiv
-	const parentContainer = csvEditorWrapper
-	//testing html creation
-	let _headerEl2: HTMLElement = document.createElement("h1")
-	_headerEl2.id = "header0"
-	_headerEl2.className = "class0"
-	_headerEl2.innerText = yamlTableHeaders[0]
-	if(parentContainer) {
-		parentContainer.insertBefore(_headerEl2, csvEditorDiv)
-	}
-	
-	if (hot) {
-		hot.destroy()
-		hot = null
-	}*/
-
-	//enable all find connected stuff
-	//we need to setup this first so we get the events before handsontable... e.g. document keydown
-	//findWidgetInstance.setupFind()
-
-	//const showColumnHeaderNamesWithLettersLikeExcel = initialConfig?.showColumnHeaderNamesWithLettersLikeExcel ?? false
-
-	//let defaultColHeaderFuncBound = defaultColHeaderFunc.bind(this, showColumnHeaderNamesWithLettersLikeExcel)
-	/*
-	isInitialHotRender = true
-
-	let index: number = 0
-	let columnNames: string[] = []
-	//make sure we select correct column data
-	//let tableName: string = yamlDataTables[0][0].type
-	yamlTableColumns.forEach((tableColumns, i) => {
-		tableColumns.forEach((column, j) => {
-			if(column.name === "IP"){
-				index = i
-			}
-			columnNames.push(column.name)
-		})
-	})
-
-	let columnOptions = setColumnOptions(yamlTableColumns[index])
-	*/
 }
 
 /**
@@ -565,6 +239,7 @@ function displayYamlData(this: any, yamlDataTables: any[][], yamlTableHeaders: s
  * if we have data we convert it to match a rectangle (every row must have the same number of columns / cells)
  * @param {string[][]} csvParseResult array with the rows or null to just destroy the old table
  */
+/*
 function displayData(this: any, csvParseResult: ExtendedCsvParseResult | null, csvReadConfig: CsvReadOptions) {
 
 	if (csvParseResult === null) {
@@ -1104,6 +779,7 @@ function displayData(this: any, csvParseResult: ExtendedCsvParseResult | null, c
 		 *   but maybe there is a way... this func should handle this anyway
 		 * endColVisualIndex: the column is inserted left to this index
 		 */
+		/*
 		afterColumnMove: (function (startColVisualIndices: number[], endColVisualIndex: number) {
 
 			if (!hot) throw new Error('table was null')
@@ -1459,6 +1135,7 @@ function displayData(this: any, csvParseResult: ExtendedCsvParseResult | null, c
 		}
 	}*/
 
+	/*
 	isInitialHotRender = false
 	if (allColWidths && allColWidths.length > 0) {
 		//apply old width
@@ -1477,13 +1154,12 @@ function displayData(this: any, csvParseResult: ExtendedCsvParseResult | null, c
 		//select first cell by default so we have always a context
 		hot.selectCell(0, 0)
 	}
-}
+}*/
 
 /**
- * should be called if anything was changes
- * then we set the editor to has changes
+ * should be called by hot if anything was changed in cell
  */
-function onAnyChange(changes?: CellChanges[] | null, reason?: string) {
+function onAnyChange(changes?: CellChanges[] | null, reason?: string, _tableName?: string) {
 
 	//this is the case on init (because initial data set)
 	//also when we reset data (button)
@@ -1507,7 +1183,54 @@ function onAnyChange(changes?: CellChanges[] | null, reason?: string) {
 		findWidgetInstance.showOrHideOutdatedSearchIndicator(true)
 	}
 
-	postApplyContent(false)
+	if(changes){
+		let changeContent: ReturnChangeObject = {tableName: _tableName, columnName: changes[0][1], cellValue: changes[0][3], oldRowIndex: [Number(changes[0][0])], newRowIndex: Number(changes[0][0])}
+		postModifyContent("valueChange", changeContent)
+	}
+
+}
+
+/**
+ * should be called if any rows/tables added/deleted/moved
+ * moved
+ */
+function onTableChange(_tableName: string, _colName: string | undefined, _cellValue: string | number | undefined, _oldRowIndex: number[] | undefined, _newRowIndex: number | undefined, _tableData: any[], reason: string) {
+	
+	let changeContent: ReturnChangeObject = {tableName: _tableName}
+	switch(reason){
+		case "addRow":
+			changeContent.newRowIndex = _newRowIndex
+			if(_tableData.length > 0){
+				changeContent.tableData = _tableData[0] 
+			}
+			break
+			//this fetches table name, row index and row data and sends it over
+		case "deleteRow":
+			changeContent.oldRowIndex = _oldRowIndex
+			break
+			//pass in row index (old = new)
+		case "moveRow":
+			changeContent.newRowIndex = _newRowIndex
+			changeContent.oldRowIndex = _oldRowIndex
+			break
+			//pass in old row index and new row index
+		case "addTable":
+			changeContent.tableData = _tableData
+			break
+			//pass tabledata in
+		case "deleteTable":
+			//table name is already passed in so do nothing here
+			break
+	}
+
+	//we need to check the value cache because the user could have cleared the input and then closed the widget
+	//but if we have an old search we re-open the old search which is now invalid...
+	if (findWidgetInstance.findWidgetInputValueCache !== '') {
+		findWidgetInstance.tableHasChangedAfterSearch = true
+		findWidgetInstance.showOrHideOutdatedSearchIndicator(true)
+	}
+
+	postModifyContent(reason, changeContent)
 
 }
 
@@ -1535,9 +1258,6 @@ function onResizeGrid() {
 		return
 	}
 
-	// checks how many existing tables, not how many have been created and logged in counter
-	//const height = (parseInt(heightString.substring(0, heightString.length - 2)) - Object.keys(HotRegisterer.bucket).length * 30)/ Object.keys(HotRegisterer.bucket).length
-
 	//iterate over every existing hot instance
 	for(let i=0; i < HotRegisterer.counter; i++){
 		let hot = HotRegisterer.getInstance("table"+i)
@@ -1555,15 +1275,6 @@ function onResizeGrid() {
 			}
 		}
 	}
-	/*
-	hot.updateSettings({
-		width: width,
-		height: height,
-	}, false)
-	*/
-
-	//get all col sizes
-
 }
 
 /**
@@ -1701,24 +1412,9 @@ function toggleAskDeleteTableModalDiv(isVisible: boolean) {
 	askDeleteTableModalDiv.classList.remove('is-active')
 }
 
-
-
-/**
- * parses and displays the given data (csv)
- * @param {string} content 
- */
-function resetData(content: string, csvReadOptions: CsvReadOptions) {
-	const _data = parseCsv(content, csvReadOptions)
-	// console.log(`_data`, _data)
-	displayData(_data, csvReadOptions)
-
-	//might be bigger than the current view
-	onResizeGrid()
-}
-
 /**
  * displays the given data (yaml)
- * @param _data the initial data object create from the yaml file
+ * @param _data the initial data object created from the yaml file
  */
 function resetDataObject(_data: InitialDataObject) {
 	//const _data = parseYaml(content) //here would pass in filename
@@ -1727,16 +1423,6 @@ function resetDataObject(_data: InitialDataObject) {
 	//might be bigger than the current view
 	onResizeGrid()
 }
-
-/**
- * a wrapper for resetData to display status text when rendering
- */
-function resetDataFromResetDialog() {
-
-	startRenderData()
-}
-
-
 
 function startReceiveCsvProgBar() {
 	receivedCsvProgBar.value = 0
@@ -1756,19 +1442,30 @@ function stopReceiveCsvProgBar() {
  * called from ui
  * @param saveSourceFile 
  */
+
 function postApplyContent(saveSourceFile: boolean) {
 
 	if (isReadonlyMode) return
 
 	//const csvContent = getDataAsCsv(defaultCsvReadOptions, defaultCsvWriteOptions)
-	const returnData: ReturnDataObject = {tablesArray: getYamlData()}
+	//const returnData: ReturnDataObject = {tablesArray: getYamlData()}
 
 	//used to clear focus... else styles are not properly applied
 	//@ts-ignore
 	if (document.activeElement !== document.body) document.activeElement.blur();
 
 	//_postApplyContent(csvContent, saveSourceFile)
-	_postApplyContent(JSON.stringify(returnData), saveSourceFile)
+	//_postApplyContent(JSON.stringify(returnData), saveSourceFile)
+}
+
+/**
+ * 
+ * @param reason 
+ * @param contentChanges 
+ */
+function postModifyContent(reason: string, contentChanges: ReturnChangeObject){
+		let modifiedContent = JSON.stringify(contentChanges)
+		_postModifyContent(reason, modifiedContent)
 }
 
 
@@ -1974,7 +1671,7 @@ function moveRowDown(){
 		}
 	}
 	if (!hot) return
-	_moveRows(selectedRowIndex, selectedRowIndex + 1, hot)
+	_moveRows(selectedRowIndex, selectedRowIndex + 2, hot)
 }
 
 /**
@@ -1988,8 +1685,14 @@ function _moveRows(oldRowIndex: number, newRowIndex: number, hot: Handsontable){
 	}
 	let plugin = hot.getPlugin('manualRowMove')
 	plugin.moveRow(oldRowIndex, newRowIndex)
-	hot.selectCell(newRowIndex, 0)
 	hot.render()
+	if(oldRowIndex < newRowIndex){
+		hot.selectCell(newRowIndex-1, 0)
+	}
+	else{
+		hot.selectCell(newRowIndex, 0)
+	}
+	
 }
 
 const minSidebarWidthInPx = 150
@@ -2236,6 +1939,7 @@ function pre_afterCreateRow(this: any, visualRowIndex: number, amount: number) {
 //and then they increment the physical row via the amount
 //however, it works somehow...
 function afterCreateRow(visualRowIndex: number, amount: number) {
+	if (!hot) throw new Error('table was null')
 	//added below
 	//critical because we could update hot settings here
 	//we need to modify some or all hiddenPhysicalRowIndices...
@@ -2247,7 +1951,16 @@ function afterCreateRow(visualRowIndex: number, amount: number) {
 			hiddenPhysicalRowIndices[i] += amount
 		}
 	}
-	onAnyChange()
+
+	let newRowData: any[] = []
+	newRowData.push(hot.getSourceDataAtRow(visualRowIndex)) 
+
+	let tableName = hot.getDataAtRowProp(0, "type")
+	if(!tableName){
+		tableName = hot.getDataAtRowProp(1, "type")
+	}
+
+	onTableChange(tableName, undefined, undefined, undefined, visualRowIndex, newRowData, "addRow")
 	//dont' call this as it corrupts hot index mappings (because all other hooks need to finish first before we update hot settings)
 	//also it's not needed as handsontable already handles this internally
 	// updateFixedRowsCols()
@@ -2360,12 +2073,12 @@ function showColHeaderNameEditor(visualColIndex: number) {
  */
 function addTable(){
 	let counter: number = HotRegisterer.counter
+	let tableKey: string = "table" + counter
 	let container = createHtmlContainer(counter, "New Table"+counter)
+	let tableData: any[] = [[0, 0, 0]]
 	if (container){
-		let tableKey: string = "table" + counter
 		let columnOptions: any[] = [{title: "col 1"}, {title: "col 2"}, {title: "col 3"}]
 		//need to create a row of placeholder data
-		let tableData = [[0, 0, 0]]
 		HotRegisterer.register(tableKey, container, tableData, columnOptions, [])
 	}
 	else{
@@ -2375,7 +2088,7 @@ function addTable(){
 	HotRegisterer.counter = counter+1
 
 	onResizeGrid()
-	onAnyChange()
+	onTableChange(tableKey, undefined, undefined, undefined, undefined, tableData, "addTable")
 }
 
 /**
@@ -2394,6 +2107,7 @@ function removeTable(){
 		}
 	}
 	if (!hot) throw new Error('table was null')
+	let tableName = hot.getDataAtRowProp(0, "type")
 	
 	let container: HTMLElement | null = document.getElementById(tableKey)
 	if(hot && container){
@@ -2404,7 +2118,7 @@ function removeTable(){
 		deleteHtmlContainer("container"+key)
 	}
 	onResizeGrid()
-	onAnyChange()
+	onTableChange(tableName, undefined, undefined, undefined, undefined, [], "deleteTable")
 }
 
 /**
@@ -2450,7 +2164,9 @@ let HotRegisterer: HotRegister = {
 				// 	: `${text} <span class="remove-row clickable" onclick="removeRow(${row})" style="visibility: hidden"><i class="fas fa-trash"></i></span>`
 			} as any,
 			renderAllRows: false, //use false and small table size for fast initial render, see https://handsontable.com/docs/7.0.2/Options.html#renderAllRows
-			afterChange: onAnyChange, //only called when cell value changed (e.g. not when col/row removed)
+			afterChange: function(changes: [number, string | number, any, any][], reason: string){
+				//@ts-ignore says getDataAtRowProp doesn't exist on default settings but it does?
+				onAnyChange(changes, reason, this.getDataAtRowProp(0, "type"))}, //only called when cell value changed (e.g. not when col/row removed)
 			fillHandle: {
 				direction: 'vertical',
 				autoInsertRow: false
@@ -2468,7 +2184,7 @@ let HotRegisterer: HotRegister = {
 			} : true,
 			manualRowMove: true,
 			manualRowResize: false,
-			manualColumnMove: true,
+			manualColumnMove: false,
 			manualColumnResize: true,
 			columns: columnOpt,
 			currentColClassName: 'foo', //actually used to overwrite highlighting
@@ -2553,9 +2269,12 @@ let HotRegisterer: HotRegister = {
 				lastClickedHeaderCellTh = th
 			},
 			outsideClickDeselects: function(event){
-				//if clicking on a button - span, button and i are all elements found on buttons but not tables/container
-				//TO DO - might need a more comprehensive method in future
-				if (event.tagName.toLowerCase() === "span" || event.tagName.toLowerCase() === "button" || event.tagName.toLowerCase() === "i"){
+				//want to preserve select if clicking on button - span, button and i are all elements found on buttons
+				if (event.tagName.toLowerCase() === "span" || event.tagName.toLowerCase() === "button" || event.tagName.toLowerCase() === "i" ){
+					//span is found on col/row headers of tables so exclude these
+					if(event.className === "rowHeader" || event.className === "colHeader"){
+						return true
+					}
 					return false
 				}
 				//if clicking on anything else
@@ -2822,8 +2541,19 @@ let HotRegisterer: HotRegister = {
 				onResizeGrid()
 			},
 			afterRowMove: function (startRow: number, endRow: number) {
+				//need to make sure it has correct hot instance
+				for(let key in HotRegisterer.bucket){
+					let _hot = HotRegisterer.bucket[key]
+					const _selections = _hot.getSelected()
+					if (_selections){
+						//this is the hot instance that is currently selected
+						hot = _hot
+					}
+				}
 				if (!hot) throw new Error('table was null')
-				onAnyChange()
+				//@ts-ignore handsontable insists startRow is a number but it's actually a number array?
+				//i don't understand why it does this and how to fix it...
+				onTableChange(hot.getDataAtRowProp(0, "type"), undefined, undefined, startRow, endRow, [], "moveRow")
 			},
 			afterCreateRow: function (visualRowIndex, amount) {
 				//added below
@@ -2856,7 +2586,9 @@ let HotRegisterer: HotRegister = {
 					}
 				}
 	
-				onAnyChange()
+				let tableName = hot.getDataAtRowProp(0, "type")
+				//onAnyChange()
+				onTableChange(tableName, undefined, undefined, [visualRowIndex], undefined, [], "deleteRow")
 				onResizeGrid()
 				//dont' call this as it corrupts hot index mappings (because all other hooks need to finish first before we update hot settings)
 				//also it's not needed as handsontable already handles this internally

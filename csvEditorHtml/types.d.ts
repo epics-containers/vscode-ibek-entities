@@ -383,19 +383,6 @@ type DisplayMessageBoxMessage = {
 	content: string
 }
 
-/*
-type OverwriteFileMessage = {
-	command: 'apply'
-	csvContent: string
-	saveSourceFile: boolean
-}*/
-
-type OverwriteFileMessage = {
-	command: 'apply'
-	yamlContent: string
-	saveSourceFile: boolean
-}
-
 type ModifyFileMessage = {
 	command: 'modify'
 	changeType: string
@@ -412,7 +399,7 @@ type SetEditorHasChangesMessage = {
 	hasChanges: boolean
 }
 
-type PostMessage = ReadyMessage | DisplayMessageBoxMessage | OverwriteFileMessage | ModifyFileMessage | CopyToClipboardMessage | SetEditorHasChangesMessage
+type PostMessage = ReadyMessage | DisplayMessageBoxMessage  | ModifyFileMessage | CopyToClipboardMessage | SetEditorHasChangesMessage
 
 type VsState = {
 	readOptionIsCollapsed: boolean
@@ -591,9 +578,10 @@ type ReturnDataObject = {
 }
 
 type ReturnChangeObject = {
-	tableName: string
-	columnName?: string
+	tableName?: string
+	columnName?: string | number
 	cellValue?: string | number
-	rowIndex?: number
+	oldRowIndex?: number[]
+	newRowIndex?: number
 	tableData?: [][]
 }

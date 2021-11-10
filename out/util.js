@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.partitionString = exports.isYamlFile = exports.isCsvFile = exports.debounce = exports.limitSingleCharacterString = exports.getCurrentViewColumn = exports.debugLog = void 0;
+exports.returnExistingEntities = exports.moveEntity = exports.partitionString = exports.isYamlFile = exports.isCsvFile = exports.debounce = exports.limitSingleCharacterString = exports.getCurrentViewColumn = exports.debugLog = void 0;
 const vscode = require("vscode");
 function debugLog(msg) {
     // console.log(msg)
@@ -78,4 +78,44 @@ function partitionString(text, sliceLength) {
     return slices;
 }
 exports.partitionString = partitionString;
+/**
+* function to move entities around in yaml ast
+* this is needed because yaml parser only appends new elements onto end of array
+* and does not seem to have functionality for moving
+* @param arr this is entities array
+* @param old_index where node was previously
+* @param new_index where node should be
+*/
+function moveEntity(arr, oldIndex, newIndex) {
+    while (oldIndex < 0) {
+        oldIndex += arr.length;
+    }
+    while (newIndex < 0) {
+        newIndex += arr.length;
+    }
+    if (newIndex >= arr.length) {
+        var k = newIndex - arr.length + 1;
+        while (k--) {
+            arr.push(undefined);
+        }
+    }
+    arr.splice(newIndex, 0, arr.splice(oldIndex, 1)[0]);
+}
+exports.moveEntity = moveEntity;
+;
+/**
+ * looks through all entities in the file and returns an array of those
+ * matching the type specified with file index for each
+ */
+function returnExistingEntities(entities, tableName) {
+    let fileIndexes = [];
+    for (let i = 0; i < entities.items.length; i++) {
+        let entityType = entities.getIn([i, "type"], true);
+        if (entityType.value === tableName) {
+            fileIndexes.push(i);
+        }
+    }
+    return fileIndexes;
+}
+exports.returnExistingEntities = returnExistingEntities;
 //# sourceMappingURL=util.js.map

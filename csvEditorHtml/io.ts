@@ -370,10 +370,25 @@ function _postApplyContent(yamlContent: string, saveSourceFile: boolean) {
 		return
 	}
 
+	/*
 	vscode.postMessage({
 		command: 'apply',
 		yamlContent,
 		saveSourceFile
+	})*/
+}
+
+function _postModifyContent(reason: string, modifiedContent: string){
+
+	if (!vscode) {
+		console.log(`_postModifyContent (but in browser)`)
+		return
+	}
+
+	vscode.postMessage({
+		command: 'modify',
+		changeType: reason,
+		changeContent: modifiedContent
 	})
 }
 

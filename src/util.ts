@@ -79,3 +79,42 @@ export function partitionString(text: string, sliceLength: number): StringSlice[
 
 	return slices
 }
+
+/**
+* function to move entities around in yaml ast
+* this is needed because yaml parser only appends new elements onto end of array
+* and does not seem to have functionality for moving
+* @param arr this is entities array
+* @param old_index where node was previously
+* @param new_index where node should be
+*/
+export function moveEntity(arr: any[], oldIndex: number, newIndex: number) {
+   while (oldIndex < 0) {
+	   oldIndex += arr.length;
+   }
+   while (newIndex < 0) {
+	   newIndex += arr.length;
+   }
+   if (newIndex >= arr.length) {
+	   var k = newIndex - arr.length + 1;
+	   while (k--) {
+		   arr.push(undefined);
+	   }
+   }
+   arr.splice(newIndex, 0, arr.splice(oldIndex, 1)[0]);
+};
+
+/**
+ * looks through all entities in the file and returns an array of those
+ * matching the type specified with file index for each
+ */
+export function returnExistingEntities(entities: any, tableName?: string){
+	let fileIndexes: number[] = []
+	for(let i = 0; i < entities.items.length; i++){
+		let entityType = entities.getIn([i, "type"], true)
+		if(entityType.value === tableName){
+			fileIndexes.push(i)
+		}
+	}
+	return fileIndexes
+}

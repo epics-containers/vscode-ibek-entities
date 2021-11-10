@@ -9,12 +9,10 @@ const instanceManager_1 = require("./instanceManager");
 //import { InstanceManager, Instance, SomeInstance, InstanceWorkspaceSourceFile } from './instanceManager';
 const configurationHelper_1 = require("./configurationHelper");
 const chokidar = require("chokidar");
-const yaml = require('js-yaml');
 const YAML = require('yaml');
 const fs = require('fs');
 const Validator = require("jsonschema").Validator;
 const fetch = require('sync-fetch');
-const YAWN = require('yawn-yaml/cjs');
 // const debounceDocumentChangeInMs = 1000
 //for a full list of context keys see https://code.visualstudio.com/docs/getstarted/keybindings#_when-clause-contexts
 /**
@@ -182,35 +180,31 @@ function activate(context) {
             instance.panel.dispose();
         }
     });
-    //this is used to track changes in text file to editor constantly
-    //TO DO - only send changes over if file is valid yaml
-    //TO DO - implement something like setTimeout
-    //TO DO - get rid of all these instance errors...
+    //used to track changes in text file to editor constantly
     const onDidChangeTextDocument = vscode.workspace.onDidChangeTextDocument((e) => {
-        //testing changes output
         let changes = e.contentChanges;
         let message = "Changed: " + changes[0].text + "\nAt: " + changes[0].range.start.line + "." + changes[0].range.start.character + " to " + changes[0].range.end.line + "." + changes[0].range.end.character;
         vscode.window.showInformationMessage(message);
-        if (vscode.window.activeTextEditor) {
-            const uri = vscode.window.activeTextEditor.document.uri;
-            const instance = instanceManager.findInstanceBySourceUri(uri);
-            if (instance) {
-                let data = parseYaml(e.document.getText(), instance);
-                let jsonSchema = fetchSchema(instance);
-                let parseResult = yaml.load(e.document.getText());
-                let yamlIsValid = validateYaml(parseResult, jsonSchema);
-                instance.hasChanges = false;
-                setEditorHasChanges(instance, false);
-                if (!yamlIsValid) {
-                    vscode.window.showWarningMessage("Warning: YAML file contents are not valid against schema. This may cause errors in displaying file or tables.");
-                }
-                const msg = {
-                    command: "yamlUpdate",
-                    yamlContent: JSON.stringify(data)
-                };
-                instance.panel.webview.postMessage(msg);
-            }
+        if (!vscode.window.activeTextEditor)
+            return;
+        const uri = vscode.window.activeTextEditor.document.uri;
+        const instance = instanceManager.findInstanceBySourceUri(uri);
+        if (!instance)
+            return;
+        let data = parseYaml(e.document.getText(), instance);
+        let jsonSchema = fetchSchema(instance);
+        let parseResult = YAML.parseDocument(e.document.getText()).toJSON();
+        let yamlIsValid = validateYaml(parseResult, jsonSchema);
+        if (!yamlIsValid) {
+            vscode.window.showWarningMessage("Warning: YAML file contents are not valid against schema. This may cause errors in displaying file or tables.");
         }
+        const msg = {
+            command: "yamlUpdate",
+            yamlContent: JSON.stringify(data)
+        };
+        instance.hasChanges = false;
+        setEditorHasChanges(instance, false);
+        instance.panel.webview.postMessage(msg);
     });
     //not needed because this changes only initial configuration...
     // vscode.workspace.onDidChangeConfiguration((args) => {
@@ -358,22 +352,6 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
                 instance.hasChanges = false;
                 setEditorHasChanges(instance, false);
                 let funcSendContent = (initialText) => {
-                    //const textSlices = partitionString(initialText, 1024 * 1024) //<1MB less should be loaded in a blink
-                    /*
-                    for (let i = 0; i < textSlices.length; i++) {
-                        const textSlice = textSlices[i];
-
-                        const msg: ReceivedMessageFromVsCode = {
-                            command: "csvUpdate",
-                            csvContent: {
-                                text: textSlice.text,
-                                sliceNr: textSlice.sliceNr,
-                                totalSlices: textSlice.totalSlices
-                            }
-                        }
-
-                        panel.webview.postMessage(msg)
-                    }*/
                     //new yaml data message, sends data as json string
                     const msg = {
                         command: "yamlUpdate",
@@ -445,15 +423,10 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
                 }
                 break;
             }
-            case "apply": {
-                const { yamlContent, saveSourceFile } = message;
-                applyYamlContent(instance, yamlContent, saveSourceFile, config.openSourceFileAfterApply);
-                break;
-            }
             case "modify": {
                 const { changeType, changeContent } = message;
                 let changeObject = JSON.parse(changeContent);
-                //applyYamlChanges(instance, changeType, changeObject, config.openSourceFileAfterApply)
+                applyYamlChanges(instance, changeType, changeObject, config.openSourceFileAfterApply);
                 break;
             }
             case "copyToClipboard": {
@@ -497,149 +470,6 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
         isWatchingSourceFile: instance.supportsAutoReload
     });
 }
-/**
- * tries to apply (replace the whole file content) with the new content
- */
-/*
-function applyContent(instance: Instance, newContent: string, saveSourceFile: boolean, openSourceFileAfterApply: boolean) {
-
-    vscode.workspace.openTextDocument(instance.sourceUri)
-        .then(document => {
-
-            const edit = new vscode.WorkspaceEdit()
-
-            var firstLine = document.lineAt(0);
-            var lastLine = document.lineAt(document.lineCount - 1);
-            var textRange = new vscode.Range(0,
-                firstLine.range.start.character,
-                document.lineCount - 1,
-                lastLine.range.end.character);
-
-            //don't apply if the content didn't change
-            if (document.getText() === newContent) {
-                debugLog(`content didn't change`)
-                return
-            }
-
-            edit.replace(document.uri, textRange, newContent)
-            vscode.workspace.applyEdit(edit)
-                .then(
-                    editsApplied => {
-                        _afterEditsApplied(instance, document, editsApplied, saveSourceFile, openSourceFileAfterApply)
-                    },
-                    (reason) => {
-                        console.warn(`Error applying edits`)
-                        console.warn(reason)
-                        vscode.window.showErrorMessage(`Error applying edits`)
-                    })
-
-            // vscode.window.showTextDocument(document)
-            // 	.then(editor => {
-            // 		editor.edit((builder) => {
-            // 			var firstLine = document.lineAt(0);
-            // 			var lastLine = document.lineAt(document.lineCount - 1);
-            // 			var textRange = new vscode.Range(0,
-            // 				firstLine.range.start.character,
-            // 				document.lineCount - 1,
-            // 				lastLine.range.end.character);
-
-            // 			builder.replace(textRange, newContent)
-            // 		})
-            // 			.then(editsApplied => {
-            // 				_afterEditsApplied(document, editsApplied, saveSourceFile)
-            // 			})
-            // 	})
-
-        },
-            (reason) => {
-
-                //maybe the source file was deleted...
-                //see https://github.com/microsoft/vscode-extension-samples/pull/195/files
-
-                console.warn(`Could not find the source file, trying to access it and create a temp file with the same path...`)
-                console.warn(reason)
-
-                vscode.workspace.fs.stat(instance.sourceUri).
-                    then(fileStat => {
-                        //file exists and can be accessed
-                        vscode.window.showErrorMessage(`Could apply changed because the source file could not be found`)
-
-                    }, error => {
-
-                        //file is probably deleted
-                        // vscode.window.showWarningMessageMessage(`The source file could not be found and was probably deleted.`)
-                        createNewSourceFile(instance, newContent, openSourceFileAfterApply, saveSourceFile)
-                    })
-
-            })
-}*/
-/**
- * tries to apply (replace the whole file content) with the new content, using yawn-yaml
- */
-function applyYamlContent(instance, newContent, saveSourceFile, openSourceFileAfterApply) {
-    vscode.workspace.openTextDocument(instance.sourceUri)
-        .then(document => {
-        //TO DO - currently lots of files being loaded unnecessarily, should streamline?
-        //fetch the old (saved) version
-        let yamlData = yaml.load(fs.readFileSync(document.uri.fsPath, 'utf8'));
-        //testing using yawn yaml to preserve comments
-        let yawn = new YAWN(fs.readFileSync(document.uri.fsPath, 'utf8'));
-        //parse string back to json object
-        let newData = JSON.parse(newContent);
-        //want to iterate over every array in array in tablesArray
-        let index = 0;
-        yamlData.entities = [];
-        newData.tablesArray.forEach((array) => {
-            array.forEach((entity) => {
-                yamlData.entities[index] = entity;
-                index += 1;
-            });
-        });
-        //update yawn yaml with new data
-        yawn.json = yamlData;
-        let yamlString = yawn.yaml;
-        //let yamlString = yaml.dump(yamlData)
-        //validate new yaml file content against schema
-        const jsonSchema = fetchSchema(instance);
-        let yamlIsValid = validateYaml(yamlData, jsonSchema);
-        if (!yamlIsValid) {
-            vscode.window.showWarningMessage("Warning: YAML file contents are not valid against schema. This may cause errors in displaying file or tables.");
-        }
-        const edit = new vscode.WorkspaceEdit();
-        var firstLine = document.lineAt(0);
-        var lastLine = document.lineAt(document.lineCount - 1);
-        var textRange = new vscode.Range(0, firstLine.range.start.character, document.lineCount - 1, lastLine.range.end.character);
-        //don't apply if the content didn't change
-        // TO DO - won't work for yaml
-        if (document.getText() === yamlString) {
-            (0, util_1.debugLog)(`content didn't change`);
-            return;
-        }
-        edit.replace(document.uri, textRange, yamlString);
-        vscode.workspace.applyEdit(edit)
-            .then(editsApplied => {
-            _afterEditsApplied(instance, document, editsApplied, saveSourceFile, openSourceFileAfterApply);
-        }, (reason) => {
-            console.warn(`Error applying edits`);
-            console.warn(reason);
-            vscode.window.showErrorMessage(`Error applying edits`);
-        });
-    }, (reason) => {
-        //maybe the source file was deleted...
-        //see https://github.com/microsoft/vscode-extension-samples/pull/195/files
-        console.warn(`Could not find the source file, trying to access it and create a temp file with the same path...`);
-        console.warn(reason);
-        vscode.workspace.fs.stat(instance.sourceUri).
-            then(fileStat => {
-            //file exists and can be accessed
-            vscode.window.showErrorMessage(`Could apply changed because the source file could not be found`);
-        }, error => {
-            //file is probably deleted
-            // vscode.window.showWarningMessageMessage(`The source file could not be found and was probably deleted.`)
-            createNewSourceFile(instance, newContent, openSourceFileAfterApply, saveSourceFile);
-        });
-    });
-}
 function _afterEditsApplied(instance, document, editsApplied, saveSourceFile, openSourceFileAfterApply) {
     const afterShowDocument = () => {
         if (!editsApplied) {
@@ -678,46 +508,216 @@ function _afterEditsApplied(instance, document, editsApplied, saveSourceFile, op
     }
 }
 /**
+ * maps changes to ast and writes applied ast to file
+ */
+function applyYamlChanges(instance, changeType, changeObject, openSourceFileAfterApply) {
+    vscode.workspace.openTextDocument(instance.sourceUri)
+        .then(document => {
+        //fetch current (and possibly unsaved) content of file
+        let currentYaml = YAML.parseDocument(document.getText());
+        let entities = currentYaml.get("entities");
+        let fileIndexes = (0, util_1.returnExistingEntities)(entities, changeObject.tableName);
+        switch (changeType) {
+            case "valueChange":
+                if (!changeObject.oldRowIndex)
+                    break;
+                let changedEntityIndex = fileIndexes[changeObject.oldRowIndex[0]];
+                let entity = entities.items[changedEntityIndex];
+                //this checks if new value is null if so deletes item?
+                if (changeObject.cellValue === null) {
+                    entity.delete(changeObject.columnName);
+                }
+                else {
+                    entity.set(changeObject.columnName, changeObject.cellValue);
+                }
+                break;
+            case "addRow":
+                let newEntityIndex = 0;
+                if (changeObject.newRowIndex >= fileIndexes.length) {
+                    //this means we are adding an item to the end of the array
+                    newEntityIndex = fileIndexes[changeObject.newRowIndex - 1] + 1;
+                }
+                else if (changeObject.newRowIndex === 0) {
+                    //this means a new row was added at the beginning of the table
+                    newEntityIndex = fileIndexes[0];
+                }
+                else {
+                    newEntityIndex = fileIndexes[changeObject.newRowIndex];
+                }
+                const newNode = currentYaml.createNode(changeObject.tableData);
+                newNode.set("type", changeObject.tableName);
+                entities.add(newNode);
+                (0, util_1.moveEntity)(entities.items, entities.items.length - 1, newEntityIndex);
+                break;
+            case "deleteRow":
+                if (!changeObject.oldRowIndex)
+                    break;
+                let oldEntityIndex = fileIndexes[changeObject.oldRowIndex[0]];
+                delete entities.items[oldEntityIndex];
+                break;
+            case "moveRow":
+                if (!changeObject.oldRowIndex)
+                    break;
+                //row(s) moved down
+                if (changeObject.newRowIndex > changeObject.oldRowIndex[changeObject.oldRowIndex.length - 1]) {
+                    //this means we want to move rows to last position
+                    if (changeObject.newRowIndex >= fileIndexes.length) {
+                        changeObject.newRowIndex--;
+                        let movedEntityIndex = fileIndexes[changeObject.newRowIndex];
+                        //the rows we are moving are going to the very end of the file
+                        if (fileIndexes[fileIndexes.length - 1] === entities.items.length - 1) {
+                            changeObject.oldRowIndex.forEach(movedRow => {
+                                const movedNode = entities.items[fileIndexes[movedRow]];
+                                entities.add(movedNode);
+                                delete entities.items[fileIndexes[movedRow]];
+                            });
+                        }
+                        //rows are moving internally
+                        else {
+                            changeObject.oldRowIndex[0]++;
+                            changeObject.oldRowIndex.forEach(movedRow => {
+                                movedRow--;
+                                (0, util_1.moveEntity)(entities.items, fileIndexes[movedRow], movedEntityIndex);
+                            });
+                        }
+                        break;
+                    }
+                    //rows are moving internally not to last row position
+                    else {
+                        changeObject.newRowIndex--;
+                        changeObject.oldRowIndex[0]++;
+                        let movedEntityIndex = fileIndexes[changeObject.newRowIndex];
+                        changeObject.oldRowIndex.forEach(movedRow => {
+                            movedRow--;
+                            (0, util_1.moveEntity)(entities.items, fileIndexes[movedRow], movedEntityIndex);
+                        });
+                        break;
+                    }
+                }
+                //row(s) moved up
+                else if (changeObject.newRowIndex < changeObject.oldRowIndex[changeObject.oldRowIndex.length - 1]) {
+                    changeObject.oldRowIndex[changeObject.oldRowIndex.length - 1]--; //TO DO there must be a better method than this?
+                    let movedEntityIndex = fileIndexes[changeObject.newRowIndex];
+                    changeObject.oldRowIndex.reverse().forEach(movedRow => {
+                        movedRow++;
+                        (0, util_1.moveEntity)(entities.items, fileIndexes[movedRow], movedEntityIndex);
+                    });
+                }
+                break;
+            case "addTable":
+                if (changeObject.tableData) {
+                    changeObject.tableData.forEach((tableRow) => {
+                        const newNode = currentYaml.createNode(tableRow);
+                        entities.add(newNode);
+                    });
+                }
+                break;
+            case "deleteTable":
+                fileIndexes.forEach((entityIndex) => {
+                    delete entities.items[entityIndex];
+                });
+                break;
+        }
+        let yamlString = currentYaml.toString();
+        let yamlData = currentYaml.toJSON();
+        //validate new yaml file content against schema
+        const jsonSchema = fetchSchema(instance);
+        let yamlIsValid = validateYaml(yamlData, jsonSchema);
+        if (!yamlIsValid) {
+            vscode.window.showWarningMessage("Warning: YAML file contents are not valid against schema. This may cause errors in displaying file or tables.");
+        }
+        const edit = new vscode.WorkspaceEdit();
+        var firstLine = document.lineAt(0);
+        var lastLine = document.lineAt(document.lineCount - 1);
+        var textRange = new vscode.Range(0, firstLine.range.start.character, document.lineCount - 1, lastLine.range.end.character);
+        //don't apply if the content didn't change
+        // TO DO - won't work for yaml
+        if (document.getText() === yamlString) {
+            (0, util_1.debugLog)(`content didn't change`);
+            return;
+        }
+        edit.replace(document.uri, textRange, yamlString);
+        vscode.workspace.applyEdit(edit)
+            .then(editsApplied => {
+            _afterEditsApplied(instance, document, editsApplied, false, openSourceFileAfterApply);
+        }, (reason) => {
+            console.warn(`Error applying edits`);
+            console.warn(reason);
+            vscode.window.showErrorMessage(`Error applying edits`);
+        });
+    }, (reason) => {
+        //maybe the source file was deleted...
+        //see https://github.com/microsoft/vscode-extension-samples/pull/195/files
+        console.warn(`Could not find the source file, trying to access it and create a temp file with the same path...`);
+        console.warn(reason);
+        vscode.workspace.fs.stat(instance.sourceUri).
+            then(fileStat => {
+            //file exists and can be accessed
+            vscode.window.showErrorMessage(`Could apply changed because the source file could not be found`);
+        }, error => {
+            //file is probably deleted
+            vscode.window.showWarningMessage(`The source file could not be found and was probably deleted.`);
+            //createNewSourceFile(instance, yamlString, openSourceFileAfterApply, false)
+        });
+    });
+}
+/**
  * tries to create a new tmp file (untitled:URI.fsPath) so that the user can decide to save or discard it
  * @param instance
  * @param newContent
  * @param openSourceFileAfterApply
  */
-function createNewSourceFile(instance, newContent, openSourceFileAfterApply, saveSourceFile) {
+/*
+function createNewSourceFile(instance: Instance, newContent: string, openSourceFileAfterApply: boolean, saveSourceFile: boolean) {
+
     //TODO i'm not sure if this also works for remote file systems...
     //see https://stackoverflow.com/questions/41068197/vscode-create-unsaved-file-and-add-content
-    const newSourceFile = vscode.Uri.parse(`untitled:${instance.sourceUri.fsPath}`);
+    const newSourceFile = vscode.Uri.parse(`untitled:${instance.sourceUri.fsPath}`)
+
     vscode.workspace.openTextDocument(newSourceFile)
         .then(newFile => {
-        const edit = new vscode.WorkspaceEdit();
-        edit.insert(newSourceFile, new vscode.Position(0, 0), newContent);
-        vscode.workspace.applyEdit(edit).then(success => {
-            if (!success) {
-                (0, util_1.debugLog)('could not created new source file because old was deleted');
-                return;
-            }
-            (0, util_1.debugLog)('created new source file because old was deleted');
-            if (openSourceFileAfterApply) {
-                vscode.window.showTextDocument(newFile);
-            }
-            if (saveSourceFile) {
-                newFile.save().then(successSave => {
-                    if (!successSave) {
-                        vscode.window.showErrorMessage(`Could not save new source file (old was deleted)`);
-                        return;
-                    }
-                    //successfully saved
-                }, error => {
-                    vscode.window.showErrorMessage(`Could not save new source file (old was deleted), error: ${error === null || error === void 0 ? void 0 : error.message}`);
-                });
-            }
+
+            const edit = new vscode.WorkspaceEdit()
+            edit.insert(newSourceFile, new vscode.Position(0, 0), newContent)
+
+            vscode.workspace.applyEdit(edit).then(success => {
+
+                if (!success) {
+                    debugLog('could not created new source file because old was deleted')
+                    return
+                }
+
+                debugLog('created new source file because old was deleted')
+
+                if (openSourceFileAfterApply) {
+                    vscode.window.showTextDocument(newFile)
+                }
+
+                if (saveSourceFile) {
+                    newFile.save().then(successSave => {
+
+                        if (!successSave) {
+                            vscode.window.showErrorMessage(`Could not save new source file (old was deleted)`)
+                            return
+                        }
+
+                        //successfully saved
+
+                    }, error => {
+                        vscode.window.showErrorMessage(`Could not save new source file (old was deleted), error: ${error?.message}`)
+                    })
+                }
+
+
+            }, error => {
+                vscode.window.showErrorMessage(`Could not create new source file (old was deleted), error: ${error?.message}`)
+            })
+
         }, error => {
-            vscode.window.showErrorMessage(`Could not create new source file (old was deleted), error: ${error === null || error === void 0 ? void 0 : error.message}`);
-        });
-    }, error => {
-        vscode.window.showErrorMessage(`Could not open new source file, error: ${error === null || error === void 0 ? void 0 : error.message}`);
-    });
-}
+            vscode.window.showErrorMessage(`Could not open new source file, error: ${error?.message}`)
+        })
+
+}*/
 /**
  * returns the active (editor) instance or null
  * error messages are already handled here
@@ -772,7 +772,7 @@ function onSourceFileChanged(path, instance) {
 // 	}
 // }
 /**
-* using js-yaml, parse yaml file into javascript object and validate it using json schema
+* parse yaml file into javascript object and validate it using json schema
 * @param {string} content
 * @returns {[string[], string[][], string[]]| null} [0] comments before, [1] csv data, [2] comments after
 */
@@ -805,7 +805,6 @@ function parseYaml(yamlString, instance) {
  * @param instance
  */
 function fetchSchema(instance) {
-    //TO DO AT LATER DATE - check if json schema is local file or linking to url to change method
     let document = instance.document;
     let jsonSchema;
     if (document) {
@@ -854,8 +853,6 @@ function validateYaml(parsedYaml, schema) {
     if (parsedYaml && schema) {
         const validation = validator.validate(parsedYaml, schema);
         if (validation.errors.length) {
-            //const errors = validation.errors.map(e => `${e.property} ${e.message}`).join("\n");
-            //throw new Error(errors);
             return false;
         }
         else {
@@ -867,24 +864,22 @@ function validateYaml(parsedYaml, schema) {
         return false;
     }
 }
-/*
-* extract the relevant table data from the yaml object and return as arrays
-*/
+/**
+ * extract the relevant table data from the yaml object and return as arrays
+ * iterates over all entities and their key value pairs
+ * @param parseResult
+ * @param tableHeaders
+ * @param tablesArray
+ */
 function createTableData(parseResult, tableHeaders, tablesArray) {
-    // this iterates over every entity in the file
     for (let entity in parseResult.entities) {
         let dataArray = []; //data array for each table
-        console.log("\n");
-        // iterates over every key:value pair in each entity
         for (let key in parseResult.entities[entity]) {
             //takes first "type" value and adds to array of headers
             if (key === "type") {
-                // currently this is an object
                 let _tempObject = parseResult.entities[entity];
-                //let {type, ..._tempObject} = parseResult.entities[entity]
                 if (tableHeaders.indexOf(parseResult.entities[entity][key]) > -1) {
-                    //do nothing to list of headers, because header already exists
-                    let index = tableHeaders.indexOf(parseResult.entities[entity][key]); //get index of existing header
+                    let index = tableHeaders.indexOf(parseResult.entities[entity][key]);
                     dataArray.push(_tempObject);
                     tablesArray[index].push(_tempObject);
                 }
@@ -896,25 +891,16 @@ function createTableData(parseResult, tableHeaders, tablesArray) {
             }
         }
     }
-    //tableHeaders.forEach((value, index) => {
-    //console.log(value)
-    //console.log(tablesArray[index])
-    //});
 }
 ;
 /**
  * extracts the relevant column data from the supplied json schema and return as array of objects
- * keep type in for now, but remove it when creating column options later
- * type needs to stay in order to select matching table and column data
 */
 function createColumnData(tableColumns, jsonSchema) {
-    //this will loop over each entity and create array of objects
-    // one array for each table, then add each array to tables array
     var iocEntities = [];
     iocEntities = jsonSchema.properties.entities.items.anyOf;
-    // iterates over each table 
     for (let tableObj of iocEntities) {
-        var dynamicColumns = [];
+        var columns = [];
         //creates object for each column in this table instance
         for (let colObj of Object.keys(tableObj.properties)) {
             if (tableObj.required.includes(colObj)) {
@@ -931,9 +917,9 @@ function createColumnData(tableColumns, jsonSchema) {
                 type: tableObj.properties[colObj].type,
                 description: tableObj.properties[colObj].description
             };
-            dynamicColumns.push(_col);
+            columns.push(_col);
         }
-        tableColumns.push(dynamicColumns);
+        tableColumns.push(columns);
     }
     ;
 }
