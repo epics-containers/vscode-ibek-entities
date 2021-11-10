@@ -57,10 +57,10 @@ function getExtensionConfiguration() {
         copy[key] = optionValue;
     }
     //ensure single character requirements
-    copy.readOption_quoteChar = util_1.limitSingleCharacterString(copy.readOption_quoteChar);
-    copy.readOption_escapeChar = util_1.limitSingleCharacterString(copy.readOption_escapeChar);
-    copy.writeOption_quoteChar = util_1.limitSingleCharacterString(copy.writeOption_quoteChar);
-    copy.writeOption_escapeChar = util_1.limitSingleCharacterString(copy.writeOption_escapeChar);
+    copy.readOption_quoteChar = (0, util_1.limitSingleCharacterString)(copy.readOption_quoteChar);
+    copy.readOption_escapeChar = (0, util_1.limitSingleCharacterString)(copy.readOption_escapeChar);
+    copy.writeOption_quoteChar = (0, util_1.limitSingleCharacterString)(copy.writeOption_quoteChar);
+    copy.writeOption_escapeChar = (0, util_1.limitSingleCharacterString)(copy.writeOption_escapeChar);
     return copy;
 }
 exports.getExtensionConfiguration = getExtensionConfiguration;
