@@ -201,38 +201,27 @@ function spreadsheetColumnLetterLabel(index: number) {
  * @param {boolean} selectNewRow true: scrolls to the  new row
  */
 function addRow(selectNewRow = true) {
+	hot = getSelectedHot()
+	if (!hot) throw new Error('table was null')
 
-	//need to make sure it has correct hot instance
-	for(let key in HotRegisterer.bucket){
-		let _hot = HotRegisterer.bucket[key]
-		const selections = _hot.getSelected()
-		if (selections){
-			//this is the hot instance that is currently selected
-			hot = _hot
-			if (!hot) throw new Error('table was null')
+	//fetch metadata from selected row
+	let rowMeta = hot.getCellMetaAtRow(0)
 
-			//fetch metadata from selected row
-			let rowMeta = hot.getCellMetaAtRow(0)
+	// const headerCells = hot.getColHeader()
+	const numRows = hot.countRows()
+	hot.alter('insert_row', numRows) //inserted data contains null but papaparse correctly unparses it as ''
+	// hot.populateFromArray(numRows, 0, [headerCells.map(p => '')])
 
-			// const headerCells = hot.getColHeader()
-			const numRows = hot.countRows()
-			hot.alter('insert_row', numRows) //inserted data contains null but papaparse correctly unparses it as ''
-			// hot.populateFromArray(numRows, 0, [headerCells.map(p => '')])
+	//need to set type cell value for new row
+	let typeCell = hot.getDataAtRowProp(numRows-1, "type")
+	hot.setDataAtRowProp(numRows, "type", typeCell)
+	//set new row metadata
+	setColumnMetadata(numRows, rowMeta)
 
-			//need to set type cell value for new row
-			let typeCell = hot.getDataAtRowProp(numRows-1, "type")
-			hot.setDataAtRowProp(numRows, "type", typeCell)
-			//set new row metadata
-			setColumnMetadata(numRows, rowMeta)
-
-			if (selectNewRow) {
-				hot.selectCell(numRows, 0)
-			}
-
-
-		}
+	if (selectNewRow) {
+		hot.selectCell(numRows, 0)
 	}
-	//checkAutoApplyHasHeader()
+
 	onResizeGrid()
 }
 
@@ -241,16 +230,8 @@ function addRow(selectNewRow = true) {
  * the index is the visual one seen in the ui (e.g. changed when we reorder rows)
  */
 function _getSelectedVisualRowIndex(): number | null {
-	
-	//need to make sure it has correct hot instance
-	for(let key in HotRegisterer.bucket){
-		let _hot = HotRegisterer.bucket[key]
-		const _selections = _hot.getSelected()
-		if (_selections){
-			//this is the hot instance that is currently selected
-			hot = _hot
-		}
-	}
+
+	hot = getSelectedHot()
 	if (!hot) throw new Error('table was null')	
 
 	const selections = hot.getSelected()
@@ -267,15 +248,7 @@ function _getSelectedVisualRowIndex(): number | null {
  */
 function _getSelectedVisualColIndex(): number | null {
 
-	//need to make sure it has correct hot instance
-	for(let key in HotRegisterer.bucket){
-		let _hot = HotRegisterer.bucket[key]
-		const _selections = _hot.getSelected()
-		if (_selections){
-			//this is the hot instance that is currently selected
-			hot = _hot
-		}
-	}
+	hot = getSelectedHot()
 	if (!hot) throw new Error('table was null')
 
 	const selections = hot.getSelected()
@@ -306,15 +279,7 @@ function insertRowBelow() {
 }
 
 function _insertRowInternal(belowCurrRow: boolean) {
-	//need to make sure it has correct hot instance
-	for(let key in HotRegisterer.bucket){
-		let _hot = HotRegisterer.bucket[key]
-		const _selections = _hot.getSelected()
-		if (_selections){
-			//this is the hot instance that is currently selected
-			hot = _hot
-		}
-	}
+	hot = getSelectedHot()
 	if (!hot) throw new Error('table was null')
 
 	const currRowIndex = _getSelectedVisualRowIndex()
@@ -928,6 +893,7 @@ function afterHandsontableCreated(hot: Handsontable) {
 			}
 		}
 
+
 		//if (getIsSidePanelCollapsed()) {
 			//not update stats (might be costly and we don't display stats anyway)
 		//} else {
@@ -1222,4 +1188,21 @@ function deleteHtmlContainer(elementId: string){
 		console.log("couldn't delete html element, doesn't exist")
 	}
 
+}
+
+/**
+ * returns the hot instance which is currently selected
+ */
+function getSelectedHot(){
+	let hot: Handsontable | null = null
+	//need to make sure it has correct hot instance
+	for(let key in HotRegisterer.bucket){
+		let _hot = HotRegisterer.bucket[key]
+		const _selections = _hot.getSelected()
+		if (_selections){
+			//this is the hot instance that is currently selected
+			hot = _hot
+		}
+	}
+	return hot
 }

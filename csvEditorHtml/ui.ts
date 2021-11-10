@@ -1581,16 +1581,7 @@ function changeFontSizeInPx(fontSizeInPx: number) {
  */
 function updateFixedRowsCols() {
 
-	hot = null
-	//need to make sure it has correct hot instance
-	for(let key in HotRegisterer.bucket){
-		let _hot = HotRegisterer.bucket[key]
-		const _selections = _hot.getSelected()
-		if (_selections){
-			//this is the hot instance that is currently selected
-			hot = _hot
-		}
-	}
+	hot = getSelectedHot()
 	if (!hot) return
 
 	hot.updateSettings({
@@ -1636,20 +1627,14 @@ function _toggleFixedColumnsText() {
  * moves selected row up
  */
 function moveRowUp(){
-	hot = null
-	let selectedRowIndex: number = 0
-	//need to make sure it has correct hot instance
-	for(let key in HotRegisterer.bucket){
-		let _hot = HotRegisterer.bucket[key]
-		const _selections = _hot.getSelected()
-		if (_selections){
-			//this is the hot instance that is currently selected
-			hot = _hot
-			selectedRowIndex = _selections[0][0]
-
-		}
-	}
+	hot = getSelectedHot()
 	if (!hot) return
+
+	let selectedRowIndex: number = 0
+	let selected = hot.getSelected()
+	if(selected){
+		selectedRowIndex = selected[0][0]
+	}
 	_moveRows(selectedRowIndex, selectedRowIndex - 1, hot)
 }
 
@@ -1657,20 +1642,14 @@ function moveRowUp(){
  * moves selected row down
  */
 function moveRowDown(){
-	hot = null
-	let selectedRowIndex: number = 0
-	//need to make sure it has correct hot instance
-	for(let key in HotRegisterer.bucket){
-		let _hot = HotRegisterer.bucket[key]
-		const _selections = _hot.getSelected()
-		if (_selections){
-			//this is the hot instance that is currently selected
-			hot = _hot
-			selectedRowIndex = _selections[0][0]
-
-		}
-	}
+	hot = getSelectedHot()
 	if (!hot) return
+
+	let selectedRowIndex: number = 0
+	let selected = hot.getSelected()
+	if(selected){
+		selectedRowIndex = selected[0][0]
+	}
 	_moveRows(selectedRowIndex, selectedRowIndex + 2, hot)
 }
 
@@ -2096,17 +2075,11 @@ function addTable(){
  */
 function removeTable(){
 	toggleAskDeleteTableModalDiv(false)
-	//get current hot instance
-	let tableKey: string = ""
-	for(let key in HotRegisterer.bucket){
-		let _hot = HotRegisterer.bucket[key]
-		const selections = _hot.getSelected()
-		if (selections){
-			hot = _hot
-			tableKey = key
-		}
-	}
+	hot = getSelectedHot()
 	if (!hot) throw new Error('table was null')
+	//@ts-ignore
+	let tableKey = hot.rootElement.id
+
 	let tableName = hot.getDataAtRowProp(0, "type")
 	
 	let container: HTMLElement | null = document.getElementById(tableKey)
@@ -2212,13 +2185,7 @@ let HotRegisterer: HotRegister = {
 	
 							if (isReadonlyMode) return true
 							
-							for(let key in HotRegisterer.bucket){
-								let _hot = HotRegisterer.bucket[key]
-								const selections = _hot.getSelected()
-								if (selections){
-									hot = _hot
-								}
-							}
+							hot = getSelectedHot()
 							if (!hot) throw new Error('table was null')
 
 							const selection = hot!.getSelected()
@@ -2438,15 +2405,7 @@ let HotRegisterer: HotRegister = {
 	
 			},
 			afterUndo: function (action: any) {
-				//need to reset metadata because undo/redo gets rid of it
-				//ensure have correct hot instance or overwrites last created table metadata
-				for(let key in HotRegisterer.bucket){
-					let _hot = HotRegisterer.bucket[key]
-					const selections = _hot.getSelected()
-					if (selections){
-						hot = _hot
-					}
-				}
+				hot = getSelectedHot()
 				if (!hot) throw new Error('table was null')
 
 				let rowMeta = hot.getCellMetaAtRow(0)
@@ -2525,15 +2484,7 @@ let HotRegisterer: HotRegister = {
 			}
 			},
 			afterRedo: function(action: any) {
-				//need to reset metadata because undo/redo gets rid of it
-				//ensure have correct hot instance or overwrites last created table metadata
-				for(let key in HotRegisterer.bucket){
-					let _hot = HotRegisterer.bucket[key]
-					const selections = _hot.getSelected()
-					if (selections){
-						hot = _hot
-					}
-				}
+				hot = getSelectedHot()
 				if (!hot) throw new Error('table was null')
 
 				let rowMeta = hot.getCellMetaAtRow(0)
@@ -2541,15 +2492,7 @@ let HotRegisterer: HotRegister = {
 				onResizeGrid()
 			},
 			afterRowMove: function (startRow: number, endRow: number) {
-				//need to make sure it has correct hot instance
-				for(let key in HotRegisterer.bucket){
-					let _hot = HotRegisterer.bucket[key]
-					const _selections = _hot.getSelected()
-					if (_selections){
-						//this is the hot instance that is currently selected
-						hot = _hot
-					}
-				}
+				hot = getSelectedHot()
 				if (!hot) throw new Error('table was null')
 				//@ts-ignore handsontable insists startRow is a number but it's actually a number array?
 				//i don't understand why it does this and how to fix it...
