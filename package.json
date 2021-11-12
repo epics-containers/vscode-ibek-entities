@@ -58,7 +58,7 @@
 			{
 				"command": "edit-csv.edit",
 				"category": "YAML",
-				"title": "Edit yaml"
+				"title": "Edit as table"
 			},
 			{
 				"command": "edit-csv.goto-source",
