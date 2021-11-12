@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.deactivate = exports.activate = exports.editorUriScheme = void 0;
+exports.createColumnData = exports.createTableData = exports.validateYaml = exports.fetchSchema = exports.parseYaml = exports.onSourceFileChanged = exports.setEditorHasChanges = exports.notExhaustive = exports.getActiveEditorInstance = exports.createNewEditorInstance = exports.getEditorTitle = exports.deactivate = exports.activate = exports.editorUriScheme = void 0;
 const vscode = require("vscode");
 const path = require("path");
 const util_1 = require("./util");
@@ -64,7 +64,7 @@ function activate(context) {
         //vscode.window.activeTextEditor will be undefined if file is too large...
         //see https://github.com/Microsoft/vscode/blob/master/src/vs/editor/common/model/textModel.ts
         if (!vscode.window.activeTextEditor || !(0, util_1.isYamlFile)(vscode.window.activeTextEditor.document)) {
-            vscode.window.showInformationMessage("Open a csv file first to show the yaml editor");
+            vscode.window.showInformationMessage("Open a yaml file first to show the yaml editor");
             return;
         }
         const uri = vscode.window.activeTextEditor.document.uri;
@@ -192,7 +192,7 @@ function activate(context) {
         if (!instance)
             return;
         let data = parseYaml(e.document.getText(), instance);
-        let jsonSchema = fetchSchema(instance);
+        let jsonSchema = fetchSchema(instance.document);
         let parseResult = YAML.parseDocument(e.document.getText()).toJSON();
         let yamlIsValid = validateYaml(parseResult, jsonSchema);
         if (!yamlIsValid) {
@@ -245,6 +245,7 @@ function onDidChangeConfiguration(instanceManager, e) {
 function getEditorTitle(document) {
     return `YAML edit ${path.basename(document.fileName)}`;
 }
+exports.getEditorTitle = getEditorTitle;
 function createNewEditorInstance(context, activeTextEditor, instanceManager) {
     var _a, _b;
     const uri = activeTextEditor.document.uri;
@@ -470,6 +471,7 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
         isWatchingSourceFile: instance.supportsAutoReload
     });
 }
+exports.createNewEditorInstance = createNewEditorInstance;
 function _afterEditsApplied(instance, document, editsApplied, saveSourceFile, openSourceFileAfterApply) {
     const afterShowDocument = () => {
         if (!editsApplied) {
@@ -621,7 +623,7 @@ function applyYamlChanges(instance, changeType, changeObject, openSourceFileAfte
         let yamlString = currentYaml.toString();
         let yamlData = currentYaml.toJSON();
         //validate new yaml file content against schema
-        const jsonSchema = fetchSchema(instance);
+        const jsonSchema = fetchSchema(instance.document);
         let yamlIsValid = validateYaml(yamlData, jsonSchema);
         if (!yamlIsValid) {
             vscode.window.showWarningMessage("Warning: YAML file contents are not valid against schema. This may cause errors in displaying file or tables.");
@@ -740,13 +742,16 @@ function getActiveEditorInstance(instanceManager) {
     }
     return instance;
 }
+exports.getActiveEditorInstance = getActiveEditorInstance;
 function notExhaustive(x, message) {
     vscode.window.showErrorMessage(message);
     throw new Error(message);
 }
+exports.notExhaustive = notExhaustive;
 function setEditorHasChanges(instance, hasChanges) {
     instance.panel.title = `${hasChanges ? '* ' : ''}${instance.originalTitle}`;
 }
+exports.setEditorHasChanges = setEditorHasChanges;
 function onSourceFileChanged(path, instance) {
     if (!instance.supportsAutoReload) {
         vscode.window.showWarningMessage(`The csv source file '${instance.document.fileName}' changed and it is not in the current workspace. Thus the content could not be automatically reloaded. Please open/display the file in vs code and switch back the to table. Then you need to manually reload the table with the reload button. Alternatively just close the table and reopen it.`, {
@@ -759,6 +764,7 @@ function onSourceFileChanged(path, instance) {
     };
     instance.panel.webview.postMessage(msg);
 }
+exports.onSourceFileChanged = onSourceFileChanged;
 // class CsvEditStateSerializer  implements vscode.WebviewPanelSerializer{
 // 	static state: VsState = {
 // 		previewIsCollapsed: true,
@@ -777,13 +783,12 @@ function onSourceFileChanged(path, instance) {
 * @returns {[string[], string[][], string[]]| null} [0] comments before, [1] csv data, [2] comments after
 */
 function parseYaml(yamlString, instance) {
-    let jsonSchema = fetchSchema(instance);
+    let jsonSchema = fetchSchema(instance.document);
     let tableHeaders = []; //array of header titles
     let tablesArray = []; //array of each data array for every table
     let tableColumns = []; //array of arrays of object, where each array of objects is one set of columns
     let parseResult;
     try {
-        //parseResult = new YAWN(yamlString).json
         parseResult = YAML.parse(yamlString);
         let yamlIsValid = validateYaml(parseResult, jsonSchema);
         if (!yamlIsValid) {
@@ -799,13 +804,13 @@ function parseYaml(yamlString, instance) {
         tablesArray, tableHeaders, tableColumns
     };
 }
+exports.parseYaml = parseYaml;
 /**
  * check if yaml file specifies schema in first-line comment
  * if it does, check it exists and fetch it
  * @param instance
  */
-function fetchSchema(instance) {
-    let document = instance.document;
+function fetchSchema(document) {
     let jsonSchema;
     if (document) {
         let firstLine = document.lineAt(0).text;
@@ -845,6 +850,7 @@ function fetchSchema(instance) {
         vscode.window.showErrorMessage("No active text document open.");
     }
 }
+exports.fetchSchema = fetchSchema;
 /*
 * using json-schema, validate the yaml file against the given json schema
 */
@@ -864,6 +870,7 @@ function validateYaml(parsedYaml, schema) {
         return false;
     }
 }
+exports.validateYaml = validateYaml;
 /**
  * extract the relevant table data from the yaml object and return as arrays
  * iterates over all entities and their key value pairs
@@ -892,6 +899,7 @@ function createTableData(parseResult, tableHeaders, tablesArray) {
         }
     }
 }
+exports.createTableData = createTableData;
 ;
 /**
  * extracts the relevant column data from the supplied json schema and return as array of objects
@@ -923,5 +931,6 @@ function createColumnData(tableColumns, jsonSchema) {
     }
     ;
 }
+exports.createColumnData = createColumnData;
 ;
 //# sourceMappingURL=extension.js.map

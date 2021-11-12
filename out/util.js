@@ -59,8 +59,10 @@ function isYamlFile(document) {
     if (!document)
         return false;
     let lang = document.languageId.toLowerCase();
-    let possible = ['yaml', 'yml', 'plaintext'];
+    let possible = ['yaml', 'yml'];
     const _isYamlFile = possible.find(p => p === lang) && document.uri.scheme !== 'csv-edit';
+    if (!_isYamlFile)
+        return false;
     return _isYamlFile;
 }
 exports.isYamlFile = isYamlFile;

@@ -81,7 +81,7 @@ export function activate(context: vscode.ExtensionContext) {
 		//vscode.window.activeTextEditor will be undefined if file is too large...
 		//see https://github.com/Microsoft/vscode/blob/master/src/vs/editor/common/model/textModel.ts
 		if (!vscode.window.activeTextEditor || !isYamlFile(vscode.window.activeTextEditor.document)) {
-			vscode.window.showInformationMessage("Open a csv file first to show the yaml editor")
+			vscode.window.showInformationMessage("Open a yaml file first to show the yaml editor")
 			return
 		}
 
@@ -246,7 +246,7 @@ export function activate(context: vscode.ExtensionContext) {
 		if(!instance) return
 
 		let data = parseYaml(e.document.getText(), instance)
-		let jsonSchema = fetchSchema(instance)
+		let jsonSchema = fetchSchema(instance.document)
 		let parseResult = YAML.parseDocument(e.document.getText()).toJSON()
 		let yamlIsValid: boolean = validateYaml(parseResult, jsonSchema)
 
@@ -305,11 +305,11 @@ function onDidChangeConfiguration(instanceManager: InstanceManager, e: vscode.Co
 	}
 }
 
-function getEditorTitle(document: vscode.TextDocument): string {
+export function getEditorTitle(document: vscode.TextDocument): string {
 	return `YAML edit ${path.basename(document.fileName)}`
 }
 
-function createNewEditorInstance(context: vscode.ExtensionContext, activeTextEditor: vscode.TextEditor, instanceManager: InstanceManager): void {
+export function createNewEditorInstance(context: vscode.ExtensionContext, activeTextEditor: vscode.TextEditor, instanceManager: InstanceManager): void {
 
 	const uri = activeTextEditor.document.uri
 
@@ -758,7 +758,7 @@ function applyYamlChanges(instance: Instance, changeType: string, changeObject: 
 			let yamlData = currentYaml.toJSON()
 
 			//validate new yaml file content against schema
-			const jsonSchema = fetchSchema(instance)
+			const jsonSchema = fetchSchema(instance.document)
 			let yamlIsValid: boolean = validateYaml(yamlData, jsonSchema)
 			if(!yamlIsValid){
 				vscode.window.showWarningMessage("Warning: YAML file contents are not valid against schema. This may cause errors in displaying file or tables.")
@@ -880,7 +880,7 @@ function createNewSourceFile(instance: Instance, newContent: string, openSourceF
  * error messages are already handled here
  * @param instanceManager 
  */
-function getActiveEditorInstance(instanceManager: InstanceManager): Instance | null {
+export function getActiveEditorInstance(instanceManager: InstanceManager): Instance | null {
 
 	if (vscode.window.activeTextEditor) { //a web view is no text editor...
 		vscode.window.showInformationMessage("Open a yaml editor first to apply changes")
@@ -900,16 +900,16 @@ function getActiveEditorInstance(instanceManager: InstanceManager): Instance | n
 	return instance
 }
 
-function notExhaustive(x: never, message: string): never {
+export function notExhaustive(x: never, message: string): never {
 	vscode.window.showErrorMessage(message);
 	throw new Error(message)
 }
 
-function setEditorHasChanges(instance: Instance, hasChanges: boolean) {
+export function setEditorHasChanges(instance: Instance, hasChanges: boolean) {
 	instance.panel.title = `${hasChanges ? '* ' : ''}${instance.originalTitle}`
 }
 
-function onSourceFileChanged(path: string, instance: Instance) {
+export function onSourceFileChanged(path: string, instance: Instance) {
 
 	if (!instance.supportsAutoReload) {
 		vscode.window.showWarningMessage(`The csv source file '${instance.document.fileName}' changed and it is not in the current workspace. Thus the content could not be automatically reloaded. Please open/display the file in vs code and switch back the to table. Then you need to manually reload the table with the reload button. Alternatively just close the table and reopen it.`, {
@@ -948,14 +948,13 @@ function onSourceFileChanged(path: string, instance: Instance) {
 * @returns {[string[], string[][], string[]]| null} [0] comments before, [1] csv data, [2] comments after
 */
 
-function parseYaml(yamlString: string, instance: Instance){
-	let jsonSchema = fetchSchema(instance)
+export function parseYaml(yamlString: string, instance: Instance){
+	let jsonSchema = fetchSchema(instance.document)
 	let tableHeaders: string[] = [] //array of header titles
 	let tablesArray: any[][] = [] //array of each data array for every table
 	let tableColumns: any[][] = [] //array of arrays of object, where each array of objects is one set of columns
 	let parseResult: any
 	try {
-		//parseResult = new YAWN(yamlString).json
 		parseResult = YAML.parse(yamlString)
 		let yamlIsValid: boolean = validateYaml(parseResult, jsonSchema)
 		if (!yamlIsValid){
@@ -976,8 +975,7 @@ function parseYaml(yamlString: string, instance: Instance){
  * if it does, check it exists and fetch it
  * @param instance
  */
-function fetchSchema(instance: Instance){
-	let document = instance.document
+export function fetchSchema(document: vscode.TextDocument){
 	let jsonSchema: any
 	if(document){
 		let firstLine: string = document.lineAt(0).text
@@ -1023,7 +1021,7 @@ function fetchSchema(instance: Instance){
 * using json-schema, validate the yaml file against the given json schema
 */
 
-function validateYaml(parsedYaml: any, schema: any){
+export function validateYaml(parsedYaml: any, schema: any){
 	const validator = new Validator();
 	if(parsedYaml && schema){
   		const validation = validator.validate(parsedYaml, schema);
@@ -1048,7 +1046,7 @@ function validateYaml(parsedYaml: any, schema: any){
  * @param tableHeaders 
  * @param tablesArray 
  */
-function createTableData(parseResult: any, tableHeaders: string[], tablesArray: any[][]){
+export function createTableData(parseResult: any, tableHeaders: string[], tablesArray: any[][]){
     for (let entity in parseResult.entities){
       let dataArray = [] //data array for each table
         for (let key in parseResult.entities[entity]){
@@ -1073,7 +1071,7 @@ function createTableData(parseResult: any, tableHeaders: string[], tablesArray: 
 /** 
  * extracts the relevant column data from the supplied json schema and return as array of objects
 */
-function createColumnData(tableColumns: any[][], jsonSchema: any){
+export function createColumnData(tableColumns: any[][], jsonSchema: any){
 	var iocEntities: any[] = []
 	iocEntities = jsonSchema.properties.entities.items.anyOf
 	for (let tableObj of iocEntities){

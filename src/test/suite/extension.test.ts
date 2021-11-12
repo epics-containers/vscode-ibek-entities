@@ -1,120 +1,193 @@
 //
 // Note: This example test is leveraging the Mocha test framework.
-// Please refer to their documentation on https://mochajs.org/ for help.
 //
+//to run tests start tsc -w and then go to the debug tab and select "EXtension Tests" and run
 
 // The module 'assert' provides assertion methods from node
 import * as assert from 'assert';
-// import * as vscode from 'vscode'
-import { partitionString } from '../../util';
+import * as vscode from 'vscode'
+import * as path from "path";
+const fs   = require('fs');
+const YAML = require('yaml')
+import { isYamlFile, returnExistingEntities} from '../../util';
+import { validateYaml, getEditorTitle, createTableData, createColumnData, fetchSchema } from '../../extension';
 
+// *** UNIT TESTING (VSCODE SIDE INPUT) ***
 
-// Defines a Mocha unit test
-// test("Something 1", function() {
-//     assert.equal(-1, [1, 2, 3].indexOf(5));
-//     assert.equal(-1, [1, 2, 3].indexOf(0));
-// });
-
-//see https://vscode.rocks/testing/
-// const newFile = vscode.Uri.parse('untitled:Untitled-2')
-// const document = await vscode.workspace.openTextDocument(newFile)
-// const textEditor = await vscode.window.showTextDocument(document)
-
-// await vscode.commands.executeCommand('edit-csv.edit')
-
-// // await sleep(1000)
-// assert.equal(textEditor, vscode.window.activeTextEditor)
-
-// function sleep(ms: number): Promise<void> {
-//     return new Promise(resolve => {
-//       setTimeout(resolve, ms)
-//     })
-//   }
-
-//to run tests start tsc -w and then go to the debug tab and select "EXtension Tests" and run
-
-// Defines a Mocha test suite to group tests of similar kind together
-suite("partitionString working properly", function () {
-
-    test('partition size not fitting', async function () {
-
-        const text = '0123456789'
-
-        const parts = partitionString(text, 3)
-
-        const margedText = parts.map(p => p.text).join('')
-
-        assert.equal(margedText, text)
+suite('initial parsing and validating tests', function () {
+    test('get editor title', async function () {
+        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
+        let test: string
+        vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
+            test = getEditorTitle(document)
+            let correct: string = "YAML edit test.yaml"
+            assert.strictEqual(test, correct)
+        })
     })
 
-    test('partition size larger than text', async function () {
-
-        const text = '0123456789'
-
-        const parts = partitionString(text, text.length + 10)
-
-        const margedText = parts.map(p => p.text).join('')
-
-        assert.equal(margedText, text)
+    test('confirm yaml file is yaml', async function () {
+        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
+        let test: boolean | "" | undefined
+        vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
+            test = isYamlFile(document)
+            const correct = true
+            assert.strictEqual(test, correct)
+        })
     })
 
-    test('partition size perfect fit', async function () {
-
-        const text = '0123456789'
-
-        const parts = partitionString(text, text.length)
-
-        const margedText = parts.map(p => p.text).join('')
-
-        assert.equal(margedText, text)
+    test('confirm csv file is not yaml', async function () {
+        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.csv"))
+        let test: boolean | "" | undefined
+        vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
+            test = isYamlFile(document)
+            const correct = false
+            assert.strictEqual(test, correct)
+        })
     })
 
+    test('test fetching schema (url)', async function () {
+        const correct: any = JSON.parse(fs.readFileSync(path.join(__dirname, "samples/test.json"), "utf-8"))
+
+        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
+        vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
+            const test: any = fetchSchema(document)
+            assert.strictEqual(test, correct)
+        })
+    })
+
+    test('test fetching schema (filepath)', async function () {
+        const correct: any = JSON.parse(fs.readFileSync(path.join(__dirname, "samples/test.json"), "utf-8"))
+
+        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/testFileSchema.yaml"))
+        vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
+            const test: any = fetchSchema(document)
+            assert.strictEqual(test, correct)
+        })
+    })
+
+    test('test yaml validation (for valid file)', async function () {
+        const correct = true
+        const schema = path.join(__dirname, "samples/test.json")
+        const file = path.join(__dirname, "samples/test.yaml")
+        const test = validateYaml(YAML.parse(fs.readFileSync(file, "utf-8")), JSON.parse(fs.readFileSync(schema, "utf-8")))
+        assert.strictEqual(test, correct)
+    })
+
+    test('test yaml validation (for invalid file)', async function () {
+        const correct = false
+        const schema = path.join(__dirname, "samples/test.json")
+        const file = path.join(__dirname, "samples/testInvalid.yaml")
+        const test = validateYaml(YAML.parse(fs.readFileSync(file, "utf-8")), JSON.parse(fs.readFileSync(schema, "utf-8")))
+        assert.strictEqual(test, correct)
+    })
+
+    test('test creating table data', async function () {
+        let tableHeaders: string[] = [] 
+        let tablesArray: any[][] = []
+
+        const correctFileHeaders = path.join(__dirname, "samples/tableHeaders.txt")
+        const correctHeaders = fs.readFileSync(correctFileHeaders, "utf-8")
+
+        const correctFileData = path.join(__dirname, "samples/tableData.txt")
+        const correctData = fs.readFileSync(correctFileData, "utf-8")
+
+
+        const file = path.join(__dirname, "samples/test.yaml")
+        createTableData(YAML.parse(fs.readFileSync(file, "utf-8")), tableHeaders, tablesArray)
+
+        const testHeaders = JSON.stringify(tableHeaders)
+        const testData = JSON.stringify(tablesArray)
+
+        assert.strictEqual(testHeaders, correctHeaders)
+        assert.strictEqual(testData, correctData)
+    })
+
+    test('test creating column data', async function () {
+        let tableColumns: any[][] = []
+
+        const correctFile = path.join(__dirname, "samples/tableColumns.txt")
+        const correct = fs.readFileSync(correctFile, "utf-8")
+
+        const schema = path.join(__dirname, "samples/test.json")
+        createColumnData(tableColumns, JSON.parse(fs.readFileSync(schema, "utf-8")))
+
+        const test = JSON.stringify(tableColumns)
+
+        assert.strictEqual(test, correct)
+    })
 
 })
 
+// *** UNIT TESTING (VSCODE SIDE OUTPUT) ***
 
-suite('some frontend func tests', function () {
+suite('some tests for writing changes/yaml back to file', function () {
+    test('test returning existing ioc entities of given type', async function () {
+        const correct = [2, 3]
 
-    test('excel like column names (letters) func is correct (like handsontable)', async function () {
+        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
+        vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
+            const currentYaml = YAML.parseDocument(document.getText())
+            const entities = currentYaml.get("entities")
 
-        const COLUMN_LABEL_BASE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-        const COLUMN_LABEL_BASE_LENGTH = COLUMN_LABEL_BASE.length
+            const test = returnExistingEntities(entities, "pmac.DlsPmacAsynMotor")
 
-        function spreadsheetColumnLetterLabel(index: number): string {
-            let num = index
-            let columnLabel = ''
-            //see https://stackoverflow.com/questions/34813980/getting-an-array-of-column-names-at-sheetjs
-            while (num >= 0) {
-                columnLabel = COLUMN_LABEL_BASE[num % 26] + columnLabel
-                num = Math.floor(num / 26) - 1
-            }
-            return columnLabel
-        }
+            assert.strictEqual(test, correct)
+        })
 
-        function spreadsheetColumnLabel(index: number): string {
-            let dividend = index + 1
-            let columnLabel = ''
-            let modulo
+    })
+})
 
-            while (dividend > 0) {
-                modulo = (dividend - 1) % COLUMN_LABEL_BASE_LENGTH;
-                columnLabel = String.fromCharCode(65 + modulo) + columnLabel;
-                dividend = parseInt((dividend - modulo) / COLUMN_LABEL_BASE_LENGTH as any, 10);
-            }
+// *** UNIT TESTING (VSCODE OUTPUT WITH EXTENSION ACTIVATED) ***
+// TO DO some tests here once I figure out how to activate the extension in a test
+/*
+suite('some tests for writing changes/yaml back to file', function () {
 
-            return columnLabel;
-        }
+    //these tests are for table functions contained within applyYamlChanges
+    test('test change item value on ioc entity', async function () {
+        //this involves opening an editor for the file, getting current text state and YAML,
+        //then calling applychange function and pretending we changed a value in the table
+        //then we fetch the text of the open file again and check that it has changed?
+        //and that it now is the same as the sample template
+        //fairly sure this needs editor instance however....
+    })
 
-
-        for (let i = 0; i < 1_000_000; i++) {
-            let correct = spreadsheetColumnLabel(i)
-            let test = spreadsheetColumnLetterLabel(i)
-
-            assert.equal(test, correct)
-        }
+    test('test remove item value on ioc entity', async function () {
 
     })
 
-})
+    test('test adding new table row to file', async function () {
 
+    })
 
+    test('test removing deleted table row from file', async function () {
+
+    })
+
+    test('test adding new table to file)', async function () {
+
+    })
+
+    test('test removing deleted table from file)', async function () {
+
+    })
+
+    //depending on how we move row(s), method is different so need tests to test all cases
+    test('test changing ioc entity order (moving row(s) up)', async function () {
+
+    })
+
+    test('test changing ioc entity order (moving row(s) down)', async function () {
+
+    })
+
+    test('test changing ioc entity order (moving row(s) down to last row)', async function () {
+
+    })
+
+    test('test changing ioc entity order (moving row(s) down to last table last row)', async function () {
+
+    })
+})*/
+
+// *** SYSTEM TESTING (WEBVIEW SIDE) ***
+// TO DO - fetch html, fetch html for table actions too?
