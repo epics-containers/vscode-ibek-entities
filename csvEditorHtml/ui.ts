@@ -1184,7 +1184,29 @@ function onAnyChange(changes?: CellChanges[] | null, reason?: string, _tableName
 	}
 
 	if(changes){
-		let changeContent: ReturnChangeObject = {tableName: _tableName, columnName: changes[0][1], cellValue: changes[0][3], oldRowIndex: [Number(changes[0][0])], newRowIndex: Number(changes[0][0])}
+		//if you don't declare types of these arrays here then can't push later because type "never"...
+		let columns: any[] = []
+		let oldIndexes: number[] = []
+		let newIndexes: number[] = []
+		let cells: any[] = []
+
+		let changeContent: ReturnChangeObject = {tableName: _tableName, columnName: columns, cellValue: cells, oldRowIndex: oldIndexes, newRowIndex: newIndexes}
+		
+		changes.forEach((change) => {
+			//this is messy but otherwise ts thinks arrays are undefined...
+			if(!Array.isArray(changeContent.columnName)) return
+			changeContent.columnName.push(change[1])
+
+			if(!Array.isArray(changeContent.cellValue)) return
+			changeContent.cellValue.push(change[3])
+			
+			if(!Array.isArray(changeContent.oldRowIndex)) return
+			changeContent.oldRowIndex.push(change[0])
+
+			if(!Array.isArray(changeContent.newRowIndex)) return
+			changeContent.newRowIndex.push(change[0])
+		})
+
 		postModifyContent("valueChange", changeContent)
 	}
 
@@ -1464,7 +1486,7 @@ function postApplyContent(saveSourceFile: boolean) {
  * @param contentChanges 
  */
 function postModifyContent(reason: string, contentChanges: ReturnChangeObject){
-		let modifiedContent = JSON.stringify(contentChanges)
+		const modifiedContent = JSON.stringify(contentChanges)
 		_postModifyContent(reason, modifiedContent)
 }
 

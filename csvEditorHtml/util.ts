@@ -212,9 +212,6 @@ function addRow(selectNewRow = true) {
 	hot.alter('insert_row', numRows) //inserted data contains null but papaparse correctly unparses it as ''
 	// hot.populateFromArray(numRows, 0, [headerCells.map(p => '')])
 
-	//need to set type cell value for new row
-	let typeCell = hot.getDataAtRowProp(numRows-1, "type")
-	hot.setDataAtRowProp(numRows, "type", typeCell)
 	//set new row metadata
 	setColumnMetadata(numRows, rowMeta)
 
@@ -288,7 +285,6 @@ function _insertRowInternal(belowCurrRow: boolean) {
 
 	//fetch metadata from selected row
 	let rowMeta = hot.getCellMetaAtRow(currRowIndex)
-	let typeCell = hot.getDataAtRowProp(currRowIndex, "type")
 
 	const targetRowIndex = currRowIndex + (belowCurrRow ? 1 : 0)
 	// const test = hot.toPhysicalRow(targetRowIndex) //also not working when rows are reordered...
@@ -313,9 +309,6 @@ function _insertRowInternal(belowCurrRow: boolean) {
 		}
 		default: notExhaustiveSwitch(focusBehavior)
 	}
-
-	//need to set type cell value for new row
-	hot.setDataAtRowProp(targetRowIndex, "type", typeCell)
 
 	//checkAutoApplyHasHeader()
 	onResizeGrid()

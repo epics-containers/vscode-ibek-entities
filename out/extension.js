@@ -521,20 +521,29 @@ function applyYamlChanges(instance, changeType, changeObject, openSourceFileAfte
         let fileIndexes = (0, util_1.returnExistingEntities)(entities, changeObject.tableName);
         switch (changeType) {
             case "valueChange":
-                if (!changeObject.oldRowIndex)
+                if (!Array.isArray(changeObject.cellValue))
                     break;
-                let changedEntityIndex = fileIndexes[changeObject.oldRowIndex[0]];
-                let entity = entities.items[changedEntityIndex];
-                //this checks if new value is null if so deletes item?
-                if (changeObject.cellValue === null) {
-                    entity.delete(changeObject.columnName);
-                }
-                else {
-                    entity.set(changeObject.columnName, changeObject.cellValue);
-                }
+                //iterate over all cells with changes
+                changeObject.cellValue.forEach((cell, i) => {
+                    if (!changeObject.oldRowIndex)
+                        return;
+                    let changedEntityIndex = fileIndexes[changeObject.oldRowIndex[i]];
+                    let entity = entities.items[changedEntityIndex];
+                    if (!Array.isArray(changeObject.columnName))
+                        return;
+                    //this checks if new value is null if so deletes item?
+                    if (cell === null) {
+                        entity.delete(changeObject.columnName[i]);
+                    }
+                    else {
+                        entity.set(changeObject.columnName[i], cell);
+                    }
+                });
                 break;
             case "addRow":
                 let newEntityIndex = 0;
+                if (Array.isArray(changeObject.newRowIndex))
+                    break;
                 if (changeObject.newRowIndex >= fileIndexes.length) {
                     //this means we are adding an item to the end of the array
                     newEntityIndex = fileIndexes[changeObject.newRowIndex - 1] + 1;
@@ -559,6 +568,8 @@ function applyYamlChanges(instance, changeType, changeObject, openSourceFileAfte
                 break;
             case "moveRow":
                 if (!changeObject.oldRowIndex)
+                    break;
+                if (Array.isArray(changeObject.newRowIndex))
                     break;
                 //row(s) moved down
                 if (changeObject.newRowIndex > changeObject.oldRowIndex[changeObject.oldRowIndex.length - 1]) {

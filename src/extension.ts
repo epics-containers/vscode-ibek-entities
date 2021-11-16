@@ -648,20 +648,27 @@ function applyYamlChanges(instance: Instance, changeType: string, changeObject: 
 			let fileIndexes: number[] = returnExistingEntities(entities, changeObject.tableName)
 			switch (changeType) {
 				case "valueChange":
-					if(!changeObject.oldRowIndex) break
-					let changedEntityIndex: number = fileIndexes[changeObject.oldRowIndex[0]]
-					let entity = entities.items[changedEntityIndex]
-					//this checks if new value is null if so deletes item?
-					if(changeObject.cellValue === null){
-						entity.delete(changeObject.columnName)
-					}
-					else{
-						entity.set(changeObject.columnName, changeObject.cellValue)
-					}
+					if(!Array.isArray(changeObject.cellValue)) break
+					//iterate over all cells with changes
+					changeObject.cellValue.forEach((cell: any, i: number) => {
+						if(!changeObject.oldRowIndex) return
+						let changedEntityIndex: number = fileIndexes[changeObject.oldRowIndex[i]]
+						let entity = entities.items[changedEntityIndex]
+
+						if(!Array.isArray(changeObject.columnName)) return
+						//this checks if new value is null if so deletes item?
+						if(cell === null){
+							entity.delete(changeObject.columnName[i])
+						}
+						else{
+							entity.set(changeObject.columnName[i], cell)
+						}
+					});
 					break
 
 				case "addRow":
 					let newEntityIndex: number = 0
+					if(Array.isArray(changeObject.newRowIndex)) break
 					if(changeObject.newRowIndex! >= fileIndexes.length){
 						//this means we are adding an item to the end of the array
 						newEntityIndex = fileIndexes[changeObject.newRowIndex!-1] + 1
@@ -688,6 +695,7 @@ function applyYamlChanges(instance: Instance, changeType: string, changeObject: 
 
 				case "moveRow":
 					if(!changeObject.oldRowIndex) break
+					if(Array.isArray(changeObject.newRowIndex)) break
 					//row(s) moved down
 					if(changeObject.newRowIndex! > changeObject.oldRowIndex[changeObject.oldRowIndex.length -1]){
 						//this means we want to move rows to last position
