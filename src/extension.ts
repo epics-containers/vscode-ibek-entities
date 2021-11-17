@@ -60,7 +60,7 @@ export function activate(context: vscode.ExtensionContext) {
 	*/
 
 	//called to get from an editor to the source file
-	const gotoSourceCsvCommand = vscode.commands.registerCommand('edit-yaml.goto-source', () => {
+	const gotoSourceYamlCommand = vscode.commands.registerCommand('edit-yaml.goto-source', () => {
 
 
 		if (vscode.window.activeTextEditor) { //a web view is no text editor...
@@ -71,7 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
 		openSourceFileFunc()
 	})
 
-	const editCsvCommand = vscode.commands.registerCommand('edit-yaml.edit', () => {
+	const editYamlCommand = vscode.commands.registerCommand('edit-yaml.edit', () => {
 
 		if (!vscode.window.activeTextEditor && instanceManager.hasActiveEditorInstance()) {
 			//open source file ... probably better for usability when we use recently used
@@ -271,8 +271,8 @@ export function activate(context: vscode.ExtensionContext) {
 	const onDidChangeConfigurationCallback = onDidChangeConfiguration.bind(undefined, instanceManager)
 	const onDidChangeConfigurationHandler = vscode.workspace.onDidChangeConfiguration(onDidChangeConfigurationCallback)
 
-	context.subscriptions.push(editCsvCommand)
-	context.subscriptions.push(gotoSourceCsvCommand)
+	context.subscriptions.push(editYamlCommand)
+	context.subscriptions.push(gotoSourceYamlCommand)
 	//context.subscriptions.push(applyCsvCommand)
 	//context.subscriptions.push(applyAndSaveCsvCommand)
 	context.subscriptions.push(onDidOpenTextDocumentHandler)
@@ -556,7 +556,7 @@ export function createNewEditorInstance(context: vscode.ExtensionContext, active
 
 	panel.onDidDispose(() => {
 
-		debugLog(`dispose csv editor panel (webview)`)
+		debugLog(`dispose yaml editor panel (webview)`)
 
 		try {
 			instanceManager.removeInstance(instance)
@@ -604,17 +604,17 @@ function _afterEditsApplied(instance: Instance, document: vscode.TextDocument, e
 				.then(
 					wasSaved => {
 						if (!wasSaved) {
-							console.warn(`Could not save csv file`)
-							vscode.window.showErrorMessage(`Could not save csv file`)
+							console.warn(`Could not save yaml file`)
+							vscode.window.showErrorMessage(`Could not save yaml file`)
 							return
 						}
 
 						setEditorHasChanges(instance, false)
 					},
 					(reason) => {
-						console.warn(`Error saving csv file`)
+						console.warn(`Error saving yaml file`)
 						console.warn(reason); //will be null e.g. no permission denied when saved manually
-						vscode.window.showErrorMessage(`Error saving csv file`)
+						vscode.window.showErrorMessage(`Error saving yaml file`)
 					})
 			return
 		}
@@ -640,8 +640,11 @@ function _afterEditsApplied(instance: Instance, document: vscode.TextDocument, e
  */
 
 function applyYamlChanges(instance: Instance, changeType: string, changeObject: ReturnChangeObject, openSourceFileAfterApply: boolean) {
+	let newContent: string = ""
 	vscode.workspace.openTextDocument(instance.sourceUri)
 		.then(document => {
+			let saveSourceFile: boolean = false
+
 			//fetch current (and possibly unsaved) content of file
 			let currentYaml = YAML.parseDocument(document.getText())
 			let entities = currentYaml.get("entities")
@@ -761,9 +764,15 @@ function applyYamlChanges(instance: Instance, changeType: string, changeObject: 
 					})
 					break
 
+				case "saveChanges":
+					saveSourceFile = true
+					_afterEditsApplied(instance, document, true, saveSourceFile, openSourceFileAfterApply)
+					break
+
 			}
 
 			let yamlString = currentYaml.toString()
+			newContent = yamlString
 			let yamlData = currentYaml.toJSON()
 
 			//validate new yaml file content against schema
@@ -793,7 +802,7 @@ function applyYamlChanges(instance: Instance, changeType: string, changeObject: 
 			vscode.workspace.applyEdit(edit)
 				.then(
 					editsApplied => {
-						_afterEditsApplied(instance, document, editsApplied, false, openSourceFileAfterApply)
+						_afterEditsApplied(instance, document, editsApplied, saveSourceFile, openSourceFileAfterApply)
 					},
 					(reason) => {
 						console.warn(`Error applying edits`)
@@ -819,7 +828,7 @@ function applyYamlChanges(instance: Instance, changeType: string, changeObject: 
 
 						//file is probably deleted
 						vscode.window.showWarningMessage(`The source file could not be found and was probably deleted.`)
-						//createNewSourceFile(instance, yamlString, openSourceFileAfterApply, false)
+						createNewSourceFile(instance, newContent, openSourceFileAfterApply, false)
 					})
 
 			})
@@ -831,7 +840,6 @@ function applyYamlChanges(instance: Instance, changeType: string, changeObject: 
  * @param newContent 
  * @param openSourceFileAfterApply 
  */
-/*
 function createNewSourceFile(instance: Instance, newContent: string, openSourceFileAfterApply: boolean, saveSourceFile: boolean) {
 
 	//TODO i'm not sure if this also works for remote file systems...
@@ -881,7 +889,7 @@ function createNewSourceFile(instance: Instance, newContent: string, openSourceF
 			vscode.window.showErrorMessage(`Could not open new source file, error: ${error?.message}`)
 		})
 
-}*/
+}
 
 
 /**

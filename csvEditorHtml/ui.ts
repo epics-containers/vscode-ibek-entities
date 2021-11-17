@@ -2548,9 +2548,17 @@ let HotRegisterer: HotRegister = {
 			afterRowMove: function (startRow: number, endRow: number) {
 				hot = getSelectedHot()
 				if (!hot) throw new Error('table was null')
+				let table: string
+				//@ts-ignore
+				if(startRow[0] < endRow){
+					table = hot.getDataAtRowProp(endRow-1, "type")
+				}
+				else{
+					table = hot.getDataAtRowProp(endRow, "type")
+				}
 				//@ts-ignore handsontable insists startRow is a number but it's actually a number array?
 				//i don't understand why it does this and how to fix it...
-				onTableChange(hot.getDataAtRowProp(0, "type"), undefined, undefined, startRow, endRow, [], "moveRow")
+				onTableChange(table, undefined, undefined, startRow, endRow, [], "moveRow")
 			},
 			afterCreateRow: function (visualRowIndex, amount) {
 				//added below

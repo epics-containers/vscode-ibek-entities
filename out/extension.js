@@ -53,14 +53,14 @@ function activate(context) {
     })
     */
     //called to get from an editor to the source file
-    const gotoSourceCsvCommand = vscode.commands.registerCommand('edit-yaml.goto-source', () => {
+    const gotoSourceYamlCommand = vscode.commands.registerCommand('edit-yaml.goto-source', () => {
         if (vscode.window.activeTextEditor) { //a web view is no text editor...
             vscode.window.showInformationMessage("Open a yaml editor first to show the source yaml file");
             return;
         }
         openSourceFileFunc();
     });
-    const editCsvCommand = vscode.commands.registerCommand('edit-yaml.edit', () => {
+    const editYamlCommand = vscode.commands.registerCommand('edit-yaml.edit', () => {
         if (!vscode.window.activeTextEditor && instanceManager.hasActiveEditorInstance()) {
             //open source file ... probably better for usability when we use recently used
             openSourceFileFunc();
@@ -216,8 +216,8 @@ function activate(context) {
     // })
     const onDidChangeConfigurationCallback = onDidChangeConfiguration.bind(undefined, instanceManager);
     const onDidChangeConfigurationHandler = vscode.workspace.onDidChangeConfiguration(onDidChangeConfigurationCallback);
-    context.subscriptions.push(editCsvCommand);
-    context.subscriptions.push(gotoSourceCsvCommand);
+    context.subscriptions.push(editYamlCommand);
+    context.subscriptions.push(gotoSourceYamlCommand);
     //context.subscriptions.push(applyCsvCommand)
     //context.subscriptions.push(applyAndSaveCsvCommand)
     context.subscriptions.push(onDidOpenTextDocumentHandler);
@@ -449,7 +449,7 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
     }, undefined, context.subscriptions);
     panel.onDidDispose(() => {
         var _a, _b;
-        (0, util_1.debugLog)(`dispose csv editor panel (webview)`);
+        (0, util_1.debugLog)(`dispose yaml editor panel (webview)`);
         try {
             instanceManager.removeInstance(instance);
         }
@@ -489,15 +489,15 @@ function _afterEditsApplied(instance, document, editsApplied, saveSourceFile, op
             document.save()
                 .then(wasSaved => {
                 if (!wasSaved) {
-                    console.warn(`Could not save csv file`);
-                    vscode.window.showErrorMessage(`Could not save csv file`);
+                    console.warn(`Could not save yaml file`);
+                    vscode.window.showErrorMessage(`Could not save yaml file`);
                     return;
                 }
                 setEditorHasChanges(instance, false);
             }, (reason) => {
-                console.warn(`Error saving csv file`);
+                console.warn(`Error saving yaml file`);
                 console.warn(reason); //will be null e.g. no permission denied when saved manually
-                vscode.window.showErrorMessage(`Error saving csv file`);
+                vscode.window.showErrorMessage(`Error saving yaml file`);
             });
             return;
         }
@@ -518,8 +518,10 @@ function _afterEditsApplied(instance, document, editsApplied, saveSourceFile, op
  * maps changes to ast and writes applied ast to file
  */
 function applyYamlChanges(instance, changeType, changeObject, openSourceFileAfterApply) {
+    let newContent = "";
     vscode.workspace.openTextDocument(instance.sourceUri)
         .then(document => {
+        let saveSourceFile = false;
         //fetch current (and possibly unsaved) content of file
         let currentYaml = YAML.parseDocument(document.getText());
         let entities = currentYaml.get("entities");
@@ -635,8 +637,13 @@ function applyYamlChanges(instance, changeType, changeObject, openSourceFileAfte
                     delete entities.items[entityIndex];
                 });
                 break;
+            case "saveChanges":
+                saveSourceFile = true;
+                _afterEditsApplied(instance, document, true, saveSourceFile, openSourceFileAfterApply);
+                break;
         }
         let yamlString = currentYaml.toString();
+        newContent = yamlString;
         let yamlData = currentYaml.toJSON();
         //validate new yaml file content against schema
         const jsonSchema = fetchSchema(instance.document);
@@ -657,7 +664,7 @@ function applyYamlChanges(instance, changeType, changeObject, openSourceFileAfte
         edit.replace(document.uri, textRange, yamlString);
         vscode.workspace.applyEdit(edit)
             .then(editsApplied => {
-            _afterEditsApplied(instance, document, editsApplied, false, openSourceFileAfterApply);
+            _afterEditsApplied(instance, document, editsApplied, saveSourceFile, openSourceFileAfterApply);
         }, (reason) => {
             console.warn(`Error applying edits`);
             console.warn(reason);
@@ -675,7 +682,7 @@ function applyYamlChanges(instance, changeType, changeObject, openSourceFileAfte
         }, error => {
             //file is probably deleted
             vscode.window.showWarningMessage(`The source file could not be found and was probably deleted.`);
-            //createNewSourceFile(instance, yamlString, openSourceFileAfterApply, false)
+            createNewSourceFile(instance, newContent, openSourceFileAfterApply, false);
         });
     });
 }
@@ -685,57 +692,41 @@ function applyYamlChanges(instance, changeType, changeObject, openSourceFileAfte
  * @param newContent
  * @param openSourceFileAfterApply
  */
-/*
-function createNewSourceFile(instance: Instance, newContent: string, openSourceFileAfterApply: boolean, saveSourceFile: boolean) {
-
+function createNewSourceFile(instance, newContent, openSourceFileAfterApply, saveSourceFile) {
     //TODO i'm not sure if this also works for remote file systems...
     //see https://stackoverflow.com/questions/41068197/vscode-create-unsaved-file-and-add-content
-    const newSourceFile = vscode.Uri.parse(`untitled:${instance.sourceUri.fsPath}`)
-
+    const newSourceFile = vscode.Uri.parse(`untitled:${instance.sourceUri.fsPath}`);
     vscode.workspace.openTextDocument(newSourceFile)
         .then(newFile => {
-
-            const edit = new vscode.WorkspaceEdit()
-            edit.insert(newSourceFile, new vscode.Position(0, 0), newContent)
-
-            vscode.workspace.applyEdit(edit).then(success => {
-
-                if (!success) {
-                    debugLog('could not created new source file because old was deleted')
-                    return
-                }
-
-                debugLog('created new source file because old was deleted')
-
-                if (openSourceFileAfterApply) {
-                    vscode.window.showTextDocument(newFile)
-                }
-
-                if (saveSourceFile) {
-                    newFile.save().then(successSave => {
-
-                        if (!successSave) {
-                            vscode.window.showErrorMessage(`Could not save new source file (old was deleted)`)
-                            return
-                        }
-
-                        //successfully saved
-
-                    }, error => {
-                        vscode.window.showErrorMessage(`Could not save new source file (old was deleted), error: ${error?.message}`)
-                    })
-                }
-
-
-            }, error => {
-                vscode.window.showErrorMessage(`Could not create new source file (old was deleted), error: ${error?.message}`)
-            })
-
+        const edit = new vscode.WorkspaceEdit();
+        edit.insert(newSourceFile, new vscode.Position(0, 0), newContent);
+        vscode.workspace.applyEdit(edit).then(success => {
+            if (!success) {
+                (0, util_1.debugLog)('could not created new source file because old was deleted');
+                return;
+            }
+            (0, util_1.debugLog)('created new source file because old was deleted');
+            if (openSourceFileAfterApply) {
+                vscode.window.showTextDocument(newFile);
+            }
+            if (saveSourceFile) {
+                newFile.save().then(successSave => {
+                    if (!successSave) {
+                        vscode.window.showErrorMessage(`Could not save new source file (old was deleted)`);
+                        return;
+                    }
+                    //successfully saved
+                }, error => {
+                    vscode.window.showErrorMessage(`Could not save new source file (old was deleted), error: ${error === null || error === void 0 ? void 0 : error.message}`);
+                });
+            }
         }, error => {
-            vscode.window.showErrorMessage(`Could not open new source file, error: ${error?.message}`)
-        })
-
-}*/
+            vscode.window.showErrorMessage(`Could not create new source file (old was deleted), error: ${error === null || error === void 0 ? void 0 : error.message}`);
+        });
+    }, error => {
+        vscode.window.showErrorMessage(`Could not open new source file, error: ${error === null || error === void 0 ? void 0 : error.message}`);
+    });
+}
 /**
  * returns the active (editor) instance or null
  * error messages are already handled here

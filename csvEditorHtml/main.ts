@@ -317,7 +317,7 @@ function setupGlobalShortcutsInVs() {
 	if (vscode) {
 		Mousetrap.bindGlobal(['meta+s', 'ctrl+s'], (e) => {
 			e.preventDefault()
-			postApplyContent(true)
+			postModifyContent("saveChanges", {})
 		})
 	}
 
