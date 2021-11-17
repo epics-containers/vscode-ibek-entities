@@ -1199,3 +1199,76 @@ function getSelectedHot(){
 	}
 	return hot
 }
+
+/**
+ * called by context menu or keyboard shortcut (TO DO).
+ * fills selected cells with incremented values
+ */
+function fillAndIncrementCells(hot: Handsontable, selection: any){
+	//will need to check if more than one column selected? TO DO
+	let cellChanges = []
+	for(let cols = 0; (cols + selection[0].start.col) <= selection[0].end.col; cols++){
+		const sourceText = hot.getDataAtCell(selection[0].start.row, selection[0].start.col + cols)
+		let increments = getIncrementedValues(sourceText, (selection[0].end.row - selection[0].start.row))
+		for(let i: number = 0; i < increments.length; i++){
+			let _cellChange = [selection[0].start.row + i+1, selection[0].start.col + cols, increments[i]]
+			cellChanges.push(_cellChange)
+		}
+	}
+	//@ts-ignore
+	hot.setDataAtCell(cellChanges)
+}
+
+/**
+ * returns an array of the new, incremented cell values to fill.
+ * this is needlessly complicated TO DO - simplify?
+ * @param sourceText the cell value to be incremented
+ */
+function getIncrementedValues(sourceText: any, num: number){
+	let newText: string[] = []
+	//use regex to find what we are incrementing
+	let re = new RegExp(/[^\d]*(\d+)[^\d]*$/, "g")
+	let match = re.exec(sourceText)
+	if(match){
+		//do regex again to find index 
+		const search = match[1] //this is the last positive integer we increment
+		//all we have in our cell is a number so increment that
+		if(search.length === sourceText.toString().length){
+			//then we don't want to iterate etc, just change value directly
+			for(let i: number = 0; i < num; i++){
+				let strLength = search.length
+				let increment: string = (Number(search) + i+1).toString()
+				if(increment.length < strLength){
+					//this means we lost trailing 0s somewhere
+					for(let j: number = 0; j < strLength-1; j++){
+						increment = "0" + increment
+					}
+				}
+				newText.push(increment)
+			}
+		}
+		else{
+			const indexes: any[] = [...sourceText.matchAll(new RegExp(search, 'gi'))].map(a => a.index);
+			//probably a less messy way of doing this
+			const start: number = indexes.slice(-1)[0]
+			const end: number = indexes.slice(-1)[0] + search.length
+	
+			let beforeStr: string = sourceText.slice(0, start)
+			let afterStr: string = sourceText.slice(end)
+	
+			for(let i: number = 0; i < num; i++){
+				let strLength = search.length
+				let increment: string = (Number(search) + i+1).toString()
+				if(increment.length < strLength){
+					//this means we lost a trailing 0 somewhere
+					for(let j: number = 0; j < strLength-1; j++){
+						increment = "0" + increment
+					}
+				}
+				let newStr: string = beforeStr + increment + afterStr
+				newText.push(newStr)
+			}
+		}
+	}
+	return newText
+}

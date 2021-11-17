@@ -2220,6 +2220,14 @@ let HotRegisterer: HotRegister = {
 							return hot!.countRows() === 1 || allRowsAreSelected
 						},
 					},
+					'fill_increment_cells': {
+						name: "Increment Cells",
+						callback: function (key: any, selection: any, clickevent: any) { //key, selection, clickEvent
+							hot = getSelectedHot()
+							if(!hot) return
+							fillAndIncrementCells(hot, selection)
+						},
+					},
 					'---------': {
 						name: '---------'
 					},
@@ -2237,7 +2245,6 @@ let HotRegisterer: HotRegister = {
 						name: "Delete table",
 						callback: function () { //key, selection, clickEvent
 							toggleAskDeleteTableModalDiv(true)
-							//removeTable(container)
 						},
 					},
 				}
