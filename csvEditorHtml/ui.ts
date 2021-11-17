@@ -2168,6 +2168,7 @@ let HotRegisterer: HotRegister = {
 			},
 			undo: true,
 					//plugins
+			copyPaste: true,
 			comments: false,
 			search: {
 				queryMethod: customSearchMethod,
@@ -2187,6 +2188,7 @@ let HotRegisterer: HotRegister = {
 			contextMenu: {
 				items: {
 					'row_above': {
+						name: "Insert Row Above (Ctrl+I)",
 						callback: function () { //key, selection, clickEvent
 							insertRowAbove()
 						},
@@ -2195,6 +2197,7 @@ let HotRegisterer: HotRegister = {
 						}
 					},
 					'row_below': {
+						name: "Insert Row Below (Ctrl+U)",
 						callback: function () { //key, selection, clickEvent
 							insertRowBelow()
 						},
@@ -2220,15 +2223,37 @@ let HotRegisterer: HotRegister = {
 							return hot!.countRows() === 1 || allRowsAreSelected
 						},
 					},
-					'fill_increment_cells': {
-						name: "Increment Cells",
+					'---------': {
+						name: '---------'
+					},
+					'cut': {
+						name: "Cut (Ctrl+X)",
+					},
+					'copy': {
+						name: "Copy (Ctrl+C)",
+					},
+					'clear': {
+						name: "Clear (Ctrl+D)",
 						callback: function (key: any, selection: any, clickevent: any) { //key, selection, clickEvent
 							hot = getSelectedHot()
 							if(!hot) return
+							selection = hot.getSelected()
+							clearCells(hot, selection)
+						},
+					},
+					'---------2': {
+						name: '---------'
+					},
+					'fill_increment_cells': {
+						name: "Fill Cells (Ctrl+L)",
+						callback: function (key: any, selection: any, clickevent: any) { //key, selection, clickEvent
+							hot = getSelectedHot()
+							if(!hot) return
+							selection = hot.getSelected()
 							fillAndIncrementCells(hot, selection)
 						},
 					},
-					'---------': {
+					'---------3': {
 						name: '---------'
 					},
 					'undo': {
@@ -2237,8 +2262,7 @@ let HotRegisterer: HotRegister = {
 					'redo': {
 						name: "Redo (Ctrl + Y)"
 					},
-					'alignment': {},
-					'---------3': {
+					'---------4': {
 						name: '---------'
 					},
 					'remove_table': {
@@ -2247,6 +2271,7 @@ let HotRegisterer: HotRegister = {
 							toggleAskDeleteTableModalDiv(true)
 						},
 					},
+					'alignment': {},
 				}
 			} as ContextMenuSettings,
 			afterOnCellMouseUp: function () {

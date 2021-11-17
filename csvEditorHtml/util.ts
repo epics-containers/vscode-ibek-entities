@@ -1201,17 +1201,31 @@ function getSelectedHot(){
 }
 
 /**
- * called by context menu or keyboard shortcut (TO DO).
+ * clears selected cells content
+ */
+function clearCells(hot: Handsontable, selection: any){
+	let cellChanges = []
+	for(let cols = 0; (cols + selection[0][1]) <= selection[0][3]; cols++){
+		for(let rows = 0; (rows + selection[0][0]) <= selection[0][2]; rows++){
+			let _cellChange = [selection[0][0]+ rows, selection[0][1] + cols, null]
+			cellChanges.push(_cellChange)
+		}
+	}
+	//@ts-ignore
+	hot.setDataAtCell(cellChanges)
+}
+
+/**
+ * called by context menu or keyboard shortcut.
  * fills selected cells with incremented values
  */
 function fillAndIncrementCells(hot: Handsontable, selection: any){
-	//will need to check if more than one column selected? TO DO
 	let cellChanges = []
-	for(let cols = 0; (cols + selection[0].start.col) <= selection[0].end.col; cols++){
-		const sourceText = hot.getDataAtCell(selection[0].start.row, selection[0].start.col + cols)
-		let increments = getIncrementedValues(sourceText, (selection[0].end.row - selection[0].start.row))
+	for(let cols = 0; (cols + selection[0][1]) <= selection[0][3]; cols++){
+		const sourceText = hot.getDataAtCell(selection[0][0], selection[0][1] + cols)
+		let increments = getIncrementedValues(sourceText, (selection[0][2] - selection[0][0]))
 		for(let i: number = 0; i < increments.length; i++){
-			let _cellChange = [selection[0].start.row + i+1, selection[0].start.col + cols, increments[i]]
+			let _cellChange = [selection[0][0]+ i+1, selection[0][1] + cols, increments[i]]
 			cellChanges.push(_cellChange)
 		}
 	}

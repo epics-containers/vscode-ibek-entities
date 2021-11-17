@@ -321,11 +321,25 @@ function setupGlobalShortcutsInVs() {
 		})
 	}
 
-	Mousetrap.bindGlobal(['ctrl+ins'], (e) => {
+	Mousetrap.bindGlobal(['ctrl+u'], (e) => {
 		insertRowBelow()
 	})
-	Mousetrap.bindGlobal(['ctrl+shift+ins'], (e) => {
+	Mousetrap.bindGlobal(['ctrl+i'], (e) => {
 		insertRowAbove()
+	})
+
+	Mousetrap.bindGlobal(['ctrl+l'], (e) => {
+		hot = getSelectedHot()
+		if(!hot) return
+		let selection = hot.getSelected()
+		fillAndIncrementCells(hot, selection)
+	})
+
+	Mousetrap.bindGlobal(['ctrl+d'], (e) => {
+		hot = getSelectedHot()
+		if(!hot) return
+		let selection = hot.getSelected()
+		clearCells(hot, selection)
 	})
 
 	//---- some shortcuts are also in ui.ts where the handsontable instance is created...
