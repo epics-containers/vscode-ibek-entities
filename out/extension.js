@@ -29,33 +29,38 @@ function activate(context) {
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     // This line of code will only be executed once when your extension is activated
     let instanceManager = new instanceManager_1.InstanceManager();
-    const applyCsvCommand = vscode.commands.registerCommand('edit-csv.apply', () => {
-        const instance = getActiveEditorInstance(instanceManager);
-        if (!instance)
-            return;
-        const msg = {
+    /*
+    const applyCsvCommand = vscode.commands.registerCommand('edit-yaml.apply', () => {
+
+        const instance = getActiveEditorInstance(instanceManager)
+        if (!instance) return
+
+        const msg: RequestApplyPressMessage = {
             command: "applyPress"
-        };
-        instance.panel.webview.postMessage(msg);
-    });
-    const applyAndSaveCsvCommand = vscode.commands.registerCommand('edit-csv.applyAndSave', () => {
-        const instance = getActiveEditorInstance(instanceManager);
-        if (!instance)
-            return;
-        const msg = {
+        }
+        instance.panel.webview.postMessage(msg)
+    })
+
+    const applyAndSaveCsvCommand = vscode.commands.registerCommand('edit-yaml.applyAndSave', () => {
+
+        const instance = getActiveEditorInstance(instanceManager)
+        if (!instance) return
+
+        const msg: RequestApplyAndSavePressMessage = {
             command: "applyAndSavePress"
-        };
-        instance.panel.webview.postMessage(msg);
-    });
+        }
+        instance.panel.webview.postMessage(msg)
+    })
+    */
     //called to get from an editor to the source file
-    const gotoSourceCsvCommand = vscode.commands.registerCommand('edit-csv.goto-source', () => {
+    const gotoSourceCsvCommand = vscode.commands.registerCommand('edit-yaml.goto-source', () => {
         if (vscode.window.activeTextEditor) { //a web view is no text editor...
             vscode.window.showInformationMessage("Open a yaml editor first to show the source yaml file");
             return;
         }
         openSourceFileFunc();
     });
-    const editCsvCommand = vscode.commands.registerCommand('edit-csv.edit', () => {
+    const editCsvCommand = vscode.commands.registerCommand('edit-yaml.edit', () => {
         if (!vscode.window.activeTextEditor && instanceManager.hasActiveEditorInstance()) {
             //open source file ... probably better for usability when we use recently used
             openSourceFileFunc();
@@ -213,8 +218,8 @@ function activate(context) {
     const onDidChangeConfigurationHandler = vscode.workspace.onDidChangeConfiguration(onDidChangeConfigurationCallback);
     context.subscriptions.push(editCsvCommand);
     context.subscriptions.push(gotoSourceCsvCommand);
-    context.subscriptions.push(applyCsvCommand);
-    context.subscriptions.push(applyAndSaveCsvCommand);
+    //context.subscriptions.push(applyCsvCommand)
+    //context.subscriptions.push(applyAndSaveCsvCommand)
     context.subscriptions.push(onDidOpenTextDocumentHandler);
     context.subscriptions.push(onDidCloseTextDocumentHandler);
     context.subscriptions.push(onDidChangeConfigurationHandler);
@@ -250,7 +255,7 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
     var _a, _b;
     const uri = activeTextEditor.document.uri;
     const title = getEditorTitle(activeTextEditor.document);
-    let panel = vscode.window.createWebviewPanel('csv-editor', title, (0, util_1.getCurrentViewColumn)(), {
+    let panel = vscode.window.createWebviewPanel('yaml-editor', title, (0, util_1.getCurrentViewColumn)(), {
         enableFindWidget: false,
         enableCommandUris: true,
         enableScripts: true,

@@ -343,19 +343,6 @@ type YamlUpdateMessage = {
 	yamlContent: string
 }
 
-/**
- * the web view should call the handler of the apply button (emulate press)
- */
-type RequestApplyPressMessage = {
-	command: "applyPress"
-}
-/**
- * the web view should call the handler of the apply and save button (emulate press)
- */
-type RequestApplyAndSavePressMessage = {
-	command: 'applyAndSavePress'
-}
-
 type RequestChangeFontSiteInPxMessage = {
 	command: 'changeFontSizeInPx'
 	fontSizeInPx: number
@@ -365,7 +352,7 @@ type SourceFileChangedMessage = {
 	command: 'sourceFileChanged'
 }
 
-type ReceivedMessageFromVsCode = CsvUpdateMessage | YamlUpdateMessage | RequestApplyPressMessage | RequestApplyAndSavePressMessage | RequestChangeFontSiteInPxMessage | SourceFileChangedMessage
+type ReceivedMessageFromVsCode =  YamlUpdateMessage | RequestChangeFontSiteInPxMessage | SourceFileChangedMessage
 
 /**
  * send by the webview indicating that it has rendered and the webview has set up the listener to receive content

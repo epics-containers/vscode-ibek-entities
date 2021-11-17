@@ -410,35 +410,11 @@ function handleVsCodeMessage(event: { data: ReceivedMessageFromVsCode }) {
 
 	switch (message.command) {
 
-		case 'csvUpdate': {
-
-			if (typeof message.csvContent === 'string') {
-				onReceiveCsvContentSlice({
-					text: message.csvContent,
-					sliceNr: 1,
-					totalSlices: 1
-				})
-
-			} else {
-				onReceiveCsvContentSlice(message.csvContent)
-			}
-
-			break
-		}
 		case 'yamlUpdate': {
 			if (typeof message.yamlContent === 'string') {
 				onReceiveYamlObject(message.yamlContent)
-				break
+				return
 			}
-		}
-
-		case "applyPress": {
-			postApplyContent(false)
-			break
-		}
-
-		case 'applyAndSavePress': {
-			postApplyContent(true)
 			break
 		}
 

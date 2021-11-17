@@ -22,7 +22,6 @@ const fetch = require('sync-fetch')
  */
 export const editorUriScheme = 'csv-edit'
 
-
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 export function activate(context: vscode.ExtensionContext) {
@@ -36,7 +35,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 	let instanceManager = new InstanceManager()
 
-	const applyCsvCommand = vscode.commands.registerCommand('edit-csv.apply', () => {
+	/*
+	const applyCsvCommand = vscode.commands.registerCommand('edit-yaml.apply', () => {
 
 		const instance = getActiveEditorInstance(instanceManager)
 		if (!instance) return
@@ -47,7 +47,7 @@ export function activate(context: vscode.ExtensionContext) {
 		instance.panel.webview.postMessage(msg)
 	})
 
-	const applyAndSaveCsvCommand = vscode.commands.registerCommand('edit-csv.applyAndSave', () => {
+	const applyAndSaveCsvCommand = vscode.commands.registerCommand('edit-yaml.applyAndSave', () => {
 
 		const instance = getActiveEditorInstance(instanceManager)
 		if (!instance) return
@@ -57,9 +57,10 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 		instance.panel.webview.postMessage(msg)
 	})
+	*/
 
 	//called to get from an editor to the source file
-	const gotoSourceCsvCommand = vscode.commands.registerCommand('edit-csv.goto-source', () => {
+	const gotoSourceCsvCommand = vscode.commands.registerCommand('edit-yaml.goto-source', () => {
 
 
 		if (vscode.window.activeTextEditor) { //a web view is no text editor...
@@ -70,7 +71,7 @@ export function activate(context: vscode.ExtensionContext) {
 		openSourceFileFunc()
 	})
 
-	const editCsvCommand = vscode.commands.registerCommand('edit-csv.edit', () => {
+	const editCsvCommand = vscode.commands.registerCommand('edit-yaml.edit', () => {
 
 		if (!vscode.window.activeTextEditor && instanceManager.hasActiveEditorInstance()) {
 			//open source file ... probably better for usability when we use recently used
@@ -272,8 +273,8 @@ export function activate(context: vscode.ExtensionContext) {
 
 	context.subscriptions.push(editCsvCommand)
 	context.subscriptions.push(gotoSourceCsvCommand)
-	context.subscriptions.push(applyCsvCommand)
-	context.subscriptions.push(applyAndSaveCsvCommand)
+	//context.subscriptions.push(applyCsvCommand)
+	//context.subscriptions.push(applyAndSaveCsvCommand)
 	context.subscriptions.push(onDidOpenTextDocumentHandler)
 	context.subscriptions.push(onDidCloseTextDocumentHandler)
 	context.subscriptions.push(onDidChangeConfigurationHandler)
@@ -315,7 +316,7 @@ export function createNewEditorInstance(context: vscode.ExtensionContext, active
 
 	const title = getEditorTitle(activeTextEditor.document)
 
-	let panel = vscode.window.createWebviewPanel('csv-editor', title, getCurrentViewColumn(), {
+	let panel = vscode.window.createWebviewPanel('yaml-editor', title, getCurrentViewColumn(), {
 		enableFindWidget: false, //we use our own find widget...
 		enableCommandUris: true,
 		enableScripts: true,

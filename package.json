@@ -28,9 +28,7 @@
 		"theme": "light"
 	},
 	"activationEvents": [
-		"onCommand:edit-csv.edit",
-		"onCommand:edit-csv.apply",
-		"onCommand:edit-csv.applyAndSave"
+		"onCommand:edit-yaml.edit"
 	],
 	"main": "./out/extension.js",
 	"contributes": {
@@ -56,90 +54,86 @@
 		],
 		"commands": [
 			{
-				"command": "edit-csv.edit",
+				"command": "edit-yaml.edit",
 				"category": "YAML",
 				"title": "Edit as table"
 			},
 			{
-				"command": "edit-csv.goto-source",
+				"command": "edit-yaml.goto-source",
 				"category": "YAML",
-				"title": "Go to csv source file"
-			},
-			{
-				"command": "edit-csv.apply",
-				"category": "YAML",
-				"title": "Apply changes to source file"
-			},
-			{
-				"command": "edit-csv.applyAndSave",
-				"category": "YAML",
-				"title": "Apply changes to source file and save"
+				"title": "Go to yaml source file"
 			}
 		],
+		"keybindings": [{
+			"command": "edit-yaml.edit",
+			"key": "ctrl+i ctrl+t",
+			"mac": "cmd+i cmd+t",
+			"when": "resourceLangId == yaml"
+		  }],
 		"menus": {
 			"explorer/context": [
 				{
 					"when": "resourceLangId == yaml",
-					"command": "edit-csv.edit",
+					"command": "edit-yaml.edit",
 					"group": "navigation"
 				},
 				{
 					"when": "resourceLangId == yml",
-					"command": "edit-csv.edit",
+					"command": "edit-yaml.edit",
 					"group": "navigation"
 				},
 				{
 					"when": "resourceLangId == YAML",
-					"command": "edit-csv.edit",
+					"command": "edit-yaml.edit",
 					"group": "navigation"
 				},
 				{
 					"when": "resourceLangId == YML",
-					"command": "edit-csv.edit",
+					"command": "edit-yaml.edit",
 					"group": "navigation"
 				}
 			],
 			"editor/title": [
 				{
-					"when": "editorLangId == yaml && resourceScheme != csv-edit",
-					"command": "edit-csv.edit",
+					"when": "editorLangId == yaml && resourceScheme != yaml-edit",
+					"command": "edit-yaml.edit",
 					"group": "navigation"
 				},
 				{
-					"when": "editorLangId == yml && resourceScheme != csv-edit",
-					"command": "edit-csv.edit",
+					"when": "editorLangId == yml && resourceScheme != yaml-edit",
+					"command": "edit-yaml.edit",
 					"group": "navigation"
 				},
 				{
-					"when": "editorLangId == YAML && resourceScheme != csv-edit",
-					"command": "edit-csv.edit",
+					"when": "editorLangId == YAML && resourceScheme != yaml-edit",
+					"command": "edit-yaml.edit",
 					"group": "navigation"
 				},
 				{
-					"when": "editorLangId == YML && resourceScheme != csv-edit",
-					"command": "edit-csv.edit",
+					"when": "editorLangId == YML && resourceScheme != yaml-edit",
+					"command": "edit-yaml.edit",
 					"group": "navigation"
 				}
 			],
 			"editor/title/context": [
 				{
-					"when": "resourceLangId == yaml && resourceScheme != csv-edit",
-					"command": "edit-csv.edit",
+					"when": "resourceLangId == yaml && resourceScheme != yaml-edit",
+					"command": "edit-yaml.edit",
 					"group": "navigation"
 				},
 				{
-					"when": "resourceLangId == yml && resourceScheme != csv-edit",
-					"command": "edit-csv.edit",
+					"when": "resourceLangId == yml && resourceScheme != yaml-edit",
+					"command": "edit-yaml.edit",
 					"group": "navigation"
 				},
 				{
-					"when": "resourceLangId == YAML && resourceScheme != csv-edit",
-					"command": "edit-csv.edit",
+					"when": "resourceLangId == YAML && resourceScheme != yaml-edit",
+					"command": "edit-yaml.edit",
 					"group": "navigation"
 				},
 				{
-					"when": "resourceLangId == YML && resourceScheme != csv-edit",
-					"command": "edit-csv.edit",
+					"when": "resourceLangId == YML && resourceScheme != yaml-edit",
+					"command": "edit-yaml.edit",
 					"group": "navigation"
 				}
 			]
