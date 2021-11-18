@@ -1956,10 +1956,7 @@ function afterCreateRow(visualRowIndex: number, amount: number) {
 	let newRowData: any[] = []
 	newRowData.push(hot.getSourceDataAtRow(visualRowIndex)) 
 
-	let tableName = hot.getDataAtRowProp(0, "type")
-	if(!tableName){
-		tableName = hot.getDataAtRowProp(1, "type")
-	}
+	let tableName = retrieveTable(hot)
 
 	onTableChange(tableName, undefined, undefined, undefined, visualRowIndex, newRowData, "addRow")
 	//dont' call this as it corrupts hot index mappings (because all other hooks need to finish first before we update hot settings)
@@ -2102,7 +2099,7 @@ function removeTable(){
 	//@ts-ignore
 	let tableKey = hot.rootElement.id
 
-	let tableName = hot.getDataAtRowProp(0, "type")
+	let tableName = retrieveTable(hot)
 	
 	let container: HTMLElement | null = document.getElementById(tableKey)
 	if(hot && container){
@@ -2548,17 +2545,10 @@ let HotRegisterer: HotRegister = {
 			afterRowMove: function (startRow: number, endRow: number) {
 				hot = getSelectedHot()
 				if (!hot) throw new Error('table was null')
-				let table: string
-				//@ts-ignore
-				if(startRow[0] < endRow){
-					table = hot.getDataAtRowProp(endRow-1, "type")
-				}
-				else{
-					table = hot.getDataAtRowProp(endRow, "type")
-				}
+				let tableName = retrieveTable(hot)
 				//@ts-ignore handsontable insists startRow is a number but it's actually a number array?
 				//i don't understand why it does this and how to fix it...
-				onTableChange(table, undefined, undefined, startRow, endRow, [], "moveRow")
+				onTableChange(tableName, undefined, undefined, startRow, endRow, [], "moveRow")
 			},
 			afterCreateRow: function (visualRowIndex, amount) {
 				//added below
@@ -2591,7 +2581,7 @@ let HotRegisterer: HotRegister = {
 					}
 				}
 	
-				let tableName = hot.getDataAtRowProp(0, "type")
+				let tableName = retrieveTable(hot)
 				//onAnyChange()
 				onTableChange(tableName, undefined, undefined, [visualRowIndex], undefined, [], "deleteRow")
 				onResizeGrid()

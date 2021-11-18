@@ -202,7 +202,7 @@ function spreadsheetColumnLetterLabel(index: number) {
  */
 function addRow(selectNewRow = true) {
 	hot = getSelectedHot()
-	if (!hot) throw new Error('table was null')
+	if (!hot) return
 
 	//fetch metadata from selected row
 	let rowMeta = hot.getCellMetaAtRow(0)
@@ -277,7 +277,7 @@ function insertRowBelow() {
 
 function _insertRowInternal(belowCurrRow: boolean) {
 	hot = getSelectedHot()
-	if (!hot) throw new Error('table was null')
+	if (!hot) return
 
 	const currRowIndex = _getSelectedVisualRowIndex()
 	const currColIndex = _getSelectedVisualColIndex()
@@ -1198,6 +1198,17 @@ function getSelectedHot(){
 		}
 	}
 	return hot
+}
+
+/**
+ * returns the type of the table selected
+ */
+function retrieveTable(hot: Handsontable){
+	//@ts-ignore
+	let tableKey: string = hot.rootElement.id
+	let tableEl = _getById('header'+tableKey.slice(5))
+	const tableName = tableEl.innerText
+	return tableName
 }
 
 /**
