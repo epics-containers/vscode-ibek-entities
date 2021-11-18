@@ -64,12 +64,14 @@
 				"title": "Go to yaml source file"
 			}
 		],
-		"keybindings": [{
-			"command": "edit-yaml.edit",
-			"key": "ctrl+i ctrl+t",
-			"mac": "cmd+i cmd+t",
-			"when": "resourceLangId == yaml"
-		  }],
+		"keybindings": [
+			{
+				"command": "edit-yaml.edit",
+				"key": "ctrl+i ctrl+t",
+				"mac": "cmd+i cmd+t",
+				"when": "resourceLangId == yaml"
+			}
+		],
 		"menus": {
 			"explorer/context": [
 				{
@@ -450,6 +452,7 @@
 		"iconv-lite": "^0.6.2",
 		"jsdom": "16.4.0",
 		"mocha": "^9.1.2",
+		"nyc": "^15.1.0",
 		"readline-sync": "^1.4.10",
 		"sweetalert2": "^9.17.2",
 		"toaster-js": "^2.2.3",
