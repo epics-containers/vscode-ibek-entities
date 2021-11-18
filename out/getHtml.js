@@ -201,7 +201,7 @@ function createEditorHtml(webview, context, initialVars) {
 						</button>
 					</div>
 
-					<button style="margin-right: 1em" class="button is-outlined on-readonly-disable-btn" onclick="addTable()">
+					<button style="margin-right: 1em" class="button is-outlined on-readonly-disable-btn" onclick="returnTableTypeList()">
 						<span class="icon is-small">
 							<i class="fas fa-table"></i>
 						</span>
@@ -265,6 +265,35 @@ function createEditorHtml(webview, context, initialVars) {
 	</div>
 		`;
     }
+    let askCreateTableModalHtml = ``;
+    {
+        askCreateTableModalHtml = `
+		<div id="ask-create-table-modal" class="modal modal-centered">
+		<div class="modal-background"></div>
+		<div class="modal-content">
+			<div class="box">
+				<h3 class="title is-3">Add table</h3>
+
+  				<label for="entities">Choose type of table to create:</label>
+					<select id="entities" name="entities">
+  				</select>
+
+				<div style="margin-top: 1em">
+					<button class="button is-warning" onclick="addTable()">
+						<span>Add</span>
+					</button>
+
+					<button style="margin-left: 0.5em" class="button is-outlined" onclick="toggleAskCreateTableModalDiv(false)">
+						<span>Close</span>
+					</button>
+				</div>
+
+			</div>
+		</div>
+		<button class="modal-close is-large" aria-label="close" onclick="toggleAskCreateTableModalDiv(false)"></button>
+	</div>
+		`;
+    }
     return `
 	<!DOCTYPE html>
 	<html>
@@ -303,6 +332,7 @@ function createEditorHtml(webview, context, initialVars) {
 
 	${askDeleteTableModalHtml}
 
+	${askCreateTableModalHtml}
 
 
 	<script src="${handsontableJs}"></script>

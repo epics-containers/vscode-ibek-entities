@@ -1435,6 +1435,20 @@ function toggleAskDeleteTableModalDiv(isVisible: boolean) {
 }
 
 /**
+ * displays or hides the ask add table modal
+ * @param isVisible 
+ */
+function toggleAskCreateTableModalDiv(isVisible: boolean) {
+
+	if (isVisible) {
+		askCreateTableModalDiv.classList.add('is-active')
+		return
+	}
+
+	askCreateTableModalDiv.classList.remove('is-active')
+}
+
+/**
  * displays the given data (yaml)
  * @param _data the initial data object created from the yaml file
  */
@@ -2064,29 +2078,54 @@ function showColHeaderNameEditor(visualColIndex: number) {
 }
 
 /**
- * creates an empty template table upon button press
- * TO DO - allow adding columns
- * TO DO future ? - allow user to select ioc type (or custom and specify row/col count)
- * and then populate table with template
+ * creates an empty template table of user selected type from schema
  */
 function addTable(){
-	let counter: number = HotRegisterer.counter
-	let tableKey: string = "table" + counter
-	let container = createHtmlContainer(counter, "New Table"+counter)
-	let tableData: any[] = [[0, 0, 0]]
+	const selectEl = <HTMLSelectElement>_getById("entities")
+	const tableType: string = selectEl.options[selectEl.selectedIndex].value
+	if(tableType === "") return //in case no option selected
+
+	//set up columns
+	let newTableColumns: any[] = []
+	initialData.tableColumns.forEach((table) => { //iterates to find correct schema data
+		table.forEach((column) => {
+			if(column.name === "type" && column.default === tableType){
+				newTableColumns = table
+			}
+		})
+	})
+	const columnOptions = setColumnOptions(newTableColumns)
+
+	//create empty row of data to initialise table
+	let emptyData: {[k: string]: any} = {}
+	newTableColumns.forEach((column) => {
+		if(column.required === true){
+			emptyData[column.name] = null
+		}
+		else if(column.name === "type"){ //set up type column here
+			emptyData[column.name] = tableType
+		}
+	})
+
+	const tableKey: string = "table" + HotRegisterer.counter
+	const container = createHtmlContainer(HotRegisterer.counter, tableType)
 	if (container){
-		let columnOptions: any[] = [{title: "col 1"}, {title: "col 2"}, {title: "col 3"}]
-		//need to create a row of placeholder data
-		HotRegisterer.register(tableKey, container, tableData, columnOptions, [])
+		HotRegisterer.register(tableKey, container, [emptyData], columnOptions, [])
+		HotRegisterer.counter++
+		setColumnMetadata(0, newTableColumns)
 	}
 	else{
 		console.log("couldn't find html to create table")
 		//TO DO - better error/exception handling here
 	}
-	HotRegisterer.counter = counter+1
 
 	onResizeGrid()
-	onTableChange(tableKey, undefined, undefined, undefined, undefined, tableData, "addTable")
+
+	console.log(Object.keys(emptyData))
+
+	hot = HotRegisterer.getInstance(tableKey)
+	if(!hot) return // TO DO need an exception error thrown bc if can't access table means smthn went wrong
+	onTableChange(tableType, undefined, undefined, undefined, undefined, [hot.getSourceDataAtRow(0)], "addTable")
 }
 
 /**
@@ -2098,7 +2137,6 @@ function removeTable(){
 	if (!hot) throw new Error('table was null')
 	//@ts-ignore
 	let tableKey = hot.rootElement.id
-
 	let tableName = retrieveTable(hot)
 	
 	let container: HTMLElement | null = document.getElementById(tableKey)
@@ -2115,7 +2153,6 @@ function removeTable(){
 
 /**
  * creates HOT instances and adds their references to a bucket so can be identified.
- * might need to be moved elsewhere as is not a type declaration
  * @param counter keeps track of how many previous instances created in order to
  * continue creating unique IDs
  * @param register used to create a new HOT instance and register it in the bucket

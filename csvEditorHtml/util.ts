@@ -1297,3 +1297,18 @@ function getIncrementedValues(sourceText: any, num: number){
 	}
 	return newText
 }
+
+/**
+ * returns a list of all entity types in the schema and populates
+ * a dropdown in the add table modal for selection
+ */
+function returnTableTypeList(){
+	const tableTypeList = initialData.tableHeaders
+	let dropdownOptions = '<option value="" disabled selected>Select</option>'
+    for (const idx in tableTypeList) {
+        dropdownOptions += "<option>" + tableTypeList[idx] + "</option>";
+	}
+	let _dropdownEl = _getById("entities")
+	_dropdownEl.innerHTML = dropdownOptions;
+	toggleAskCreateTableModalDiv(true)
+}
