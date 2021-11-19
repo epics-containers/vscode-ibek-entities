@@ -753,6 +753,7 @@ function applyYamlChanges(instance: Instance, changeType: string, changeObject: 
 					if(changeObject.tableData){
 						changeObject.tableData.forEach((tableRow) => {
 							const newNode = currentYaml.createNode(tableRow)
+							newNode.items.splice(0, 0, newNode.items.pop())
 							entities.add(newNode)
 						})
 					}
