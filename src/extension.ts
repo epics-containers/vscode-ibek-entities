@@ -431,6 +431,48 @@ export function createNewEditorInstance(context: vscode.ExtensionContext, active
 	//just set the panel if we added the instance
 	instance.panel = panel
 
+	panel.onDidChangeViewState(({ webviewPanel }) => {
+		if (!webviewPanel.visible || !webviewPanel.active) {
+			undoCommand.dispose();
+			redoCommand.dispose();
+			saveCommand.dispose();
+		} else {
+			registerCommands();
+		}
+	});
+
+	//register our custom undo/redo/save commands for triggering inside webview
+	let undoCommand: vscode.Disposable;
+	let redoCommand: vscode.Disposable;
+	let saveCommand: vscode.Disposable;
+	const registerCommands = () => {
+		undoCommand = vscode.commands.registerCommand('undo', async (args: any) => {
+			const msg: ReceivedMessageFromVsCode = {
+				command: "triggerUndo",
+				}
+			panel.webview.postMessage(msg)
+			return vscode.commands.executeCommand('default:undo', args);
+		});
+
+		redoCommand = vscode.commands.registerCommand('redo', async (args) => {
+			const msg: ReceivedMessageFromVsCode = {
+				command: "triggerRedo",
+				}
+			panel.webview.postMessage(msg)
+			return vscode.commands.executeCommand('default:redo', args);
+		});
+
+		saveCommand = vscode.commands.registerCommand('workbench.action.files.save', async (args: any) => {
+			vscode.workspace.openTextDocument(instance.sourceUri)
+				.then(document => {
+					document.save()
+			})
+			return
+		});
+
+	};
+	registerCommands();
+
 
 	panel.webview.onDidReceiveMessage((message: PostMessage) => {
 

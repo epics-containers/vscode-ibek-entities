@@ -2194,6 +2194,11 @@ let HotRegisterer: HotRegister = {
 			} as any,
 			renderAllRows: false, //use false and small table size for fast initial render, see https://handsontable.com/docs/7.0.2/Options.html#renderAllRows
 			afterChange: function(changes: [number, string | number, any, any][], reason: string){
+				//push changes to global undo stack
+				if(this.undo && (reason !== "UndoRedo.undo" && reason !== "UndoRedo.redo")){
+					undoStack.push(this)
+					redoStack = [] //clear redo stack after new changes made?
+				}
 				//@ts-ignore says getDataAtRowProp doesn't exist on default settings but it does?
 				onAnyChange(changes, reason, this.getDataAtRowProp(0, "type"))}, //only called when cell value changed (e.g. not when col/row removed)
 			fillHandle: {
@@ -2290,11 +2295,17 @@ let HotRegisterer: HotRegister = {
 					'---------3': {
 						name: '---------'
 					},
-					'undo': {
-						name: "Undo (Ctrl + Z)"
+					'globalUndo': {
+						name: "Undo (Ctrl + Z)",
+						callback: function () { 
+							triggerGlobalUndo()
+						},
 					},
-					'redo': {
-						name: "Redo (Ctrl + Y)"
+					'globalRedo': {
+						name: "Redo (Ctrl + Y)",
+						callback: function () { 
+							triggerGlobalRedo()
+						},
 					},
 					'---------4': {
 						name: '---------'

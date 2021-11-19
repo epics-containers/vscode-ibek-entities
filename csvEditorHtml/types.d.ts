@@ -352,7 +352,15 @@ type SourceFileChangedMessage = {
 	command: 'sourceFileChanged'
 }
 
-type ReceivedMessageFromVsCode =  YamlUpdateMessage | RequestChangeFontSiteInPxMessage | SourceFileChangedMessage
+type TriggerUndoMessage = {
+	command: 'triggerUndo'
+}
+
+type TriggerRedoMessage = {
+	command: 'triggerRedo'
+}
+
+type ReceivedMessageFromVsCode =  YamlUpdateMessage | RequestChangeFontSiteInPxMessage | SourceFileChangedMessage | TriggerUndoMessage | TriggerRedoMessage
 
 /**
  * send by the webview indicating that it has rendered and the webview has set up the listener to receive content

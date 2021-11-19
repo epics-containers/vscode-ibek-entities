@@ -1312,3 +1312,27 @@ function returnTableTypeList(){
 	_dropdownEl.innerHTML = dropdownOptions;
 	toggleAskCreateTableModalDiv(true)
 }
+
+/**
+ * implements a global undo
+ */
+function triggerGlobalUndo(){
+    if (undoStack.length > 0) {
+		const hotInstance = undoStack.splice(-1)[0];
+		if(!hotInstance) throw new Error("nothing to undo in the stack")
+        hotInstance.undo();
+        redoStack.push(hotInstance);
+    }
+}
+
+/**
+ * implements a global redo
+ */
+function triggerGlobalRedo(){
+    if (redoStack.length > 0) {
+		const hotInstance = redoStack.splice(-1)[0];
+		if(!hotInstance) throw new Error("nothing to redo in the stack")
+        hotInstance.redo();
+        undoStack.push(hotInstance);
+    }
+}

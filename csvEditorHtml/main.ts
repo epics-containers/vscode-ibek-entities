@@ -36,6 +36,15 @@ let hot: import('../thirdParty/handsontable/handsontable') | null
 toFormat(Big)
 
 /**
+ * sets up an empty global undo stack for all tables
+ */
+let undoStack: any[] = []
+/**
+ * sets up an empty global redo stack for all tables
+ */
+let redoStack: any[] = []
+
+/**
  * the default csv content to used if we get empty content
  * handson table will throw if we pass in a 1D array because it expects an object?
  */
@@ -315,12 +324,12 @@ if (vscode) {
 
 //register this before handsontable so we can first apply our actions
 function setupGlobalShortcutsInVs() {
-	if (vscode) {
-		Mousetrap.bindGlobal(['meta+s', 'ctrl+s'], (e) => {
-			e.preventDefault()
-			postModifyContent("saveChanges", {})
-		})
-	}
+	//if (vscode) {
+		//Mousetrap.bindGlobal(['meta+s', 'ctrl+s'], (e) => {
+			//e.preventDefault()
+			//postModifyContent("saveChanges", {})
+		//})
+	//}
 
 	Mousetrap.bindGlobal(['ctrl+u'], (e) => {
 		insertRowBelow()

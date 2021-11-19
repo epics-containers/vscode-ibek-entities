@@ -1,4 +1,13 @@
 "use strict";
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.createColumnData = exports.createTableData = exports.validateYaml = exports.fetchSchema = exports.parseYaml = exports.onSourceFileChanged = exports.setEditorHasChanges = exports.notExhaustive = exports.getActiveEditorInstance = exports.createNewEditorInstance = exports.getEditorTitle = exports.deactivate = exports.activate = exports.editorUriScheme = void 0;
 const vscode = require("vscode");
@@ -350,6 +359,44 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
     }
     //just set the panel if we added the instance
     instance.panel = panel;
+    panel.onDidChangeViewState(({ webviewPanel }) => {
+        if (!webviewPanel.visible || !webviewPanel.active) {
+            undoCommand.dispose();
+            redoCommand.dispose();
+            saveCommand.dispose();
+        }
+        else {
+            registerCommands();
+        }
+    });
+    //register our custom undo/redo/save commands for triggering inside webview
+    let undoCommand;
+    let redoCommand;
+    let saveCommand;
+    const registerCommands = () => {
+        undoCommand = vscode.commands.registerCommand('undo', (args) => __awaiter(this, void 0, void 0, function* () {
+            const msg = {
+                command: "triggerUndo",
+            };
+            panel.webview.postMessage(msg);
+            return vscode.commands.executeCommand('default:undo', args);
+        }));
+        redoCommand = vscode.commands.registerCommand('redo', (args) => __awaiter(this, void 0, void 0, function* () {
+            const msg = {
+                command: "triggerRedo",
+            };
+            panel.webview.postMessage(msg);
+            return vscode.commands.executeCommand('default:redo', args);
+        }));
+        saveCommand = vscode.commands.registerCommand('workbench.action.files.save', (args) => __awaiter(this, void 0, void 0, function* () {
+            vscode.workspace.openTextDocument(instance.sourceUri)
+                .then(document => {
+                document.save();
+            });
+            return;
+        }));
+    };
+    registerCommands();
     panel.webview.onDidReceiveMessage((message) => {
         switch (message.command) {
             case 'ready': {

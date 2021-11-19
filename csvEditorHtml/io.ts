@@ -433,6 +433,16 @@ function handleVsCodeMessage(event: { data: ReceivedMessageFromVsCode }) {
 			break
 		}
 
+		case 'triggerUndo': {
+			triggerGlobalUndo()
+			break
+		}
+
+		case 'triggerRedo': {
+			triggerGlobalRedo()
+			break
+		}
+
 		default: {
 			_error('received unknown message from vs code')
 			notExhaustiveSwitch(message)
