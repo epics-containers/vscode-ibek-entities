@@ -560,6 +560,7 @@ type HotRegister = {
 	register: (key: string,container: HTMLElement, tableData: any[], columnOps: any[], tableColumns: any[]) => void
 	getInstance: (key: string) => Handsontable | null
 	removeKey: (key: string) => void
+	emptyBucket: any[]
 }
 
 type InitialDataObject = {
@@ -579,4 +580,12 @@ type ReturnChangeObject = {
 	oldRowIndex?: number[]
 	newRowIndex?: number | number[]
 	tableData?: [][]
+}
+
+type DeletedTableObject = {
+	type: string
+	keyIndex: number
+	latestData: any[]
+	undoList: any[]
+	redoList: any[]
 }

@@ -45,6 +45,16 @@ let undoStack: any[] = []
 let redoStack: any[] = []
 
 /**
+ * used to differentiate between row actions called by user or undo/redo
+ */
+let isUndoRedo: boolean = false
+
+/**
+ * used to override hot table undo keyboard shortcut
+ */
+let lastKey = 0
+
+/**
  * the default csv content to used if we get empty content
  * handson table will throw if we pass in a 1D array because it expects an object?
  */

@@ -1214,7 +1214,6 @@ function onAnyChange(changes?: CellChanges[] | null, reason?: string, _tableName
 
 /**
  * should be called if any rows/tables added/deleted/moved
- * moved
  */
 function onTableChange(_tableName: string, _colName: string | undefined, _cellValue: string | number | undefined, _oldRowIndex: number[] | undefined, _newRowIndex: number | undefined, _tableData: any[], reason: string) {
 	
@@ -1226,20 +1225,20 @@ function onTableChange(_tableName: string, _colName: string | undefined, _cellVa
 				changeContent.tableData = _tableData[0] 
 			}
 			break
-			//this fetches table name, row index and row data and sends it over
+
 		case "deleteRow":
 			changeContent.oldRowIndex = _oldRowIndex
 			break
-			//pass in row index (old = new)
+
 		case "moveRow":
 			changeContent.newRowIndex = _newRowIndex
 			changeContent.oldRowIndex = _oldRowIndex
 			break
-			//pass in old row index and new row index
+
 		case "addTable":
 			changeContent.tableData = _tableData
 			break
-			//pass tabledata in
+		
 		case "deleteTable":
 			//table name is already passed in so do nothing here
 			break
@@ -2085,32 +2084,66 @@ function addTable(){
 	const tableType: string = selectEl.options[selectEl.selectedIndex].value
 	if(tableType === "") return //in case no option selected
 
+	const tableKey: string = "table" + HotRegisterer.counter
+	createTable(tableType, HotRegisterer.counter, tableKey, [])
+
+	if(isUndoRedo === false){	
+		undoStack.push({[tableKey]: hot, "reason": "addTable"})
+		redoStack = [] //clear redo stack after new changes made?
+	}
+}
+
+/**
+ * called by undo/redo actions. creates a formerly deleted table again with undo/redo stack preserved.
+ */
+function recoverTable(){
+	const oldTable: DeletedTableObject = HotRegisterer.emptyBucket.pop()
+	const tableKey: string = "table" + oldTable.keyIndex
+	createTable(oldTable.type, oldTable.keyIndex, tableKey, oldTable.latestData)
+
+	//TO DO something here to move the html container back to original spot
+
+	//now need to bring back undo/redo stack
+	hot = HotRegisterer.getInstance(tableKey)
+	let undoPlugin = (hot as any).undoRedo
+	undoPlugin.doneActions = oldTable.undoList
+	undoPlugin.undoneActions = oldTable.redoList
+
+	return hot
+}
+
+/**
+ * called when any type of table is created
+ */
+function createTable(type: string, count: number, key: string, _data: any[]){
 	//set up columns
 	let newTableColumns: any[] = []
 	initialData.tableColumns.forEach((table) => { //iterates to find correct schema data
 		table.forEach((column) => {
-			if(column.name === "type" && column.default === tableType){
+			if(column.name === "type" && column.default === type){
 				newTableColumns = table
 			}
 		})
 	})
 	const columnOptions = setColumnOptions(newTableColumns)
 
-	//create empty row of data to initialise table
-	let emptyData: {[k: string]: any} = {}
-	newTableColumns.forEach((column) => {
-		if(column.required === true){
-			emptyData[column.name] = null
-		}
-		else if(column.name === "type"){ //set up type column here
-			emptyData[column.name] = tableType
-		}
-	})
+	//if no data was passed in, create empty set
+	if(_data.length === 0){
+		let emptyData: {[k: string]: any} = {}
+		newTableColumns.forEach((column) => {
+			if(column.required === true){
+				emptyData[column.name] = null
+			}
+			else if(column.name === "type"){ //set up type column here
+				emptyData[column.name] = type
+			}
+		})
+		_data.push(emptyData)
+	}
 
-	const tableKey: string = "table" + HotRegisterer.counter
-	const container = createHtmlContainer(HotRegisterer.counter, tableType)
+	const container = createHtmlContainer(count, type)
 	if (container){
-		HotRegisterer.register(tableKey, container, [emptyData], columnOptions, [])
+		HotRegisterer.register(key, container, _data, columnOptions, [])
 		HotRegisterer.counter++
 		setColumnMetadata(0, newTableColumns)
 	}
@@ -2121,31 +2154,50 @@ function addTable(){
 
 	onResizeGrid()
 
-	console.log(Object.keys(emptyData))
-
-	hot = HotRegisterer.getInstance(tableKey)
+	hot = HotRegisterer.getInstance(key)
 	if(!hot) return // TO DO need an exception error thrown bc if can't access table means smthn went wrong
-	onTableChange(tableType, undefined, undefined, undefined, undefined, [hot.getSourceDataAtRow(0)], "addTable")
+
+	onTableChange(type, undefined, undefined, undefined, undefined, _data, "addTable")
 }
 
 /**
  * called when a table is manually deleted
  */
-function removeTable(){
+function removeTable(oldHot?: any){
+
 	toggleAskDeleteTableModalDiv(false)
 	hot = getSelectedHot()
+
+	if(oldHot){
+		hot = oldHot
+	}
 	if (!hot) throw new Error('table was null')
 	//@ts-ignore
 	let tableKey = hot.rootElement.id
 	let tableName = retrieveTable(hot)
 	
-	let container: HTMLElement | null = document.getElementById(tableKey)
-	if(hot && container){
+	let _container: HTMLElement | null = document.getElementById(tableKey)
+	if(hot && _container){
+		//before delete table, must keep outline to create again if undone
+		const matches = tableKey.match(/\d+$/); //finds counter value
+		let undoPlugin = (hot as any).undoRedo
+		let _table: DeletedTableObject = {
+			type: tableName, 
+			keyIndex: matches[0],
+			latestData: hot.getSourceData(), 
+			undoList: undoPlugin.doneActions, 
+			redoList: undoPlugin.undoneActions
+		}
+		HotRegisterer.emptyBucket.push(_table)
+		if(isUndoRedo === false){	
+			undoStack.push({[tableKey]: hot, "reason": "deleteTable"})
+			redoStack = [] //clear redo stack after new changes made?
+		}
+
 		hot.destroy()
 		hot = null
-		let key: string = (container.id).substr((container.id).length -1)
-		HotRegisterer.removeKey("table"+key)
-		deleteHtmlContainer("container"+key)
+		HotRegisterer.removeKey(tableKey)
+		deleteHtmlContainer("container"+matches[0])
 	}
 	onResizeGrid()
 	onTableChange(tableName, undefined, undefined, undefined, undefined, [], "deleteTable")
@@ -2159,10 +2211,12 @@ function removeTable(){
  * @param getInstance used to select a particular table instance
  * @param bucket a bucket to store all the keys to hot instances in
  * @param removeKey removes deleted instances from bucket
+ * @param emptyBucket stores outline data on deleted tables in case recreated
  */
 let HotRegisterer: HotRegister = {
 	counter: 0,
-    bucket: {},
+	bucket: {},
+	emptyBucket: [],
 	register: function(key, container, tableData, columnOpt, tableColumns) {
 		//reset header row
 		headerRowWithIndex = null
@@ -2194,9 +2248,11 @@ let HotRegisterer: HotRegister = {
 			} as any,
 			renderAllRows: false, //use false and small table size for fast initial render, see https://handsontable.com/docs/7.0.2/Options.html#renderAllRows
 			afterChange: function(changes: [number, string | number, any, any][], reason: string){
-				//push changes to global undo stack
-				if(this.undo && (reason !== "UndoRedo.undo" && reason !== "UndoRedo.redo")){
-					undoStack.push(this)
+				//push changes to global undo stack but NOT if initial table load
+				if(reason !== "loadData" && reason !== "UndoRedo.undo" && reason !== "UndoRedo.redo"){	
+					//@ts-ignore
+					let tableKey = this.rootElement.id
+					undoStack.push({[tableKey]: this})
 					redoStack = [] //clear redo stack after new changes made?
 				}
 				//@ts-ignore says getDataAtRowProp doesn't exist on default settings but it does?
@@ -2298,13 +2354,13 @@ let HotRegisterer: HotRegister = {
 					'globalUndo': {
 						name: "Undo (Ctrl + Z)",
 						callback: function () { 
-							triggerGlobalUndo()
+							triggerGlobalUndoRedo(undoStack, redoStack)
 						},
 					},
 					'globalRedo': {
 						name: "Redo (Ctrl + Y)",
 						callback: function () { 
-							triggerGlobalRedo()
+							triggerGlobalUndoRedo(redoStack, undoStack)
 						},
 					},
 					'---------4': {
@@ -2374,6 +2430,7 @@ let HotRegisterer: HotRegister = {
 			},
 			enterMoves: function (event: KeyboardEvent) {
 
+				hot = getSelectedHot()
 				if (!hot) throw new Error('table was null')
 	
 				lastHandsonMoveWas = 'enter'
@@ -2403,7 +2460,7 @@ let HotRegisterer: HotRegister = {
 				return _default
 			},
 			tabMoves: function (event: KeyboardEvent) {
-
+				hot = getSelectedHot()
 				if (!hot) throw new Error('table was null')
 	
 				lastHandsonMoveWas = 'tab'
@@ -2451,6 +2508,7 @@ let HotRegisterer: HotRegister = {
 			},
 			beforeUndo: function (_action: EditHeaderCellAction | RemoveColumnAction | InsertColumnAction | any) {
 
+				isUndoRedo = true
 				let __action = _action as EditHeaderCellAction | RemoveColumnAction | InsertColumnAction
 	
 				//when we change has header this is not a prolbem because the undo stack is cleared when we toggle has header
@@ -2504,7 +2562,8 @@ let HotRegisterer: HotRegister = {
 	
 			},
 			afterUndo: function (action: any) {
-				hot = getSelectedHot()
+				//hot = getSelectedHot()
+				isUndoRedo = true
 				if (!hot) throw new Error('table was null')
 
 				let rowMeta = hot.getCellMetaAtRow(0)
@@ -2533,6 +2592,8 @@ let HotRegisterer: HotRegister = {
 			},
 			beforeRedo: function (_action: EditHeaderCellAction | RemoveColumnAction | InsertColumnAction | any) {
 	
+				isUndoRedo = true
+
 				let __action = _action as EditHeaderCellAction | RemoveColumnAction | InsertColumnAction
 	
 				//when we change has header this is not a prolbem because the undo stack is cleared when we toggle has header
@@ -2583,7 +2644,8 @@ let HotRegisterer: HotRegister = {
 			}
 			},
 			afterRedo: function(action: any) {
-				hot = getSelectedHot()
+				//hot = getSelectedHot()
+				isUndoRedo = true
 				if (!hot) throw new Error('table was null')
 
 				let rowMeta = hot.getCellMetaAtRow(0)
@@ -2591,7 +2653,14 @@ let HotRegisterer: HotRegister = {
 				onResizeGrid()
 			},
 			afterRowMove: function (startRow: number, endRow: number) {
-				hot = getSelectedHot()
+				if(isUndoRedo === false){
+					//@ts-ignore
+					let tableKey = this.rootElement.id
+					undoStack.push({[tableKey]: this})
+					redoStack = [] //clear redo stack after new changes made?
+				}
+
+				//hot = getSelectedHot()
 				if (!hot) throw new Error('table was null')
 				let tableName = retrieveTable(hot)
 				//@ts-ignore handsontable insists startRow is a number but it's actually a number array?
@@ -2602,12 +2671,26 @@ let HotRegisterer: HotRegister = {
 				//added below
 				//critical because we could update hot settings here
 				pre_afterCreateRow(visualRowIndex, amount)
+
+				if(isUndoRedo === false){
+					//@ts-ignore
+					let tableKey = this.rootElement.id
+					undoStack.push({[tableKey]: this})
+					redoStack = [] //clear redo stack after new changes made?
+				}
 	
 				//don't do this as we are inside a hook and the next listerners will change the indices and when we call
 				//hot.updateSettings (inside this func) the plugin internal states are changed and the indices/mappings are corrupted
 				// updateFixedRowsCols()
 			},
 			afterRemoveRow: function (visualRowIndex, amount) {
+				if(isUndoRedo === false){
+					//@ts-ignore
+					let tableKey = this.rootElement.id
+					undoStack.push({[tableKey]: this})
+					redoStack = [] //clear redo stack after new changes made?
+				}
+
 				//we need to modify some or all hiddenPhysicalRowIndices...
 				if (!hot) return
 	
@@ -2639,27 +2722,21 @@ let HotRegisterer: HotRegister = {
 			},
 			beforeKeyDown: function (event: KeyboardEvent) {
 
-				//we need this because when editing header cell the hot instance thinks some editor is active and would pass the inputs to the next cell...
-				if (editHeaderCellTextInputEl) {
+				if (event.keyCode === 90 && lastKey === 17){
 					event.stopImmediatePropagation()
-					return
+					//event.preventDefault()
+					triggerGlobalUndoRedo(undoStack, redoStack)
+					return false //this is necessary to prevent handsontable default undo being called as well
+				}
+				else if (event.keyCode === 89 && lastKey === 17){
+					event.stopImmediatePropagation()
+					//event.preventDefault()
+					triggerGlobalUndoRedo(redoStack, undoStack)
+					return false
 				}
 	
-				//NOTE that this can prevent all vs code shortcuts... e.g. cmd+p (on mac)!!!
-				if (event.ctrlKey && event.shiftKey && event.altKey && event.key === 'ArrowDown') {
-					event.stopImmediatePropagation()
-					insertRowBelow()
-				} else if (event.ctrlKey && event.shiftKey && event.altKey && event.key === 'ArrowUp') {
-					event.stopImmediatePropagation()
-					insertRowAbove()
-				} else if (event.ctrlKey && event.shiftKey && event.altKey && event.key === 'ArrowLeft') {
-					event.stopImmediatePropagation()
-					insertColLeft()
-				} else if (event.ctrlKey && event.shiftKey && event.altKey && event.key === 'ArrowRight') {
-					event.stopImmediatePropagation()
-					insertColRight()
-				}
-	
+				lastKey = event.keyCode
+
 			} as any,
 		})
 
@@ -2777,7 +2854,6 @@ function getMatchingColumns(tableName: string, yamlTableColumns: any[][]){
 function setColumnMetadata(row: number, tableColumns: any[]){
 	tableColumns.forEach((column, idx) => {
 		if(hot){
-			//TO DO - descriptions are off by 1 or 2 index, need to fix
 			hot.setCellMeta(row, idx, "description", column.description)
 			hot.setCellMeta(row, idx, "default", column.default)
 			hot.setCellMeta(row, idx, "required", column.required)

@@ -1314,25 +1314,64 @@ function returnTableTypeList(){
 }
 
 /**
- * implements a global undo
+ * Implements a global undo or redo. custom handling for table actions
+ * that are not covered by handsontable's own undo/redo.
+ * @param fetchStack the stack we are pulling from
+ * @param the stack our change gets pushed to after enacted
  */
-function triggerGlobalUndo(){
-    if (undoStack.length > 0) {
-		const hotInstance = undoStack.splice(-1)[0];
-		if(!hotInstance) throw new Error("nothing to undo in the stack")
-        hotInstance.undo();
-        redoStack.push(hotInstance);
-    }
+function triggerGlobalUndoRedo(fetchStack: any[], pushStack: any[]){
+    if (fetchStack.length <= 0) return
+		
+	let action = fetchStack.splice(-1)[0];
+	let reason = action["reason"]
+	delete action["reason"] //prevents it being looped over
+	Object.keys(action).forEach((key) => {
+		let tableAction = isTableActionUndoRedo(key, action, fetchStack, reason)
+
+		if(tableAction !== false){
+			action[key] = tableAction
+			fetchStack.forEach((item) => {
+				Object.keys(item).forEach((itemKey) =>{
+					if (itemKey === key){
+						item[itemKey] = tableAction
+					}
+				})
+			})
+		}
+		else if (tableAction === false){
+			let hotInstance = action[key]
+			hotInstance.undo();
+		}
+	pushStack.push(action); 
+	isUndoRedo = false
+	})
 }
 
 /**
- * implements a global redo
+ * Determines whether the next item in the undo stack is the
+ * creation or deletion of a table, and enacts this action.
+ * Called by global undo and redo trigger functions. Returns 
+ * false if action is not table creation or deletion
+ * @param key reference to hot container for instance
+ * @param hotInstance the instance the next undo/redo occurs on
+ * @param stack undo or redo stack, depending on which was called
+ * @param reason informs whether table action was delete or add
  */
-function triggerGlobalRedo(){
-    if (redoStack.length > 0) {
-		const hotInstance = redoStack.splice(-1)[0];
-		if(!hotInstance) throw new Error("nothing to redo in the stack")
-        hotInstance.redo();
-        undoStack.push(hotInstance);
-    }
+function isTableActionUndoRedo(key: string, action: any, stack: any[], reason: string){
+	let hotInstance = action[key]
+	isUndoRedo = true
+	
+	if(hotInstance.isDestroyed && reason === "deleteTable"){
+		hotInstance = recoverTable()
+		action["reason"] = "addTable" //re-add and swap so re/undo know what to do
+		return hotInstance
+	}
+	else if(reason === "addTable"){
+		removeTable(hotInstance)
+		action["reason"] = "deleteTable" //re-add and swap so re/undo know what to do
+		return hotInstance
+	}
+	else{
+		return false
+	}
 }
