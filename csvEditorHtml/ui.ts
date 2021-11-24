@@ -2101,7 +2101,7 @@ function recoverTable(){
 	const tableKey: string = "table" + oldTable.keyIndex
 	createTable(oldTable.type, oldTable.keyIndex, tableKey, oldTable.latestData)
 
-	//TO DO something here to move the html container back to original spot
+	moveHtmlContainer("container"+oldTable.keyIndex, oldTable.keyIndex)
 
 	//now need to bring back undo/redo stack
 	hot = HotRegisterer.getInstance(tableKey)
@@ -2340,7 +2340,7 @@ let HotRegisterer: HotRegister = {
 						name: '---------'
 					},
 					'fill_increment_cells': {
-						name: "Fill Cells (Ctrl+L)",
+						name: "Increment Cells (Ctrl+L)",
 						callback: function (key: any, selection: any, clickevent: any) { //key, selection, clickEvent
 							hot = getSelectedHot()
 							if(!hot) return

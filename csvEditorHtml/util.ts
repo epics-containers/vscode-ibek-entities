@@ -1184,6 +1184,22 @@ function deleteHtmlContainer(elementId: string){
 }
 
 /**
+ * Used to move handsontable instances around.
+ * @param currentNode container with table we want to move
+ * @param newIndex the index we are moving the container to
+ */
+function moveHtmlContainer(elementId: string, newIndex: number){
+	let currentEl = document.getElementById(elementId)
+	if(currentEl && currentEl.parentNode){
+		let elementsList = currentEl.parentNode.children
+		currentEl.parentNode.insertBefore(currentEl, elementsList[newIndex])
+	}
+	else{
+		console.log("Couldn't find HTML container with that ID.")
+	}
+}
+
+/**
  * returns the hot instance which is currently selected
  */
 function getSelectedHot(){
