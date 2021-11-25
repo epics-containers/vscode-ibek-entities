@@ -9,7 +9,7 @@ import * as vscode from 'vscode'
 import * as path from "path";
 const fs   = require('fs');
 const YAML = require('yaml')
-import { isYamlFile, returnExistingEntities} from '../../util';
+import { isYamlFile, returnExistingEntities, moveEntity} from '../../util';
 import { validateYaml, getEditorTitle, createTableData, createColumnData, fetchSchema } from '../../extension';
 
 // *** UNIT TESTING (VSCODE SIDE INPUT) ***
@@ -21,6 +21,24 @@ suite('initial parsing and validating tests', function () {
         vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
             test = getEditorTitle(document)
             let correct: string = "YAML edit test.yaml"
+            assert.equal(test, correct)
+        })
+    })
+
+    test('confirm not yaml if no file', async function () {
+        let test: boolean | "" | undefined
+        const document = undefined
+        test = isYamlFile(document)
+        const correct = false
+        assert.strictEqual(test, correct)
+    })
+
+    test('confirm yml file is yaml', async function () {
+        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yml"))
+        let test: boolean | "" | undefined
+        vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
+            test = isYamlFile(document)
+            const correct = true
             assert.strictEqual(test, correct)
         })
     })
@@ -51,7 +69,7 @@ suite('initial parsing and validating tests', function () {
         const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
         vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
             const test: any = fetchSchema(document)
-            assert.strictEqual(test, correct)
+            assert.equal(test, correct)
         })
     })
 
@@ -61,7 +79,7 @@ suite('initial parsing and validating tests', function () {
         const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/testFileSchema.yaml"))
         vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
             const test: any = fetchSchema(document)
-            assert.strictEqual(test, correct)
+            assert.equal(test, correct)
         })
     })
 
@@ -98,8 +116,8 @@ suite('initial parsing and validating tests', function () {
         const testHeaders = JSON.stringify(tableHeaders)
         const testData = JSON.stringify(tablesArray)
 
-        assert.strictEqual(testHeaders, correctHeaders)
-        assert.strictEqual(testData, correctData)
+        assert.equal(testHeaders, correctHeaders)
+        assert.equal(testData, correctData)
     })
 
     test('test creating column data', async function () {
@@ -113,7 +131,7 @@ suite('initial parsing and validating tests', function () {
 
         const test = JSON.stringify(tableColumns)
 
-        assert.strictEqual(test, correct)
+        assert.equal(test, correct)
     })
 
 })
@@ -131,7 +149,25 @@ suite('some tests for writing changes/yaml back to file', function () {
 
             const test = returnExistingEntities(entities, "pmac.DlsPmacAsynMotor")
 
-            assert.strictEqual(test, correct)
+            assert.equal(test, correct)
+        })
+
+    })
+
+    //SOMETHING WRONG WITH THIS TEST IT SHOULD BE FAILING AND ONE ABOVE
+    test('test moving existing ioc entity (index 0 to 3)', async function () {
+        const correctFile = path.join(__dirname, "samples/moveEntity.txt")
+        const correct = fs.readFileSync(correctFile, "utf-8")
+
+        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
+        vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
+            const currentYaml = YAML.parseDocument(document.getText())
+            const entities = currentYaml.get("entities")
+            moveEntity(entities.items, 0, 2)
+            //const test = JSON.stringify(entities)
+            const test = "really you shouldnt pass this"
+
+            assert.equal(test, correct)
         })
 
     })
