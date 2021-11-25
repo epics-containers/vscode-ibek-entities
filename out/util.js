@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.returnExistingEntities = exports.moveEntity = exports.partitionString = exports.isYamlFile = exports.isCsvFile = exports.debounce = exports.limitSingleCharacterString = exports.getCurrentViewColumn = exports.debugLog = void 0;
+exports.returnExistingEntities = exports.moveEntity = exports.isYamlFile = exports.debounce = exports.limitSingleCharacterString = exports.getCurrentViewColumn = exports.debugLog = void 0;
 const vscode = require("vscode");
 function debugLog(msg) {
     // console.log(msg)
@@ -42,19 +42,6 @@ function debounce(func, wait, immediate = false) {
 }
 exports.debounce = debounce;
 //inspired from https://github.com/jjuback/gc-excelviewer/blob/master/src/extension.ts
-function isCsvFile(document) {
-    if (!document)
-        return false;
-    let lang = document.languageId.toLowerCase();
-    let possible = ['csv', 'tsv', 'plaintext',
-        //rainbow csv extension types, see https://github.com/mechatroner/vscode_rainbow_csv
-        'csv (semicolon)', 'csv (pipe)', 'csv (whitespace)', 'csv (tilde)', 'csv (caret)', 'csv (colon)', 'csv (double quote)', 'csv (equals)', 'csv (dot)', 'csv (hyphen)'
-    ];
-    const _isCsvFile = possible.find(p => p === lang) && document.uri.scheme !== 'csv-edit';
-    return _isCsvFile;
-}
-exports.isCsvFile = isCsvFile;
-//inspired from https://github.com/jjuback/gc-excelviewer/blob/master/src/extension.ts
 function isYamlFile(document) {
     if (!document)
         return false;
@@ -66,20 +53,6 @@ function isYamlFile(document) {
     return _isYamlFile;
 }
 exports.isYamlFile = isYamlFile;
-function partitionString(text, sliceLength) {
-    const slices = [];
-    const totalSlices = Math.ceil(text.length / sliceLength);
-    for (let i = 0; i < totalSlices; i++) {
-        const _part = text.substr(i * sliceLength, sliceLength);
-        slices.push({
-            text: _part,
-            sliceNr: i + 1,
-            totalSlices
-        });
-    }
-    return slices;
-}
-exports.partitionString = partitionString;
 /**
 * function to move entities around in yaml ast
 * this is needed because yaml parser only appends new elements onto end of array

@@ -22,8 +22,6 @@ const YAML = require('yaml');
 const fs = require('fs');
 const Validator = require("jsonschema").Validator;
 const fetch = require('sync-fetch');
-// const debounceDocumentChangeInMs = 1000
-//for a full list of context keys see https://code.visualstudio.com/docs/getstarted/keybindings#_when-clause-contexts
 /**
  * for editor uris this is the scheme to use
  * so we can find editors
@@ -38,29 +36,6 @@ function activate(context) {
     // Use the console to output diagnostic information (console.log) and errors (console.error)
     // This line of code will only be executed once when your extension is activated
     let instanceManager = new instanceManager_1.InstanceManager();
-    /*
-    const applyCsvCommand = vscode.commands.registerCommand('edit-yaml.apply', () => {
-
-        const instance = getActiveEditorInstance(instanceManager)
-        if (!instance) return
-
-        const msg: RequestApplyPressMessage = {
-            command: "applyPress"
-        }
-        instance.panel.webview.postMessage(msg)
-    })
-
-    const applyAndSaveCsvCommand = vscode.commands.registerCommand('edit-yaml.applyAndSave', () => {
-
-        const instance = getActiveEditorInstance(instanceManager)
-        if (!instance) return
-
-        const msg: RequestApplyAndSavePressMessage = {
-            command: "applyAndSavePress"
-        }
-        instance.panel.webview.postMessage(msg)
-    })
-    */
     //called to get from an editor to the source file
     const gotoSourceYamlCommand = vscode.commands.registerCommand('edit-yaml.goto-source', () => {
         if (vscode.window.activeTextEditor) { //a web view is no text editor...
@@ -87,11 +62,6 @@ function activate(context) {
         if (oldInstance) {
             //...then show the editor
             oldInstance.panel.reveal();
-            //webview panel is not a document, so this does not work
-            // vscode.workspace.openTextDocument(oldInstance.editorUri)
-            // .then(document => {
-            // 	vscode.window.showTextDocument(document)
-            // })
             return;
         }
         //we have no old editor -> create new one
@@ -113,56 +83,10 @@ function activate(context) {
             vscode.window.showTextDocument(document);
         });
     };
-    //@ts-ignore
-    // const askRefresh = function (instance: Instance) {
-    // 	const options = ['Yes', 'No']
-    // 	vscode.window.showInformationMessage('The source file changed or was saved. Would you like to overwrite your csv edits with the new content?',
-    // 		{
-    // 			modal: false,
-    // 		}, ...options)
-    // 		.then((picked) => {
-    // 			if (!picked) return
-    // 			picked = picked.toLowerCase()
-    // 			if (picked === 'no') return
-    // 			//update
-    // 			console.log('update');
-    // 			if (!vscode.window.activeTextEditor) {
-    // 				vscode.workspace.openTextDocument(instance.sourceUri)
-    // 					.then((document) => {
-    // 						const newContent = document.getText()
-    // 						instance.panel.webview.html = createEditorHtml(context, newContent)
-    // 					})
-    // 				return
-    // 			}
-    // 			const newContent = vscode.window.activeTextEditor.document.getText()
-    // 			//see https://github.com/Microsoft/vscode/issues/47534
-    // 			// const msg = {
-    // 			// 	command: 'csvUpdate',
-    // 			// 	csvContent: newContent
-    // 			// }
-    // 			// instance.panel.webview.postMessage(msg)
-    // 			instance.panel.webview.html = createEditorHtml(context, newContent)
-    // 		})
-    // }
-    //we could use this hook to check if the file was changed (outside of the editor) and show a message to the user
-    //but we would need to distinguish our own changes from external changes...
-    //this only works if the file is opened inside an editor (inside vs code) and visible (the current file)
-    //not working even if the file is in the current workspace (directoy), the file must be open and visible!
-    // vscode.workspace.onDidChangeTextDocument((args: vscode.TextDocumentChangeEvent) => {
-    // 	//see https://github.com/Microsoft/vscode/issues/50344
-    // 	//when dirty flag changes this is called
-    // 	// if (args.contentChanges.length === 0) {
-    // 	// 	return
-    // 	// }
-    // 	console.log(`onDidChangeTextDocument`, args)
-    // })
-    // 	if (!isCsvFile(args.document)) return //closed non-csv file ... we cannot have an editor for this document
-    // 	console.log(`CHANGE ${args.document.uri.toString()}`);
-    // }, debounceDocumentChangeInMs));
     //when an unnamed file is saved the new file (new uri) is opened
     //	when the extension calls save the new file is not displayed
-    //	because we don't know the new uri we wait for new csv files to be opened and show them
-    //TODO can be improved to not show any opened csv file (e.g. from other extensions to only write to a file)
+    //	because we don't know the new uri we wait for new yaml files to be opened and show them
+    //TODO can be improved to not show any opened yaml file (e.g. from other extensions to only write to a file)
     const onDidOpenTextDocumentHandler = vscode.workspace.onDidOpenTextDocument((args) => {
         //when we know the old uri then we could update the instance manager and the panel (e.g. title)...
         //but for now we close the editor iff we saved an untitled file
@@ -172,21 +96,12 @@ function activate(context) {
         //so just filter for csv file and show it 
         if (args.isUntitled || (0, util_1.isYamlFile)(args) === false || args.version !== 1)
             return;
-        //this will display the new file (after unnamed was saved) but the reference is still broken...
-        //also this would show almost every opened csv file (even if we don't wan to display it e.g. only for silent editing from other extensions)
-        // vscode.window.showTextDocument(args.uri)
     });
-    // vscode.workspace.onDidSaveTextDocument(debounce((args: vscode.TextDocument) => {
-    // }, debounceDocumentChangeInMs))
-    // vscode.workspace.onDidSaveTextDocument((args: vscode.TextDocument) => {
-    // console.log(`onDidSaveTextDocument ${args.uri.toString()}`);
-    // })
-    //when an unnamed csv file is closed and we have an editor for it then close the editor
+    //when an unnamed yaml file is closed and we have an editor for it then close the editor
     //	this is because we currently not updating the editor (e.g. title, uris) after an unnamed file is saved
     const onDidCloseTextDocumentHandler = vscode.workspace.onDidCloseTextDocument((args) => {
         if (args.uri.scheme === exports.editorUriScheme)
             return; //closed an editor nothing to do here... onDispose will handle it
-        // console.log(`onDidCloseTextDocument ${args.uri.toString()}`);
         if ((0, util_1.isYamlFile)(args) && args.isUntitled && args.uri.scheme === "untitled") {
             const instance = instanceManager.findInstanceBySourceUri(args.uri);
             if (!instance)
@@ -220,15 +135,10 @@ function activate(context) {
         setEditorHasChanges(instance, false);
         instance.panel.webview.postMessage(msg);
     });
-    //not needed because this changes only initial configuration...
-    // vscode.workspace.onDidChangeConfiguration((args) => {
-    // })
     const onDidChangeConfigurationCallback = onDidChangeConfiguration.bind(undefined, instanceManager);
     const onDidChangeConfigurationHandler = vscode.workspace.onDidChangeConfiguration(onDidChangeConfigurationCallback);
     context.subscriptions.push(editYamlCommand);
     context.subscriptions.push(gotoSourceYamlCommand);
-    //context.subscriptions.push(applyCsvCommand)
-    //context.subscriptions.push(applyAndSaveCsvCommand)
     context.subscriptions.push(onDidOpenTextDocumentHandler);
     context.subscriptions.push(onDidCloseTextDocumentHandler);
     context.subscriptions.push(onDidChangeConfigurationHandler);
@@ -413,24 +323,6 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
                     panel.webview.postMessage(msg);
                 };
                 if (isInCurrentWorkspace === false) {
-                    //slow path
-                    //external files are normally not synced so better read the file...
-                    // vscode.workspace.fs.readFile(instance.sourceUri)
-                    // 	.then(content => {
-                    // 		console.log(`encoding`)
-                    // 		//TODO get encoding????
-                    // 		//see https://github.com/microsoft/vscode/issues/824
-                    // const text = Buffer.from(content).toString('utf-8')
-                    // 		funcSendContent(text)
-                    // 	}, error => {
-                    // 		vscode.window.showErrorMessage(`could not read the source file, error: ${error?.message}`);
-                    // 	})
-                    //TODO
-                    //THIS might not get the up-to-date state of the file on the disk
-                    //but vs code api cannot get the file encoding (so that we could use vscode.workspace.fs.readFile)
-                    //or allow us to force to updat the memory model in vs code of the file...
-                    //see https://github.com/microsoft/vscode/issues/824
-                    //see https://github.com/microsoft/vscode/issues/3025
                     //in case we closed the file (we have an old view/model of the file) open it again
                     vscode.workspace.openTextDocument(instance.sourceUri)
                         .then(document => {
@@ -453,7 +345,6 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
                 else {
                     //fast path
                     //file is still open and synchronized
-                    //let initialText = activeTextEditor.document.getText()
                     funcSendContent(activeTextEditor.document.uri.fsPath);
                 }
                 (0, util_1.debugLog)('finished sending csv content to webview');
@@ -828,18 +719,6 @@ function onSourceFileChanged(path, instance) {
     instance.panel.webview.postMessage(msg);
 }
 exports.onSourceFileChanged = onSourceFileChanged;
-// class CsvEditStateSerializer  implements vscode.WebviewPanelSerializer{
-// 	static state: VsState = {
-// 		previewIsCollapsed: true,
-// 		readOptionIsCollapsed: true,
-// 		writeOptionIsCollapsed: true
-// 	}
-// 	async deserializeWebviewPanel(webviewPanel: vscode.WebviewPanel, state: VsState) {
-// 		// `state` is the state persisted using `setState` inside the webview
-// 		console.log(`Got state: ${state}`);
-// 		CsvEditStateSerializer.state = state
-// 	}
-// }
 /**
 * parse yaml file into javascript object and validate it using json schema
 * @param {string} content

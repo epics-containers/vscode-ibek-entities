@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import type * as chokidar from "chokidar";
+import * as chokidar from "chokidar";
 
 export interface Instance {
 	/**

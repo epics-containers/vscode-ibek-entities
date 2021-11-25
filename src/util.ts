@@ -40,20 +40,7 @@ export function debounce(func: Function, wait: number, immediate = false) {
 }
 
 //inspired from https://github.com/jjuback/gc-excelviewer/blob/master/src/extension.ts
-export function isCsvFile(document: vscode.TextDocument) {
-	if (!document) return false
-
-	let lang = document.languageId.toLowerCase()
-	let possible = ['csv', 'tsv', 'plaintext',
-		//rainbow csv extension types, see https://github.com/mechatroner/vscode_rainbow_csv
-		'csv (semicolon)', 'csv (pipe)', 'csv (whitespace)', 'csv (tilde)', 'csv (caret)', 'csv (colon)', 'csv (double quote)', 'csv (equals)', 'csv (dot)', 'csv (hyphen)'
-	]
-	const _isCsvFile = possible.find(p => p === lang) && document.uri.scheme !== 'csv-edit'
-	return _isCsvFile
-}
-
-//inspired from https://github.com/jjuback/gc-excelviewer/blob/master/src/extension.ts
-export function isYamlFile(document: vscode.TextDocument) {
+export function isYamlFile(document: vscode.TextDocument | undefined) {
 	if (!document) return false
 
 	let lang = document.languageId.toLowerCase()
@@ -61,24 +48,6 @@ export function isYamlFile(document: vscode.TextDocument) {
 	const _isYamlFile = possible.find(p => p === lang) && document.uri.scheme !== 'csv-edit'
 	if(!_isYamlFile) return false
 	return _isYamlFile
-}
-
-export function partitionString(text: string, sliceLength: number): StringSlice[] {
-
-	const slices: StringSlice[] = []
-	const totalSlices = Math.ceil(text.length / sliceLength)
-
-	for (let i = 0; i < totalSlices; i++) {
-		const _part = text.substr(i * sliceLength, sliceLength)
-
-		slices.push({
-			text: _part,
-			sliceNr: i + 1,
-			totalSlices
-		})
-	}
-
-	return slices
 }
 
 /**
