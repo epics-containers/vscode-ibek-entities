@@ -449,6 +449,11 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 	//@ts-ignore
 	Handsontable.renderers.TextRenderer.apply(this, args);
 
+	//sets up tooltip
+	if (td) {
+		(td as HTMLElement).title = cellProperties.description + " <type '" + cellProperties.cellType + "'>";
+	}
+
 	//checks if cell is empty, fills in default value
 	if(args[5] === null || args[5] === ""){
 		td.style.backgroundColor = '44474C';
@@ -470,11 +475,6 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 	else{
 		td.style.color = '';
 	}
-
-	//sets up tooltip
-	if (td) {
-		(td as HTMLElement).title = cellProperties.description + " <type '" + cellProperties.cellType + "'>";
-	}
 	
 	//checks column requirement
 	if(cellProperties.required && args[5]){
@@ -485,6 +485,7 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 		td.style.color = '';
 	}
 	else if(cellProperties.required && !args[5] && !instance.isEmptyRow(row)){
+		(td as HTMLElement).title += "\nA value is required for this cell."
 		td.style.backgroundColor = '#f34f38';
 		td.style.color = ''
 	}
@@ -500,7 +501,7 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 class CustomEditor extends Handsontable.editors.TextEditor {
 	getValue() {
 		//@ts-ignore
-		if(this.cellProperties.cellType === "integer" && !isNaN(Number(this.TEXTAREA.value))){
+		if(this.cellProperties.cellType === "integer" && !isNaN(Number(this.TEXTAREA.value)) && this.TEXTAREA.value){
 			return Math.round(Number(this.TEXTAREA.value)) 
 		}
 		return this.TEXTAREA.value === "" ? null : this.TEXTAREA.value;
