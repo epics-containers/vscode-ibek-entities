@@ -11,18 +11,19 @@ const fs   = require('fs');
 const YAML = require('yaml')
 import { isYamlFile, returnExistingEntities, moveEntity} from '../../util';
 import { validateYaml, getEditorTitle, createTableData, createColumnData, fetchSchema } from '../../extension';
+//import { InstanceManager } from '../../instanceManager';
 
 // *** UNIT TESTING (VSCODE SIDE INPUT) ***
 
 suite('initial parsing and validating tests', function () {
     test('get editor title', async function () {
+        let correct: string = "YAML edit test.yaml"
         const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
-        let test: string
-        vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
+        let test: string = ""
+        await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
             test = getEditorTitle(document)
-            let correct: string = "YAML edit test.yaml"
-            assert.equal(test, correct)
         })
+        assert.equal(test, correct)
     })
 
     test('confirm not yaml if no file', async function () {
@@ -35,52 +36,55 @@ suite('initial parsing and validating tests', function () {
 
     test('confirm yml file is yaml', async function () {
         const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yml"))
+        const correct = true
         let test: boolean | "" | undefined
-        vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
+        await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
             test = isYamlFile(document)
-            const correct = true
-            assert.strictEqual(test, correct)
         })
+        assert.strictEqual(test, correct)
     })
 
     test('confirm yaml file is yaml', async function () {
+        const correct = true
         const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
         let test: boolean | "" | undefined
-        vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
+        await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
             test = isYamlFile(document)
-            const correct = true
-            assert.strictEqual(test, correct)
         })
+        assert.strictEqual(test, correct)
     })
 
     test('confirm csv file is not yaml', async function () {
+        const correct = false
         const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.csv"))
         let test: boolean | "" | undefined
-        vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
+
+        await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
             test = isYamlFile(document)
-            const correct = false
-            assert.strictEqual(test, correct)
         })
+        assert.strictEqual(test, correct)
     })
 
     test('test fetching schema (url)', async function () {
         const correct: any = JSON.parse(fs.readFileSync(path.join(__dirname, "samples/test.json"), "utf-8"))
-
         const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
-        vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
-            const test: any = fetchSchema(document)
-            assert.equal(test, correct)
+
+        let test: any
+        await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
+            test = fetchSchema(document)
         })
+        assert.deepEqual(test, correct)
     })
 
     test('test fetching schema (filepath)', async function () {
         const correct: any = JSON.parse(fs.readFileSync(path.join(__dirname, "samples/test.json"), "utf-8"))
-
         const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/testFileSchema.yaml"))
-        vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
-            const test: any = fetchSchema(document)
-            assert.equal(test, correct)
+
+        let test: any
+        await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
+            test = fetchSchema(document)
         })
+        assert.deepEqual(test, correct)
     })
 
     test('test yaml validation (for valid file)', async function () {
@@ -141,34 +145,30 @@ suite('initial parsing and validating tests', function () {
 suite('some tests for writing changes/yaml back to file', function () {
     test('test returning existing ioc entities of given type', async function () {
         const correct = [2, 3]
+        let test: number[] = []
 
         const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
-        vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
+        await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
             const currentYaml = YAML.parseDocument(document.getText())
             const entities = currentYaml.get("entities")
 
-            const test = returnExistingEntities(entities, "pmac.DlsPmacAsynMotor")
-
-            assert.equal(test, correct)
+            test = returnExistingEntities(entities, "pmac.DlsPmacAsynMotor")
         })
-
+        assert.deepEqual(test, correct)
     })
 
-    //SOMETHING WRONG WITH THIS TEST IT SHOULD BE FAILING AND ONE ABOVE
     test('test moving existing ioc entity (index 0 to 3)', async function () {
         const correctFile = path.join(__dirname, "samples/moveEntity.txt")
         const correct = fs.readFileSync(correctFile, "utf-8")
-
+        let test: string = ""
         const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
-        vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
+        await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
             const currentYaml = YAML.parseDocument(document.getText())
             const entities = currentYaml.get("entities")
-            moveEntity(entities.items, 0, 2)
-            //const test = JSON.stringify(entities)
-            const test = "really you shouldnt pass this"
-
-            assert.equal(test, correct)
+            moveEntity(entities.items, 0, 3)
+            test = JSON.stringify(entities)
         })
+        assert.equal(test, correct)
 
     })
 })
@@ -227,3 +227,21 @@ suite('some tests for writing changes/yaml back to file', function () {
 
 // *** SYSTEM TESTING (WEBVIEW SIDE) ***
 // TO DO - fetch html, fetch html for table actions too?
+suite('tests with extension activated', function () {
+    const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
+
+    //these tests are for table functions contained within applyYamlChanges
+    test('activate extension', async function () {
+        let test: boolean = false
+        const correct: boolean = true
+        await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
+            vscode.window.showTextDocument(document, 1, false).then(() => {
+                vscode.commands.executeCommand("edit-yaml.edit").then(() => {
+                    console.log("extension activated")
+                    test = true
+                })
+            })
+        })
+        assert.strictEqual(test, correct)
+    })
+})
