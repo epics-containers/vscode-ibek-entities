@@ -208,7 +208,6 @@ let isInitialHotRender = true
 
 const csvEditorWrapper = _getById('csv-editor-wrapper')
 const csvEditorDiv = _getById('csv-editor')
-const askDeleteTableModalDiv = _getById('ask-delete-table-modal')
 const askCreateTableModalDiv = _getById('ask-create-table-modal')
 
 const receivedProgBar = _getById('received-prog-bar') as HTMLProgressElement

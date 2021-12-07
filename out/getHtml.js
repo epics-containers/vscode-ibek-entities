@@ -234,37 +234,6 @@ function createEditorHtml(webview, context, initialVars) {
 		</div>
 		`;
     }
-    let askDeleteTableModalHtml = ``;
-    {
-        askDeleteTableModalHtml = `
-		<div id="ask-delete-table-modal" class="modal modal-centered">
-		<div class="modal-background"></div>
-		<div class="modal-content">
-			<div class="box">
-				<h3 class="title is-3">Delete table</h3>
-
-				<p>
-					Are you sure you want to delete this table? <br />
-					All data and changes will be lost. This cannot be undone! <br />
-					<br />
-				</p>
-
-				<div style="margin-top: 1em">
-					<button class="button is-warning" onclick="removeTable()">
-						<span>Delete</span>
-					</button>
-
-					<button style="margin-left: 0.5em" class="button is-outlined" onclick="toggleAskDeleteTableModalDiv(false)">
-						<span>Cancel</span>
-					</button>
-				</div>
-
-			</div>
-		</div>
-		<button class="modal-close is-large" aria-label="close" onclick="toggleAskDeleteTableModalDiv(false)"></button>
-	</div>
-		`;
-    }
     let askCreateTableModalHtml = ``;
     {
         askCreateTableModalHtml = `
@@ -329,8 +298,6 @@ function createEditorHtml(webview, context, initialVars) {
 	${findWidgetHtml}
 
 	${bodyPageHtml}
-
-	${askDeleteTableModalHtml}
 
 	${askCreateTableModalHtml}
 

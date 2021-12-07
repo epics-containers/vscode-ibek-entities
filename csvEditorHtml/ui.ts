@@ -324,20 +324,6 @@ function _getColWidths(hot?: Handsontable): number[] {
 
 
 /**
- * displays or hides the ask delete table modal
- * @param isVisible 
- */
-function toggleAskDeleteTableModalDiv(isVisible: boolean) {
-
-	if (isVisible) {
-		askDeleteTableModalDiv.classList.add('is-active')
-		return
-	}
-
-	askDeleteTableModalDiv.classList.remove('is-active')
-}
-
-/**
  * displays or hides the ask add table modal
  * @param isVisible 
  */
@@ -823,7 +809,6 @@ function createTable(type: string, count: number, key: string, _data: any[]){
  */
 function removeTable(oldHot?: any){
 
-	toggleAskDeleteTableModalDiv(false)
 	hot = getSelectedHot()
 
 	if(oldHot){
@@ -896,16 +881,7 @@ let HotRegisterer: HotRegister = {
 			readOnly: isReadonlyMode,
 			rowHeaders: function (row: number) { //the visual row index
 				let text = (row + 1).toString()
-	
-				if (tableData.length === 1 || isReadonlyMode) {
-					return `${text} <span class="remove-row clickable" onclick="removeRow(${row})" style="visibility: hidden"><i class="fas fa-trash"></i></span>`
-				}
-	
-				return `${text} <span class="remove-row clickable" onclick="removeRow(${row})"><i class="fas fa-trash"></i></span>`
-				//why we would always disallow to remove first row?
-				// return row !== 0
-				// 	? `${text} <span class="remove-row clickable" onclick="removeRow(${row})"><i class="fas fa-trash"></i></span>`
-				// 	: `${text} <span class="remove-row clickable" onclick="removeRow(${row})" style="visibility: hidden"><i class="fas fa-trash"></i></span>`
+				return `${text}`
 			} as any,
 			renderAllRows: false, //use false and small table size for fast initial render, see https://handsontable.com/docs/7.0.2/Options.html#renderAllRows
 			afterChange: function(changes: [number, string | number, any, any][], reason: string){
@@ -1033,7 +1009,7 @@ let HotRegisterer: HotRegister = {
 					'remove_table': {
 						name: "Delete table",
 						callback: function () { //key, selection, clickEvent
-							toggleAskDeleteTableModalDiv(true)
+							removeTable()
 						},
 					},
 					'alignment': {},
