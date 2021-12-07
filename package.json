@@ -414,6 +414,7 @@
 		"package": "vsce package",
 		"test": "npm run compile && node ./node_modules/vscode-test",
 		"test2": "echo 'to run the tests compile and then go to the debug tab and start Extension Tests'",
+		"testci": "tsc -p ./ && node ./out/test/runTest.js",
 		"lint": "npx tslint -p . && npx tslint -p ./csvEditorHtml/tsconfig.json",
 		"promptUp": "node ./promtUploadbuild.js",
 		"buildBrowser": "node ./csvEditorHtml/out/browser/build/build.js"
