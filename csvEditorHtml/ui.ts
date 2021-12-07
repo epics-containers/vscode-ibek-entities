@@ -3,59 +3,6 @@ type ContextMenuSettings = import("../thirdParty/handsontable/handsontable").con
 
 type GridSettings = import("../thirdParty/handsontable/handsontable").GridSettings
 
-/* --- common helpers --- */
-
-/**
- * sets the read delimiter programmatically
- * @param {string} delimiter 
- */
-/*
-function setReadDelimiter(delimiter: string) {
-	const el = _getById('delimiter-string') as HTMLInputElement
-	el.value = delimiter
-	defaultCsvReadOptions.delimiter = delimiter
-}*/
-
-/* --- write options --- */
-
-/*
-function setHasHeaderWrite() {
-	const el = _getById('has-header-write') as HTMLInputElement
-	defaultCsvWriteOptions.header = el.checked
-}
-
-function setDelimiterStringWrite() {
-	const el = _getById('delimiter-string-write') as HTMLInputElement
-	defaultCsvWriteOptions.delimiter = el.value
-}
-
-function setCommentStringWrite() {
-	const el = _getById('comment-string-write') as HTMLInputElement
-	defaultCsvWriteOptions.comments = el.value === '' ? false : el.value
-}
-
-function setQuoteCharStringWrite() {
-	const el = _getById('quote-char-string-write') as HTMLInputElement
-
-	ensuredSingleCharacterString(el)
-
-	defaultCsvWriteOptions.quoteChar = el.value
-}
-
-function setEscapeCharStringWrite() {
-	const el = _getById('escape-char-string-write') as HTMLInputElement
-
-	ensuredSingleCharacterString(el)
-
-	defaultCsvWriteOptions.escapeChar = el.value
-}
-
-function setQuoteAllFieldsWrite() {
-	const el = _getById('quote-all-fields-write') as HTMLInputElement
-	defaultCsvWriteOptions.quoteAllFields = el.checked
-}
-*/
-
 /**
  * NOT USED CURRENTLY (ui is hidden)
  * only in browser version
@@ -73,18 +20,6 @@ function setNewLineWrite() {
 		defaultCsvWriteOptions.newline = '\r\n'
 	}
 }
-
-/**
- * sets the write delimiter programmatically
- * @param {string} delimiter 
- */
-/*
-function setWriteDelimiter(delimiter: string) {
-	const el = _getById('delimiter-string-write') as HTMLInputElement
-	el.value = delimiter
-	defaultCsvWriteOptions.delimiter = delimiter
-}*/
-
 
 /**
  * renders the hot table again
@@ -368,30 +303,6 @@ function applyColWidths() {
 		}
 	}
 
-	/*
-	if (!hot) return
-
-	//this is a bit messy but it works...??
-	// console.log(`col widths applies`, allColWidths)
-	//snatched from https://github.com/YaroslavOvdii/fliplet-widget-data-source/blob/master/js/spreadsheet.js
-	hot.getSettings().manualColumnResize = false
-	let autoSizedWidths = _getColWidths()
-
-	//maybe the user removed columns so we don't have all widths... e.g. remove cols then reset data...
-	//we keep the col widths we have and add the auto size ones for the columns where we don't have old sizes...
-	//NOTE we don't store the column names so we probably apply the wrong size to the wrong columns, e.g. 2 cols, reset 5 columns -> first 2 columns will get the old size of the old 2 columns
-	for (let i = allColWidths.length; i < autoSizedWidths.length; i++) {
-		const colWidth = autoSizedWidths[i]
-		allColWidths.push(colWidth)
-	}
-
-	//note that setting colWidths will disable the auto size column plugin (see Plugin AutoColumnSize.isEnabled)
-	//it is enabled if (!colWidths)
-	hot.updateSettings({ colWidths: allColWidths }, false)
-	hot.getSettings().manualColumnResize = true
-	hot.updateSettings({}, false)
-	hot.getPlugin('autoColumnSize').enablePlugin()
-	*/
 }
 /**
  * syncs the {@link allColWidths} with the ui/handsonable state
@@ -452,17 +363,17 @@ function resetDataObject(_data: InitialDataObject) {
 	onResizeGrid()
 }
 
-function startReceiveCsvProgBar() {
-	receivedCsvProgBar.value = 0
-	receivedCsvProgBarWrapper.style.display = "block"
+function startReceiveProgBar() {
+	receivedProgBar.value = 0
+	receivedProgBarWrapper.style.display = "block"
 }
 
-function intermediateReceiveCsvProgBar() {
-	receivedCsvProgBar.attributes.removeNamedItem('value')
+function intermediateReceiveProgBar() {
+	receivedProgBar.attributes.removeNamedItem('value')
 }
 
-function stopReceiveCsvProgBar() {
-	receivedCsvProgBarWrapper.style.display = "none"
+function stopReceiveProgBar() {
+	receivedProgBarWrapper.style.display = "none"
 }
 
 

@@ -215,8 +215,8 @@ function createEditorHtml(webview, context, initialVars) {
 					</div>			
 
 				</div>
-				<div id="received-csv-prog-bar-wrapper">
-					<progress id="received-csv-prog-bar" class="progress is-info" value="50" max="100"></progress>
+				<div id="received-prog-bar-wrapper">
+					<progress id="received-prog-bar" class="progress is-info" value="50" max="100"></progress>
 				</div>
 			</div>
 

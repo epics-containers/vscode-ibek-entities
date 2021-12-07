@@ -64,7 +64,7 @@ body .toast {
 #source-file-unwatched-indicator,
 #reload-file,
 #btn-apply-changes-to-file,
-#received-csv-prog-bar-wrapper {
+#received-csv-bar-wrapper {
 	display: none;
 }
 

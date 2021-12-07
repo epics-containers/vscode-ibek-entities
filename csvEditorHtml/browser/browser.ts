@@ -201,17 +201,17 @@ async function onFileList(fileList: FileList) {
 	const fileReader = new FileReader()
 
 	fileReader.onloadstart = (e) => {
-		startReceiveCsvProgBar()
+		startReceiveProgBar()
 	}
 
 	fileReader.onprogress = (e) => {
-		receivedCsvProgBar.value = e.loaded * 100 / e.total
+		receivedProgBar.value = e.loaded * 100 / e.total
 	}
 
 	statusInfo.innerText = `Loading file, detecting encoding, decoding file...`
 
 	fileReader.onloadend = (e) => {
-		stopReceiveCsvProgBar()
+		stopReceiveProgBar()
 
 		if (fileReader.error) {
 			console.log(`could not load file`, fileReader.error)

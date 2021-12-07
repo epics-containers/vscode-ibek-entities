@@ -152,10 +152,10 @@ input.input {
 	white-space: nowrap;
 }
 
-#received-csv-prog-bar {
+#received-prog-bar {
 	height: 5px;
 }
-#received-csv-prog-bar-wrapper {
+#received-prog-bar-wrapper {
 	font-display: none;
 	position: absolute;
 	left:0;

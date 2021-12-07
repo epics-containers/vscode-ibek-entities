@@ -25,22 +25,6 @@ function ensuredSingleCharacterString(el: HTMLInputElement) {
 }
 
 /**
- * checks if a given cell value is a comment with the given configuration
- * @param value
- * @param csvReadConfig
- */
-function isCommentCell(value: string | null, csvReadConfig: CsvReadOptions) {
-
-	if (value === null) return false
-
-	if (typeof csvReadConfig.comments === 'string' && csvReadConfig.comments !== '') {
-		return value.trimLeft().startsWith(csvReadConfig.comments)
-	}
-
-	return false
-}
-
-/**
  * Adds a new row at the end of selected table
  * @param {boolean} selectNewRow true: scrolls to the  new row
  */
@@ -169,77 +153,11 @@ function removeRow(index: number) {
 	if (!hot) throw new Error('table was null')
 
 	hot.alter('remove_row', index)
-	//checkIfHasHeaderReadOptionIsAvailable(false)
 }
 
 /**
- * removes a column by index
- * @param {number} index the visual column index
- */
-function removeColumn(index: number) {
-
-	if (isReadonlyMode) return
-
-	if (!hot) throw new Error('table was null')
-
-	hot.alter('remove_col', index)
-
-	//keep header in sync with the number of columns
-	//this is done in the hooks
-
-	//we could get 0 cols...
-	//checkIfHasHeaderReadOptionIsAvailable(false)
-
-}
-
-/**
- * called on every render...
- * so we only need to add the css rule and never remove it
- * @param instance 
- * @param td 
- * @param row 
- * @param col 
- * @param prop 
- * @param value 
- * @param cellProperties 
- */
-function commentValueRenderer(instance: Handsontable, td: HTMLTableDataCellElement, row: number, col: number, prop: any, value: string | null, cellProperties: any) {
-	//@ts-ignore
-	Handsontable.renderers.TextRenderer.apply(this, arguments);
-
-	// console.log(value)
-
-	if (value !== null && col === 0 && isCommentCell(value, defaultCsvReadOptions)) {
-		// td.classList.add('comment-row')
-		if (td && td.nextSibling) {
-			(td.nextSibling as HTMLElement).title = warningTooltipTextWhenCommentRowNotFirstCellIsUsed;
-		}
-
-		//make the whole row a comment
-		if (td && td.parentElement) {
-			td.parentElement.classList.add('comment-row')
-		}
-	}
-
-	// if (cellProperties._isComment) {
-	// 	td.classList.add('comment-row')
-	// } else {
-	// 	// td.style.backgroundColor = ''
-	// }
-
-}
-
-(Handsontable.renderers as any).registerRenderer('commentValueRenderer', commentValueRenderer);
-
-/**
- * custom rendering for cells, fills in default values and changes background colours
- * @param instance 
- * @param td 
- * @param row 
- * @param column 
- * @param prop 
- * @param value 
- * @param cellProperties 
+ * Custom renderer for cells called when table loaded or cell is edited. Applies
+ * colour changes for required/invalid cells and fills in default schema values.
  */
 function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, row: number, col: number, prop: any, value: string | null, cellProperties: any) {
 	const args = arguments;
@@ -291,9 +209,9 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 (Handsontable.renderers as any).registerRenderer('customRenderer', customRenderer);
 
 /**
- * defining custom editor to return empty stringed cells as null
+ * Custom editor to return empty stringed cells as null,
  * otherwise any empty cell double clicked on returns empty string to file
- * also converts floats to ints
+ * Also converts floats to ints for int type cells
  */
 class CustomEditor extends Handsontable.editors.TextEditor {
 	getValue() {
@@ -304,19 +222,6 @@ class CustomEditor extends Handsontable.editors.TextEditor {
 		return this.TEXTAREA.value === "" ? null : this.TEXTAREA.value;
 	}
 }
-
-// function invisiblesCellValueRenderer(instance: Handsontable, td: HTMLTableDataCellElement, row: number, col: number, prop: any, value: string | null, cellProperties: any) {
-// 	//@ts-ignore
-// 	const val = Handsontable.helper.stringify(value);
-
-// 	console.log(value)
-
-// 	td.innerText = val.replace(/\ /g, '·').replace(/\	/g, '⇥')
-
-// 	return td
-// }
-
-// (Handsontable.renderers as any).registerRenderer('invisiblesCellValueRenderer', invisiblesCellValueRenderer);
 
 /**
  * overwrites a single option
@@ -339,131 +244,6 @@ function _setOption<T extends {}>(targetOptions: T, options: T, optionName: keyo
 		_error(`options object has not property '${optionName}'`)
 	}
 }
-
-/**
- * overwrites the current read options with the given options
- * also updates the ui to display the new options
- * @param {*} options 
- */
-function setCsvReadOptionsInitial(options: CsvReadOptions) {
-
-	const keys = Object.keys(defaultCsvReadOptions)
-
-	for (const key of keys) {
-		_setOption(defaultCsvReadOptions, options, key as keyof CsvReadOptions)
-	}
-
-	//set ui from (maybe updated) options
-	const el1 = _getById('delimiter-string') as HTMLInputElement
-	el1.value = defaultCsvReadOptions.delimiter
-
-
-	//disabled
-	// const el2 = _getById('skip-empty-lines')
-	// if (el2) {
-	// 	//currently disabled...
-	// 	el2.checked = csvReadOptions.skipEmptyLines
-	// }
-
-	const el3 = _getById('has-header') as HTMLInputElement
-	el3.checked = defaultCsvReadOptions._hasHeader
-
-	const el4 = _getById('comment-string') as HTMLInputElement
-	el4.value = defaultCsvReadOptions.comments === false ? '' : defaultCsvReadOptions.comments
-
-	const el5 = _getById('quote-char-string') as HTMLInputElement
-	el5.value = defaultCsvReadOptions.quoteChar
-
-	const el6 = _getById('escape-char-string') as HTMLInputElement
-	el6.value = defaultCsvReadOptions.escapeChar
-}
-
-/**
- * overwrites the current write options with the given options
- * also updates the ui to display the new options
- * @param {*} options 
- */
-function setCsvWriteOptionsInitial(options: CsvWriteOptions) {
-
-	const keys = Object.keys(defaultCsvWriteOptions)
-
-	for (const key of keys) {
-		_setOption(defaultCsvWriteOptions, options, key as keyof CsvWriteOptions)
-	}
-
-	//set ui from (maybe updated) options
-	const el1 = _getById('has-header-write') as HTMLInputElement
-	el1.checked = defaultCsvWriteOptions.header
-
-	const el2 = _getById('delimiter-string-write') as HTMLInputElement
-	el2.value = defaultCsvWriteOptions.delimiter
-
-	const el3 = _getById('comment-string-write') as HTMLInputElement
-	el3.value = defaultCsvWriteOptions.comments === false ? '' : defaultCsvWriteOptions.comments
-
-	const el4 = _getById('quote-char-string-write') as HTMLInputElement
-	el4.value = defaultCsvWriteOptions.quoteChar
-
-	const el5 = _getById('escape-char-string-write') as HTMLInputElement
-	el5.value = defaultCsvWriteOptions.quoteChar
-
-	const el6 = _getById('quote-all-fields-write') as HTMLInputElement
-	el6.checked = defaultCsvWriteOptions.quoteAllFields
-}
-
-/**
- * checks if the has header read option must be disabled or not
- * and sets the needed state
- * 
- * if has header option is available (when we have enough data rows) we also check 
- * {@link headerRowWithIndex} if we have only comment rows
- * 
- * see https://forum.handsontable.com/t/table-with-only-header-row/2915 and
- * and https://github.com/handsontable/handsontable/issues/735
- * seems like with default headers it's not possible to only have headers?
- * @returns false: force changes (settings want headers but is not possible with data), true: all ok
- */
-/*
-function checkIfHasHeaderReadOptionIsAvailable(isInitialRender: boolean): boolean {
-
-	const data = getData() //this also includes header rows
-
-	const el = hasHeaderReadOptionInput
-
-	let canSetOption = false
-
-	if (isInitialRender) {
-		canSetOption = data.length > 1
-	}
-	else {
-		if (defaultCsvReadOptions._hasHeader) {
-			canSetOption = data.length >= 1 //we already stored the header row so we have data + 1 rows...
-		} else {
-			canSetOption = data.length > 1 //no header ... to enable header we need 2 rows
-		}
-	}
-
-	if (canSetOption) {
-		//but we could have only comments --> no header available
-		const firstRow = getFirstRowWithIndex()
-		if (firstRow === null && !el.checked) { //if el.checked is true then we already have a header row...
-			canSetOption = false
-		}
-	}
-
-	if (canSetOption) {
-		// el.removeAttribute('disabled')
-
-	} else {
-		// el.setAttribute('disabled', '')
-
-		defaultCsvReadOptions._hasHeader = false
-		el.checked = false
-		return false
-	}
-
-	return true
-}*/
 
 //from https://stackoverflow.com/questions/27078285/simple-throttle-in-js ... from underscore
 function throttle(func: Function, wait: number) {
@@ -704,191 +484,7 @@ function afterHandsontableCreated(hot: Handsontable) {
 	hot.addHook('afterCreateCol', afterRowOrColsCountChangeHandler)
 	hot.addHook('afterRemoveCol', afterRowOrColsCountChangeHandler)
 
-	//statSelectedRows.innerText = `${0}`
-	//statSelectedCols.innerText = `${0}`
-	//statSelectedNotEmptyCells.innerText = `${0}`
-	//statSumOfNumbers.innerText = `${0}`
-	//statSelectedCellsCount.innerText = `${0}`
-	//statRowsCount.innerText = `${hot.countRows()}`
-	//statColsCount.innerText = `${hot.countCols()}`
 }
-
-/**
- * recalculates the stats (even if they are not visible)
- */
-/*
-function recalculateStats() {
-	const selectedRanges = hot!.getSelected()
-
-	if (!selectedRanges) return
-
-	const firstRange = selectedRanges[0]
-
-	calculateStats(...firstRange)
-}*/
-
-/**
- * the stats calculation func
- * @param row 
- * @param column 
- * @param row2 
- * @param column2 
- */
-/*
-function _calculateStats(row: number, column: number, row2: number, column2: number) {
-
-	let numbersStyleToUse = getNumbersStyleFromUi()
-	let rowsCount = Math.abs(row2 - row) + 1
-	let colsCount = Math.abs(column2 - column) + 1
-	statSelectedRows.innerText = `${rowsCount}`
-	// statSelectedNotEmptyRows
-	statSelectedCols.innerText = `${colsCount}`
-	// statSelectedNotEmptyCols
-	statSelectedCellsCount.innerText = `${rowsCount * colsCount}`
-
-	//could be improved when we iterate over cols when we have less cols than rows??
-	let notEmptyCount = 0
-	let numbersSum = Big(0)
-	let containsInvalidNumbers = false
-	let minR = Math.min(row, row2)
-	let maxR = Math.max(row, row2)
-	for (let index = minR; index <= maxR; index++) {
-		const data = hot!.getDataAtRow(index)
-
-		let minC = Math.min(column, column2)
-		let maxC = Math.max(column, column2)
-
-		for (let i = minC; i <= maxC; i++) {
-			const el = data[i]
-
-			if (el !== '' && el !== null) {
-				notEmptyCount++
-
-				if (!containsInvalidNumbers) {
-
-					const firstCanonicalNumberStringInCell = getFirstCanonicalNumberStringInCell(el, numbersStyleToUse)
-
-					if (firstCanonicalNumberStringInCell === null) continue
-
-					try {
-						let _num = Big(firstCanonicalNumberStringInCell)
-						numbersSum = numbersSum.plus(_num)
-					} catch (error) {
-						console.warn(`could not create or add number to statSumOfNumbers at row: ${index}, col: ${i}`, error)
-						containsInvalidNumbers = true
-					}
-				}
-			}
-		}
-	}
-
-	statSelectedNotEmptyCells.innerText = `${notEmptyCount}`
-	statSumOfNumbers.innerText = containsInvalidNumbers
-		? `Some invalid num`
-		: `${formatBigJsNumber(numbersSum, numbersStyleToUse)}`
-
-}
-
-const calculateStats = throttle(_calculateStats, 300) as typeof _calculateStats
-*/
-
-
-/**
- * returns the first number string in the cell value
- */
-function getFirstCanonicalNumberStringInCell(cellValue: string, numbersStyle: NumbersStyle): string | null {
-
-	// let thousandSeparatorsMatches = numbersStyle.thousandSeparatorReplaceRegex.exec(cellValue)
-
-	let cellContent = cellValue
-
-	let thousandSeparatorsMatches
-	while (thousandSeparatorsMatches = numbersStyle.thousandSeparatorReplaceRegex.exec(cellValue)) {
-
-		let replaceContent = thousandSeparatorsMatches[0].replace(numbersStyle.thousandSeparator, '')
-		cellContent = cellContent.replace(thousandSeparatorsMatches[0], replaceContent)
-	}
-
-	let numberRegexRes = numbersStyle.regex.exec(cellContent)
-
-	if (!numberRegexRes || numberRegexRes.length === 0) return null
-
-	//this not longer has thousand separators...
-	//big js only accepts numbers in en format (3.14)
-	return numberRegexRes[0].replace(/\,/gm, '.')
-}
-
-const knownNumberStylesMap: KnownNumberStylesMap = {
-	"en": {
-		key: 'en',
-		/**
-		 * this allows:
-		 * 0(000)
-		 * 0(000).0(000)
-		 * .0(000)
-		 * all repeated with - in front (negative numbers)
-		 * all repeated with e0(000) | e+0(000) | e-0(000)
-		 */
-		regex: /-?(\d+(\.\d*)?|\.\d+)(e[+-]?\d+)?/,
-		thousandSeparator: /(\,| )/gm,
-		thousandSeparatorReplaceRegex: /((\,| )\d{3})+/gm
-	},
-	"non-en": {
-		key: 'non-en',
-		/**
-		 * this allows:
-		 * 0(000)
-		 * 0(000),0(000)
-		 * ,0(000)
-		 * all repeated with - in front (negative numbers)
-		 * all repeated with e0(000) | e+0(000) | e-0(000)
-		 */
-		regex: /-?(\d+(\,\d*)?|\,\d+)(e[+-]?\d+)?/,
-		thousandSeparator: /(\.| )/gm,
-		thousandSeparatorReplaceRegex: /((\.| )\d{3})+/gm
-	}
-}
-
-/**
- * sets the number style ui from the given nubmer style
- */
-/*
-function setNumbersStyleUi(numbersStyleToUse: CsvEditSettings["initialNumbersStyle"]) {
-
-	numbersStyleEnRadio.checked = false
-	numbersStyleNonEnRadio.checked = false
-
-	switch (numbersStyleToUse) {
-		case 'en': {
-			numbersStyleEnRadio.checked = true
-			break
-		}
-
-		case 'non-en': {
-			numbersStyleNonEnRadio.checked = true
-			break
-		}
-
-		default:
-			notExhaustiveSwitch(numbersStyleToUse)
-	}
-}*/
-
-/**
- * returns the number style from the ui
- */
-/*
-function getNumbersStyleFromUi(): NumbersStyle {
-
-
-	if (numbersStyleEnRadio.checked) return knownNumberStylesMap['en']
-
-	if (numbersStyleNonEnRadio.checked) return knownNumberStylesMap['non-en']
-
-	postVsWarning(`Got unknown numbers style from ui, defaulting to 'en'`)
-
-	return knownNumberStylesMap['en']
-}*/
 
 //don't know how to type this properly without typeof ...
 const b = new Big(1)

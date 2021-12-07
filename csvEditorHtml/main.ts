@@ -211,8 +211,8 @@ const csvEditorDiv = _getById('csv-editor')
 const askDeleteTableModalDiv = _getById('ask-delete-table-modal')
 const askCreateTableModalDiv = _getById('ask-create-table-modal')
 
-const receivedCsvProgBar = _getById('received-csv-prog-bar') as HTMLProgressElement
-const receivedCsvProgBarWrapper = _getById('received-csv-prog-bar-wrapper') as HTMLDivElement
+const receivedProgBar = _getById('received-prog-bar') as HTMLProgressElement
+const receivedProgBarWrapper = _getById('received-prog-bar-wrapper') as HTMLDivElement
 const statusInfo = _getById('status-info') as HTMLSpanElement
 
 const fixedColumnsTopInfoSpan = _getById('fixed-columns-top-info') as HTMLDivElement
@@ -271,7 +271,6 @@ setupAndApplyInitialConfigPart1(initialConfig, initialVars)
 setupGlobalShortcutsInVs()
 
 //see readDataAgain
-//let _data = parseCsv(initialContent, defaultCsvReadOptions)
 if (typeof initialData === 'undefined') {
 	var initialData = {
 		tablesArray: [[]] as any[][],
@@ -319,7 +318,7 @@ if (_data && !vscode) {
 
 if (vscode) {
 
-	receivedCsvProgBarWrapper.style.display = "block"
+	receivedProgBarWrapper.style.display = "block"
 
 	window.addEventListener('message', (e) => {
 		handleVsCodeMessage(e)

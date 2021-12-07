@@ -1,84 +1,4 @@
 
-/*
- * everything for communication or read / write
- */
-
-/**
- * 
- * @returns {string[][]} the current data in the handson table
- */
-function getData(): string[][] {
-	//hot.getSourceData() returns the original data (e.g. not sorted...)
-
-	if (!hot) throw new Error('table was null')
-
-	return hot.getData()
-}
-
-
-/**
- * if we have an header row already it is ignored here!!
- */
-function getFirstRowWithIndex(skipCommentLines: boolean = true): HeaderRowWithIndex | null {
-	if (!hot) return null
-
-	const rowCount = hot.countRows()
-	if (rowCount === 0) return null
-
-	let firstDataRow: string[] = []
-	let rowIndex = -1
-
-	for (let i = 0; i < rowCount; i++) {
-		const row = hot.getDataAtRow(i)
-		if (row.length === 0) continue
-		
-		if (skipCommentLines && isCommentCell(row[0], defaultCsvReadOptions)) continue
-
-		firstDataRow = [...row] //make a copy to not get a reference
-		rowIndex = i
-		break
-	}
-
-	if (rowIndex === -1) {
-		return null
-	}
-
-	return {
-		physicalIndex: rowIndex,
-		row: firstDataRow
-	}
-}
-
-function getFirstRowWithIndexByData(data: string[][], skipCommentLines: boolean = true): HeaderRowWithIndex | null {
-
-	const rowCount = data.length
-	if (rowCount === 0) return null
-
-	let firstDataRow: string[] = []
-	let rowIndex = -1
-
-	for (let i = 0; i < rowCount; i++) {
-		const row = data[i]
-		if (row.length === 0) continue
-		
-		if (skipCommentLines && isCommentCell(row[0], defaultCsvReadOptions)) continue
-
-		firstDataRow = [...row] //make a copy to not get a reference
-		rowIndex = i
-		break
-	}
-
-	if (rowIndex === -1) {
-		return null
-	}
-
-	return {
-		physicalIndex: rowIndex,
-		row: firstDataRow
-	}
-}
-
-
 /* --- messages back to vs code --- */
 
 /**
@@ -206,7 +126,7 @@ function _postReadyMessage() {
 		return
 	}
 
-	startReceiveCsvProgBar()
+	startReceiveProgBar()
 
 	vscode.postMessage({
 		command: 'ready'
@@ -265,7 +185,7 @@ function handleVsCodeMessage(event: { data: ReceivedMessageFromVsCode }) {
  * and parses back into an object and passing to initialData
  */
 function onReceiveYamlObject(yamlObject: string){
-	stopReceiveCsvProgBar()
+	stopReceiveProgBar()
 	initialData = JSON.parse(yamlObject)
 	startRenderData()
 }
