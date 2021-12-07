@@ -41,163 +41,7 @@ function isCommentCell(value: string | null, csvReadConfig: CsvReadOptions) {
 }
 
 /**
- * ensures that all rows inside data have the same length
- * @param csvParseResult 
- * @param csvReadConfig 
- */
-function _normalizeDataArray(csvParseResult: ExtendedCsvParseResult, csvReadConfig: CsvReadOptions, fillString = '') {
-
-
-	const maxCols = csvParseResult.data.reduce((prev, curr) => curr.length > prev ? curr.length : prev, 0)
-
-	let firstRealRowExpandedWasFound = false
-
-	for (let i = 0; i < csvParseResult.data.length; i++) {
-		const row = csvParseResult.data[i];
-
-		//first real row (not a comment)
-		//we might need to expand the quote information array
-		//this works always because
-		//case 1: first real row is the row with max columns --> maxCols === row.length --> we push empty and because of spread operator we don't push anything
-		//case 2: first real row has less rows --> row.length < maxCols --> we push
-		if (isCommentCell(row[0], csvReadConfig) === false && firstRealRowExpandedWasFound === false) {
-			firstRealRowExpandedWasFound = true
-
-			//if the first row is expanded we need to expand the quote information
-			if (row.length < maxCols && csvParseResult.columnIsQuoted !== null) {
-				csvParseResult.columnIsQuoted.push(...Array.from(Array(maxCols - row.length), (p, index) => newColumnQuoteInformationIsQuoted))
-			}
-		}
-
-		if (row.length < maxCols) {
-			row.push(...Array.from(Array(maxCols - row.length), (p, index) => fillString))
-
-			//comment rows are also expanded...
-			//but comment rows only export the first cell so they are not really affect the expanded state
-		}
-
-		//because we mutate the array the csv parse result will be changed...
-		//papaparse not automatically expands the rows
-
-		//trim cell values to normalize
-		// if(trimWhitespace) {
-		// 	for (let j = 0; j < row.length; j++) {
-
-		// 		if (row[j] === null || row[j] === undefined) continue
-
-		// 		row[j] = row[j].trim()
-		// 	}
-		// }
-
-	}
-
-}
-
-// /**
-//  * if we find a comment row merge the cells into one row (else we would need to display additional columns for them)
-//  * also for export multiple cells in a comment row is bad because we might need to escape the cells because of spaces... e.g. #"  test  ", aaa
-//  * @param data 
-//  * @param csvReadConfig 
-//  */
-// function mergeCommentRowsIntoOneCell(data: string[][], csvReadConfig: CsvReadOptions): void {
-
-// 	for (let i = 0; i < data.length; i++) {
-// 		const row = data[i];
-
-// 		if (isCommentCell(row[0], csvReadConfig)) {
-
-// 			data[i] = [row.join(',')]// csv.unparse([row])
-
-// 		}
-
-// 	}
-
-// }
-
-/**
- * returns the rows starting with a comment string
- * if comments are treated as normal rows an empty array is returned
- * @param data 
- * @param csvReadConfig 
- */
-function _getCommentIndices(data: string[][], csvReadConfig: CsvReadOptions): number[] {
-
-	if (typeof csvReadConfig.comments !== "string") return []
-
-	let commentIndices: number[] = []
-
-	for (let i = 0; i < data.length; i++) {
-		const row = data[i];
-
-		//can be null if we added a new row
-		if (row.length > 0 && row[0] !== null && isCommentCell(row[0], csvReadConfig)) {
-			commentIndices.push(i)
-		}
-	}
-	return commentIndices
-}
-
-/**
- * generates column labels: column 1, column 2, ....
- * @param index 0 based (where 0 will generate label 1 because this is probably more desired)
- */
-function getSpreadsheetColumnLabel(index: number) {
-	return `column ${index + 1}`
-}
-
-//idea from handsontable
-const COLUMN_LABEL_BASE = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
-const COLUMN_LABEL_BASE_LENGTH = COLUMN_LABEL_BASE.length
-/**
- * generates spreadsheet-like column names: A, B, C, ..., Z, AA, AB
- * 
- * DO NOT CHANGE THIS !!! IF YOU NEED TO TAKE A LOOK AT THE TESTS IN THE PLUGIN
- * @param {Number} index Column index (starting with 0)
- */
-function spreadsheetColumnLetterLabel(index: number) {
-	//e.g. we have index 
-	/*
-	0 --> A
-	1 --> B
-	...
-	25 --> Z
-	26 --> AA
-	27 --> AB
-	...
-	2*26-1=51 --> AZ
-	52 --> BA
-	3*26-1=77 --> BZ
-	*/
-	let num = index
-	let columnLabel = ''
-
-	//see https://stackoverflow.com/questions/34813980/getting-an-array-of-column-names-at-sheetjs
-	while (num >= 0) {
-		columnLabel = COLUMN_LABEL_BASE[num % 26] + columnLabel //this will cover the last "bit" in range 0-25 so we get the last letter
-		num = Math.floor(num / 26) - 1 //e.g. 27 would get us 27/26 = 1 but this is actually AB so we do -1
-		//e.g. 52 -> first (right) letter is A, 52 / 26 = 2 --> 2-1 = 1 = B --> BA
-		//so this works only because the number is not changed before getting the first letter
-	}
-	return columnLabel
-}
-//this is ~ 2x slower because of parseInt (and maybe a bit more because of String.fromCharCode)
-//this is the original from handson table
-// function spreadsheetColumnLabel(index: number): string {
-//   let dividend = index + 1
-//   let columnLabel = ''
-//   let modulo
-
-//   while (dividend > 0) {
-//     modulo = (dividend - 1) % COLUMN_LABEL_BASE_LENGTH;
-//     columnLabel = String.fromCharCode(65 + modulo) + columnLabel;
-//     dividend = parseInt((dividend - modulo) / COLUMN_LABEL_BASE_LENGTH, 10);
-//   }
-
-//   return columnLabel;
-// }
-
-/**
- * adds a new row at the end
+ * Adds a new row at the end of selected table
  * @param {boolean} selectNewRow true: scrolls to the  new row
  */
 function addRow(selectNewRow = true) {
@@ -315,54 +159,7 @@ function _insertRowInternal(belowCurrRow: boolean) {
 }
 
 /**
- * adds a new row above the current row
- */
-function insertColLeft(selectNewCol = true, preserveSelectedRow = true) {
-
-	if (isReadonlyMode) return
-
-	_insertColInternal(false)
-}
-/**
- * adds a new col below the current row
- */
-function insertColRight(selectNewCol = true, preserveSelectedRow = true) {
-
-	if (isReadonlyMode) return
-
-	_insertColInternal(true)
-}
-
-function _insertColInternal(afterCurrCol: boolean) {
-	if (!hot) throw new Error('table was null')
-
-	const currColIndex = _getSelectedVisualColIndex()
-	const currRowIndex = _getSelectedVisualRowIndex()
-	if (currRowIndex === null || currColIndex === null) return
-
-	const targetColIndex = currColIndex + (afterCurrCol ? 1 : 0)
-	// const test = hot.toPhysicalColumn(targetColIndex) //also not working when columns are reordered...
-	hot.alter('insert_col', targetColIndex)
-
-	//undefined should not happen but just in case
-	const focusBehavior = initialConfig?.insertColBehavior ?? 'keepRowKeepColumn'
-
-	switch (focusBehavior) {
-		case 'keepRowFocusNewColumn': {
-			//new row, first cell
-			hot.selectCell(currRowIndex, targetColIndex)
-			break;
-		}
-		case 'keepRowKeepColumn': {
-			//before insert row, same column
-			hot.selectCell(currRowIndex, targetColIndex + (afterCurrCol ? -1 : 1))
-			break;
-		}
-		default: notExhaustiveSwitch(focusBehavior)
-	}
-}
-/**
- * removes a row by index
+ * Removes a row by index from selected table
  * @param {number} index 0 based
  */
 function removeRow(index: number) {
@@ -1186,7 +983,7 @@ function deleteHtmlContainer(elementId: string){
 
 /**
  * Used to move handsontable instances around.
- * @param currentNode container with table we want to move
+ * @param elementId container with table we want to move
  * @param newIndex the index we are moving the container to
  */
 function moveHtmlContainer(elementId: string, newIndex: number){
@@ -1198,6 +995,27 @@ function moveHtmlContainer(elementId: string, newIndex: number){
 	else{
 		console.log("Couldn't find HTML container with that ID.")
 	}
+}
+
+/**
+ * Returns the visual index of the html container, for a given table
+ * key. Based on visual ordering rather than container key index.
+ * @param elementId the name of the table element we want to find the index
+ * of
+ */
+function fetchHtmlContainerIndex(elementId: number){
+	let tableIndex: number = 0
+
+	let currentEl = document.getElementById("container"+elementId)
+	if(!currentEl) throw new Error ("Could not find HTML container with that ID.")
+	if(!currentEl.parentNode) throw new Error ("Could not find parent HTML container for that ID.")
+	let elementsList = Array.from(currentEl.parentNode.children);
+	elementsList.forEach((element: Element, index: number) => {
+		if (element.id === "container"+elementId){
+			tableIndex = index
+		}
+	})
+	return tableIndex
 }
 
 /**

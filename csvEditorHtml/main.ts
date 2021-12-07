@@ -334,13 +334,6 @@ if (vscode) {
 
 //register this before handsontable so we can first apply our actions
 function setupGlobalShortcutsInVs() {
-	//if (vscode) {
-		//Mousetrap.bindGlobal(['meta+s', 'ctrl+s'], (e) => {
-			//e.preventDefault()
-			//postModifyContent("saveChanges", {})
-		//})
-	//}
-
 	Mousetrap.bindGlobal(['ctrl+u'], (e) => {
 		insertRowBelow()
 	})
