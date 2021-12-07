@@ -40,6 +40,9 @@ export function debounce(func: Function, wait: number, immediate = false) {
 }
 
 //inspired from https://github.com/jjuback/gc-excelviewer/blob/master/src/extension.ts
+/**
+ * Confirms that the current file is a yaml file or not
+ */
 export function isYamlFile(document: vscode.TextDocument | undefined) {
 	if (!document) return false
 
@@ -51,12 +54,11 @@ export function isYamlFile(document: vscode.TextDocument | undefined) {
 }
 
 /**
-* function to move entities around in yaml ast
-* this is needed because yaml parser only appends new elements onto end of array
-* and does not seem to have functionality for moving
-* @param arr this is entities array
-* @param old_index where node was previously
-* @param new_index where node should be
+* Moves items in array around. Implemented in order to move
+* positions of entities in YAMl file, via moving of nodes in AST
+* @param arr array to move items within
+* @param old_index current index of item to move
+* @param new_index index to move item to
 */
 export function moveEntity(arr: any[], oldIndex: number, newIndex: number) {
    while (oldIndex < 0) {
@@ -75,16 +77,32 @@ export function moveEntity(arr: any[], oldIndex: number, newIndex: number) {
 };
 
 /**
- * looks through all entities in the file and returns an array of those
- * matching the type specified with file index for each
+ * Parses entities array in yaml file and returns 2D array of all type
+ * groupings and their corresponding indices. Each array within the returned 
+ * array is a "table", and the indices within are the indices of entities that
+ * reside in that "table" group.
  */
 export function returnExistingEntities(entities: any, tableName?: string){
-	let fileIndexes: number[] = []
+	let fileIndexes: any[][] = []
+	let lastEntityType: string = ""
 	for(let i = 0; i < entities.items.length; i++){
 		let entityType = entities.getIn([i, "type"], true)
-		if(entityType.value === tableName){
-			fileIndexes.push(i)
+		let length = fileIndexes.length
+		let _tempArray: number[] = [i]
+		//if this is first array
+		if (length === 0){
+			fileIndexes.push(_tempArray)
 		}
+		//check if last found index is 1 less than current aka same group
+		else if(lastEntityType === entityType.value){
+			fileIndexes[length-1].push(i)
+		}
+		//otherwise, new grouping
+		else{
+			fileIndexes.push(_tempArray)
+		}
+		lastEntityType = entityType.value
+		entityType.value = lastEntityType
 	}
 	return fileIndexes
 }

@@ -540,7 +540,10 @@ function _afterEditsApplied(instance: Instance, document: vscode.TextDocument, e
 }
 
 /**
- * maps changes to ast and writes applied ast to file
+ * Called when a change is made in the table. Maps the change to the file YAML AST
+ * and then overwrites the entire file content with the newly changed AST content.
+ * @param changeType the name of the change
+ * @param changeObject object containing details of the change made
  */
 
 function applyYamlChanges(instance: Instance, changeType: string, changeObject: ReturnChangeObject, openSourceFileAfterApply: boolean) {
@@ -553,14 +556,16 @@ function applyYamlChanges(instance: Instance, changeType: string, changeObject: 
 			let currentYaml = YAML.parseDocument(document.getText())
 			let entities = currentYaml.get("entities")
 
-			let fileIndexes: number[] = returnExistingEntities(entities, changeObject.tableName)
+			//let fileIndexes: number[] = returnExistingEntities(entities, changeObject.tableName)
+			let fileIndexes: any[] = returnExistingEntities(entities, changeObject.tableName)
+			const tableGroup = fileIndexes[changeObject.tableIndex!] //fetch the indexes of entities involved in current change
 			switch (changeType) {
 				case "valueChange":
 					if(!Array.isArray(changeObject.cellValue)) break
 					//iterate over all cells with changes
 					changeObject.cellValue.forEach((cell: any, i: number) => {
 						if(!changeObject.oldRowIndex) return
-						let changedEntityIndex: number = fileIndexes[changeObject.oldRowIndex[i]]
+						let changedEntityIndex: number = tableGroup[changeObject.oldRowIndex[i]]
 						let entity = entities.items[changedEntityIndex]
 
 						if(!Array.isArray(changeObject.columnName)) return
@@ -577,27 +582,35 @@ function applyYamlChanges(instance: Instance, changeType: string, changeObject: 
 				case "addRow":
 					let newEntityIndex: number = 0
 					if(Array.isArray(changeObject.newRowIndex)) break
-					if(changeObject.newRowIndex! >= fileIndexes.length){
+					if(changeObject.newRowIndex! >= tableGroup.length){
 						//this means we are adding an item to the end of the array
-						newEntityIndex = fileIndexes[changeObject.newRowIndex!-1] + 1
+						newEntityIndex = tableGroup[changeObject.newRowIndex!-1] + 1
 					}
 					else if(changeObject.newRowIndex === 0){
 						//this means a new row was added at the beginning of the table
-						newEntityIndex = fileIndexes[0]
+						newEntityIndex = tableGroup[0]
 					}
 					else{
-						newEntityIndex = fileIndexes[changeObject.newRowIndex!]
+						newEntityIndex = tableGroup[changeObject.newRowIndex!]
 					}
 
 					const newNode = currentYaml.createNode(changeObject.tableData)
 					newNode.set("type", changeObject.tableName)
+					newNode.items.forEach((item: any, idx: number) => {
+						if (item.key.value === "type"){
+							let _moveType = newNode.items[idx]
+							newNode.items.splice(idx, 1)
+							newNode.items.unshift(_moveType)
+							return
+						}
+					});
 					entities.add(newNode)
 					moveEntity(entities.items, entities.items.length-1, newEntityIndex)
 					break
 
 				case "deleteRow":
 					if(!changeObject.oldRowIndex) break
-					let oldEntityIndex: number = fileIndexes[changeObject.oldRowIndex[0]!]
+					let oldEntityIndex: number = tableGroup[changeObject.oldRowIndex[0]!]
 					delete entities.items[oldEntityIndex]
 					break
 
@@ -607,15 +620,15 @@ function applyYamlChanges(instance: Instance, changeType: string, changeObject: 
 					//row(s) moved down
 					if(changeObject.newRowIndex! > changeObject.oldRowIndex[changeObject.oldRowIndex.length -1]){
 						//this means we want to move rows to last position
-						if(changeObject.newRowIndex! >= fileIndexes.length){
+						if(changeObject.newRowIndex! >= tableGroup.length){
 							changeObject.newRowIndex!--
-							let movedEntityIndex: number = fileIndexes[changeObject.newRowIndex!]
+							let movedEntityIndex: number = tableGroup[changeObject.newRowIndex!]
 							//the rows we are moving are going to the very end of the file
-							if(fileIndexes[fileIndexes.length-1] === entities.items.length-1){
+							if(tableGroup[tableGroup.length-1] === entities.items.length-1){
 								changeObject.oldRowIndex.forEach(movedRow => {
-									const movedNode = entities.items[fileIndexes[movedRow]]
+									const movedNode = entities.items[tableGroup[movedRow]]
 									entities.add(movedNode)
-									delete entities.items[fileIndexes[movedRow]]
+									delete entities.items[tableGroup[movedRow]]
 								});
 							}
 							//rows are moving internally
@@ -623,7 +636,7 @@ function applyYamlChanges(instance: Instance, changeType: string, changeObject: 
 								changeObject.oldRowIndex[0]++
 								changeObject.oldRowIndex.forEach(movedRow => {
 									movedRow--
-									moveEntity(entities.items, fileIndexes[movedRow], movedEntityIndex)
+									moveEntity(entities.items, tableGroup[movedRow], movedEntityIndex)
 								});
 							}
 							break
@@ -633,10 +646,10 @@ function applyYamlChanges(instance: Instance, changeType: string, changeObject: 
 						else{
 							changeObject.newRowIndex!--
 							changeObject.oldRowIndex[0]++
-							let movedEntityIndex: number = fileIndexes[changeObject.newRowIndex!]
+							let movedEntityIndex: number = tableGroup[changeObject.newRowIndex!]
 							changeObject.oldRowIndex.forEach(movedRow => {
 								movedRow--
-								moveEntity(entities.items, fileIndexes[movedRow], movedEntityIndex)
+								moveEntity(entities.items, tableGroup[movedRow], movedEntityIndex)
 							});
 							break
 						}
@@ -644,16 +657,17 @@ function applyYamlChanges(instance: Instance, changeType: string, changeObject: 
 					//row(s) moved up
 					else if(changeObject.newRowIndex! < changeObject.oldRowIndex[changeObject.oldRowIndex.length -1]){
 						changeObject.oldRowIndex[changeObject.oldRowIndex.length -1]-- //TO DO there must be a better method than this?
-						let movedEntityIndex: number = fileIndexes[changeObject.newRowIndex!]
+						let movedEntityIndex: number = tableGroup[changeObject.newRowIndex!]
 						changeObject.oldRowIndex.reverse().forEach(movedRow => {
 							movedRow++
-							moveEntity(entities.items, fileIndexes[movedRow], movedEntityIndex)
+							moveEntity(entities.items, tableGroup[movedRow], movedEntityIndex)
 						});
 					}
 
 					break
 
 				case "addTable":
+					let iterIndex = 0 
 					if(changeObject.tableData){
 						changeObject.tableData.forEach((tableRow) => {
 							const newNode = currentYaml.createNode(tableRow)
@@ -667,12 +681,18 @@ function applyYamlChanges(instance: Instance, changeType: string, changeObject: 
 								}
 							});
 							entities.add(newNode)
+							if(changeObject.tableIndex !== fileIndexes.length){
+								//This means table NOT added to end of document so need to move
+								moveEntity(entities.items, entities.items.length - 1, fileIndexes[changeObject.tableIndex!][iterIndex])
+								iterIndex++
+							}
 						})
 					}
 					break
 
 				case "deleteTable":
-					fileIndexes.forEach((entityIndex) => {
+					tableGroup.reverse() //delete entities in reverse order to preserve index
+					tableGroup.forEach((entityIndex: number) => {
 						delete entities.items[entityIndex]
 					})
 					break
@@ -857,8 +877,9 @@ export function onSourceFileChanged(path: string, instance: Instance) {
 
 /** 
 * parse yaml file into javascript object and validate it using json schema
-* @param {string} content 
-* @returns {[string[], string[][], string[]]| null} [0] comments before, [1] csv data, [2] comments after
+* @param {string} yamlString stringified content of the selected yaml file 
+* @returns {[any[][], string[], any[][]]} [0] array of each table's data, 
+* [1] header (entity type) of each table [2] column names and metadata for each table
 */
 
 export function parseYaml(yamlString: string, instance: Instance){
@@ -884,9 +905,8 @@ export function parseYaml(yamlString: string, instance: Instance){
 }
 
 /**
- * check if yaml file specifies schema in first-line comment
- * if it does, check it exists and fetch it
- * @param instance
+ * Fetches the JSON schema associated with the yaml file from the first line
+ * comment. Fetches from URL or filepath.
  */
 export function fetchSchema(document: vscode.TextDocument){
 	let jsonSchema: any
@@ -930,10 +950,11 @@ export function fetchSchema(document: vscode.TextDocument){
 	}
 }
 
-/*
-* using json-schema, validate the yaml file against the given json schema
-*/
-
+/**
+ * Validates contents of the yaml file against JSON schema.
+ * @param parsedYaml 
+ * @param schema 
+ */
 export function validateYaml(parsedYaml: any, schema: any){
 	const validator = new Validator();
 	if(parsedYaml && schema){
@@ -953,11 +974,11 @@ export function validateYaml(parsedYaml: any, schema: any){
 }
 
 /**
- * extract the relevant table data from the yaml object and return as arrays
- * iterates over all entities and their key value pairs
- * @param parseResult 
- * @param tableHeaders 
- * @param tablesArray 
+ * Extracts items from the "entities" array of the yaml file and formats
+ * them by type grouping into data sets for Handsontable to process
+ * @param parseResult the parsed yaml file
+ * @param tableHeaders array containing the "type" of each entity group
+ * @param tablesArray array containing each tables dataset
  */
 export function createTableData(parseResult: any, tableHeaders: string[], tablesArray: any[][]){
     for (let entity in parseResult.entities){
@@ -966,23 +987,33 @@ export function createTableData(parseResult: any, tableHeaders: string[], tables
             //takes first "type" value and adds to array of headers
             if (key === "type"){
 				let _tempObject: {} = parseResult.entities[entity]
-              	if (tableHeaders.indexOf(parseResult.entities[entity][key]) > -1){
-                	let index = tableHeaders.indexOf(parseResult.entities[entity][key]) 
-                	dataArray.push(_tempObject)
-					tablesArray[index].push(_tempObject)
-              	}
-              	else {
-                	tableHeaders.push(parseResult.entities[entity][key])
+				let length = tableHeaders.length
+				//if this is first array
+				if (tableHeaders.length === 0){
+					tableHeaders.push(parseResult.entities[entity][key])
                 	dataArray.push(_tempObject)
 					tablesArray.push(dataArray)
-              	}
+				}
+				//check if current entity group matches current entity
+				else if(tableHeaders[length-1] === parseResult.entities[entity][key]){
+					//yes does match so we want to append this entity to current tables
+					tablesArray[length-1].push(_tempObject)
+				}
+				else{
+					//no, so we want to make a new array and tableheaders
+					tableHeaders.push(parseResult.entities[entity][key])
+                	dataArray.push(_tempObject)
+					tablesArray.push(dataArray)
+				}
             }
         } 
 	}
 };
 
 /** 
- * extracts the relevant column data from the supplied json schema and return as array of objects
+ * Extracts data from JSON schema for columns, including name and metadat
+ * (such as default value, requirement etc), and puts into a format for Handsontable 
+ * to utilise
 */
 export function createColumnData(tableColumns: any[][], jsonSchema: any){
 	var iocEntities: any[] = []

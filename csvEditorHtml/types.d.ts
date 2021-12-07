@@ -575,6 +575,7 @@ type ReturnDataObject = {
 
 type ReturnChangeObject = {
 	tableName?: string
+	tableIndex?: number 
 	columnName?: string | number | any[]
 	cellValue?: any[]
 	oldRowIndex?: number[]
