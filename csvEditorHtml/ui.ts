@@ -1012,7 +1012,6 @@ let HotRegisterer: HotRegister = {
 							removeTable()
 						},
 					},
-					'alignment': {},
 				}
 			} as ContextMenuSettings,
 			afterOnCellMouseUp: function () {
