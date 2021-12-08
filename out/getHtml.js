@@ -147,18 +147,6 @@ function createEditorHtml(webview, context, initialVars) {
 											<i id="force-column-resize-icon" class="fas fa-arrows-alt-h"></i>
 										</span>
 
-										<!-- move rows up and down-->
-										<span class="mar-left-half clickable" onclick="moveRowUp()" style="margin-left: 0.5em;"
-											title="Shift row up">
-											<i id="move-row-up-icon" class="fas fa-chevron-circle-up"></i>
-										</span>
-
-										<span class="mar-left-half clickable" onclick="moveRowDown()" style="margin-left: 0.5em;"
-											title="Shift row down">
-											<i id="move-row-down-icon" class="fas fa-chevron-circle-down"></i>
-										</span>
-
-
 										<!-- fixed columns left -->
 										<div class="flexed changeable-indicator" style="margin-left: 1em;">
 											<div>
@@ -167,12 +155,17 @@ function createEditorHtml(webview, context, initialVars) {
 												</span>
 												<span id="fixed-columns-text" style="margin-left: 0.5rem;" class="dis-hidden">fixed columns:</span>
 											</div>
-											<div id="fixed-columns-top-info" class="text" style="margin-left: 0.5rem;">0</div>
-											<div class="changeable" style="margin-left: 0.5rem;">
+											<div id="fixed-columns-top-info" class="text" style="margin-left: 0.3rem;">0</div>
+											<div class="changeable" style="margin-left: 0.1rem;">
 												<span class="clickable" onclick="incFixedColsLeft()"><i class="fas fa-chevron-up"></i></span>
 												<span class="clickable" onclick="decFixedColsLeft()"><i class="fas fa-chevron-down"></i></span>
 											</div>
 										</div>
+
+										<span class="mar-left-half clickable" onclick="returnTableTypeList()" style="margin-left: 0.5em;"
+											title="Add table">
+											<i id="add-table-icon" class="fas fa-plus"></i>
+										</span>
 								</div>
 							</th>
 						</tr>
@@ -185,28 +178,6 @@ function createEditorHtml(webview, context, initialVars) {
 			<div class="table-action-buttons">
 
 				<div class="separated-btns">
-					
-					<button id="add-row-btn" class="button is-outlined on-readonly-disable-btn" onclick="addRow()">
-						<span class="icon is-small">
-							<i class="fas fa-plus"></i>
-						</span>
-						<span>Add row</span>
-					</button>
-					<div class="row-col-insert-btns">
-						<button class="button is-outlined on-readonly-disable-btn" onclick="insertRowAbove()" title="Insert row above current row [ctrl+shift+alt+up, ctrl+shift+ins]">
-							<i class="fas fas fa-caret-up "></i>
-						</button>
-						<button class="button is-outlined on-readonly-disable-btn" onclick="insertRowBelow() " title="Insert row below current row [ctrl+shift+alt+down, ctrl+ins]">
-							<i class="fas fa-caret-down ad"></i>
-						</button>
-					</div>
-
-					<button style="margin-right: 1em" class="button is-outlined on-readonly-disable-btn" onclick="returnTableTypeList()">
-						<span class="icon is-small">
-							<i class="fas fa-table"></i>
-						</span>
-						<span>Add table</span>
-					</button>
 
 					<div id="status-info-wrapper">
 						<div>
