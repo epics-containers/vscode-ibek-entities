@@ -326,15 +326,6 @@ type MiscOptions = {
 	doubleClickMinColWidth: number
 }
 
-
-/**
- * used to update the csv string we use to build the table (changes will be lost!!)
- */
-type CsvUpdateMessage = {
-	command: 'csvUpdate'
-	csvContent: string | StringSlice
-}
-
 /**
  * used to update the yaml object we use to build the table (changes will be lost!!) 
  */
@@ -348,10 +339,6 @@ type RequestChangeFontSiteInPxMessage = {
 	fontSizeInPx: number
 }
 
-type SourceFileChangedMessage = {
-	command: 'sourceFileChanged'
-}
-
 type TriggerUndoMessage = {
 	command: 'triggerUndo'
 }
@@ -360,7 +347,7 @@ type TriggerRedoMessage = {
 	command: 'triggerRedo'
 }
 
-type ReceivedMessageFromVsCode =  YamlUpdateMessage | RequestChangeFontSiteInPxMessage | SourceFileChangedMessage | TriggerUndoMessage | TriggerRedoMessage
+type ReceivedMessageFromVsCode =  YamlUpdateMessage | RequestChangeFontSiteInPxMessage | TriggerUndoMessage | TriggerRedoMessage
 
 /**
  * send by the webview indicating that it has rendered and the webview has set up the listener to receive content
@@ -495,11 +482,6 @@ type CellChanges = [number, number | string, string, string]
 type Point = {
 	x: number
 	y: number
-}
-
-type ExtendedCsvParseResult = {
-	data: string[][]
-	columnIsQuoted: boolean[]
 }
 
 type NumbersStyle = {

@@ -9,7 +9,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createColumnData = exports.createTableData = exports.validateYaml = exports.fetchSchema = exports.parseYaml = exports.onSourceFileChanged = exports.setEditorHasChanges = exports.notExhaustive = exports.getActiveEditorInstance = exports.createNewEditorInstance = exports.getEditorTitle = exports.deactivate = exports.activate = exports.editorUriScheme = void 0;
+exports.createColumnData = exports.createTableData = exports.validateYaml = exports.fetchSchema = exports.parseYaml = exports.setEditorHasChanges = exports.notExhaustive = exports.getActiveEditorInstance = exports.createNewEditorInstance = exports.getEditorTitle = exports.deactivate = exports.activate = exports.editorUriScheme = void 0;
 const vscode = require("vscode");
 const path = require("path");
 const util_1 = require("./util");
@@ -17,7 +17,6 @@ const getHtml_1 = require("./getHtml");
 const instanceManager_1 = require("./instanceManager");
 //import { InstanceManager, Instance, SomeInstance, InstanceWorkspaceSourceFile } from './instanceManager';
 const configurationHelper_1 = require("./configurationHelper");
-const chokidar = require("chokidar");
 const YAML = require('yaml');
 const fs = require('fs');
 const Validator = require("jsonschema").Validator;
@@ -171,7 +170,6 @@ function getEditorTitle(document) {
 }
 exports.getEditorTitle = getEditorTitle;
 function createNewEditorInstance(context, activeTextEditor, instanceManager) {
-    var _a, _b;
     const uri = activeTextEditor.document.uri;
     const title = getEditorTitle(activeTextEditor.document);
     let panel = vscode.window.createWebviewPanel('yaml-editor', title, (0, util_1.getCurrentViewColumn)(), {
@@ -192,21 +190,6 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
     let instance;
     // NOTE that watching new files (untitled) is not supported by this is probably no issue...
     if (isInCurrentWorkspace) {
-        let watcher = null;
-        if (config.shouldWatchCsvSourceFile) {
-            //if the file is in the current workspace we the file model in vs code is always synced so is this (faster reads/cached)
-            watcher = vscode.workspace.createFileSystemWatcher(activeTextEditor.document.fileName, true, false, true);
-            //not needed because on apply changes we create a new file if this is needed
-            watcher.onDidChange((e) => {
-                if (instance.ignoreNextChangeEvent) {
-                    instance.ignoreNextChangeEvent = false;
-                    (0, util_1.debugLog)(`source file changed: ${e.fsPath}, ignored`);
-                    return;
-                }
-                (0, util_1.debugLog)(`source file changed: ${e.fsPath}`);
-                onSourceFileChanged(e.fsPath, instance);
-            });
-        }
         instance = {
             kind: 'workspaceFile',
             panel: null,
@@ -216,27 +199,12 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
             }),
             hasChanges: false,
             originalTitle: title,
-            sourceFileWatcher: watcher,
             document: activeTextEditor.document,
             supportsAutoReload: true,
             ignoreNextChangeEvent: false,
         };
     }
     else {
-        let watcher = null;
-        if (config.shouldWatchCsvSourceFile) {
-            //the problem with this is that it is faster than the file model (in vs code) can sync the file...
-            watcher = chokidar.watch(activeTextEditor.document.fileName);
-            watcher.on('change', (path) => {
-                if (instance.ignoreNextChangeEvent) {
-                    instance.ignoreNextChangeEvent = false;
-                    (0, util_1.debugLog)(`source file (external) changed: ${path}, ignored`);
-                    return;
-                }
-                (0, util_1.debugLog)(`source file (external) changed: ${path}`);
-                onSourceFileChanged(path, instance);
-            });
-        }
         instance = {
             kind: 'externalFile',
             panel: null,
@@ -246,7 +214,6 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
             }),
             hasChanges: false,
             originalTitle: title,
-            sourceFileWatcher: watcher,
             document: activeTextEditor.document,
             supportsAutoReload: false,
             ignoreNextChangeEvent: false,
@@ -258,12 +225,6 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
     catch (error) {
         if (error instanceof Error) {
             vscode.window.showErrorMessage(`Could not create an editor instance, error: ${error.message}`);
-        }
-        if (instance.kind === 'workspaceFile') {
-            (_a = instance.sourceFileWatcher) === null || _a === void 0 ? void 0 : _a.dispose();
-        }
-        else {
-            (_b = instance.sourceFileWatcher) === null || _b === void 0 ? void 0 : _b.close();
         }
         return;
     }
@@ -386,7 +347,6 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
         }
     }, undefined, context.subscriptions);
     panel.onDidDispose(() => {
-        var _a, _b;
         (0, util_1.debugLog)(`dispose yaml editor panel (webview)`);
         try {
             instanceManager.removeInstance(instance);
@@ -394,19 +354,6 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
         catch (error) {
             if (error instanceof Error) {
                 vscode.window.showErrorMessage(`Could not destroy an editor instance, error: ${error.message}`);
-            }
-        }
-        try {
-            if (instance.kind === 'workspaceFile') {
-                (_a = instance.sourceFileWatcher) === null || _a === void 0 ? void 0 : _a.dispose();
-            }
-            else {
-                (_b = instance.sourceFileWatcher) === null || _b === void 0 ? void 0 : _b.close();
-            }
-        }
-        catch (error) {
-            if (error instanceof Error) {
-                vscode.window.showErrorMessage(`Could not dispose source file watcher for file ${instance.document.uri.fsPath}, error: ${error.message}`);
             }
         }
     }, null, context.subscriptions);
@@ -726,19 +673,6 @@ function setEditorHasChanges(instance, hasChanges) {
     instance.panel.title = `${hasChanges ? '* ' : ''}${instance.originalTitle}`;
 }
 exports.setEditorHasChanges = setEditorHasChanges;
-function onSourceFileChanged(path, instance) {
-    if (!instance.supportsAutoReload) {
-        vscode.window.showWarningMessage(`The csv source file '${instance.document.fileName}' changed and it is not in the current workspace. Thus the content could not be automatically reloaded. Please open/display the file in vs code and switch back the to table. Then you need to manually reload the table with the reload button. Alternatively just close the table and reopen it.`, {
-            modal: false,
-        });
-        return;
-    }
-    const msg = {
-        command: 'sourceFileChanged'
-    };
-    instance.panel.webview.postMessage(msg);
-}
-exports.onSourceFileChanged = onSourceFileChanged;
 /**
 * parse yaml file into javascript object and validate it using json schema
 * @param {string} yamlString stringified content of the selected yaml file

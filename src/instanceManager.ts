@@ -1,5 +1,4 @@
 import * as vscode from 'vscode';
-import * as chokidar from "chokidar";
 
 export interface Instance {
 	/**
@@ -48,20 +47,10 @@ export interface Instance {
 
 export interface InstanceWorkspaceSourceFile extends Instance {
 	kind: 'workspaceFile'
-
-	/**
-	* used to watch the source file and notify the extension view
-	*/
-	sourceFileWatcher: vscode.FileSystemWatcher | null
 }
 
 export interface InstanceExternalFile extends Instance {
 	kind: 'externalFile'
-
-	/**
- * used to watch the source file and notify the extension view
- */
-	sourceFileWatcher: chokidar.FSWatcher | null
 }
 
 export type SomeInstance = InstanceWorkspaceSourceFile | InstanceExternalFile

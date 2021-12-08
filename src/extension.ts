@@ -5,7 +5,6 @@ import { createEditorHtml } from './getHtml';
 import { InstanceManager, Instance, SomeInstance } from './instanceManager';
 //import { InstanceManager, Instance, SomeInstance, InstanceWorkspaceSourceFile } from './instanceManager';
 import { getExtensionConfiguration } from './configurationHelper';
-import * as chokidar from "chokidar";
 const YAML = require('yaml')
 const fs   = require('fs');
 const Validator = require("jsonschema").Validator;
@@ -227,25 +226,6 @@ export function createNewEditorInstance(context: vscode.ExtensionContext, active
 
 	if (isInCurrentWorkspace) {
 
-		let watcher: vscode.FileSystemWatcher | null = null
-
-		if (config.shouldWatchCsvSourceFile) {
-			//if the file is in the current workspace we the file model in vs code is always synced so is this (faster reads/cached)
-			watcher = vscode.workspace.createFileSystemWatcher(activeTextEditor.document.fileName, true, false, true)
-
-			//not needed because on apply changes we create a new file if this is needed
-			watcher.onDidChange((e) => {
-				if (instance.ignoreNextChangeEvent) {
-					instance.ignoreNextChangeEvent = false
-					debugLog(`source file changed: ${e.fsPath}, ignored`)
-					return
-				}
-
-				debugLog(`source file changed: ${e.fsPath}`)
-				onSourceFileChanged(e.fsPath, instance)
-			})
-		}
-
 		instance = {
 			kind: 'workspaceFile',
 			panel: null as any,
@@ -255,31 +235,12 @@ export function createNewEditorInstance(context: vscode.ExtensionContext, active
 			}),
 			hasChanges: false,
 			originalTitle: title,
-			sourceFileWatcher: watcher,
 			document: activeTextEditor.document,
 			supportsAutoReload: true,
 			ignoreNextChangeEvent: false,
 		}
 
 	} else {
-
-		let watcher: chokidar.FSWatcher | null = null
-
-		if (config.shouldWatchCsvSourceFile) {
-			//the problem with this is that it is faster than the file model (in vs code) can sync the file...
-			watcher = chokidar.watch(activeTextEditor.document.fileName)
-
-			watcher.on('change', (path) => {
-
-				if (instance.ignoreNextChangeEvent) {
-					instance.ignoreNextChangeEvent = false
-					debugLog(`source file (external) changed: ${path}, ignored`)
-					return
-				}
-				debugLog(`source file (external) changed: ${path}`)
-				onSourceFileChanged(path, instance)
-			})
-		}
 
 		instance = {
 			kind: 'externalFile',
@@ -290,7 +251,6 @@ export function createNewEditorInstance(context: vscode.ExtensionContext, active
 			}),
 			hasChanges: false,
 			originalTitle: title,
-			sourceFileWatcher: watcher,
 			document: activeTextEditor.document,
 			supportsAutoReload: false,
 			ignoreNextChangeEvent: false,
@@ -302,12 +262,6 @@ export function createNewEditorInstance(context: vscode.ExtensionContext, active
 	} catch (error) {
 		if(error instanceof Error){
 			vscode.window.showErrorMessage(`Could not create an editor instance, error: ${error.message}`)
-		}
-
-		if (instance.kind === 'workspaceFile') {
-			instance.sourceFileWatcher?.dispose()
-		} else {
-			instance.sourceFileWatcher?.close()
 		}
 
 		return
@@ -467,19 +421,6 @@ export function createNewEditorInstance(context: vscode.ExtensionContext, active
 		} catch (error) {
 			if(error instanceof Error){
 				vscode.window.showErrorMessage(`Could not destroy an editor instance, error: ${error.message}`);
-			}
-		}
-
-		try {
-
-			if (instance.kind === 'workspaceFile') {
-				instance.sourceFileWatcher?.dispose()
-			} else {
-				instance.sourceFileWatcher?.close()
-			}
-		} catch (error) {
-			if(error instanceof Error){
-				vscode.window.showErrorMessage(`Could not dispose source file watcher for file ${instance.document.uri.fsPath}, error: ${error.message}`);
 			}
 		}
 
@@ -857,22 +798,6 @@ export function notExhaustive(x: never, message: string): never {
 
 export function setEditorHasChanges(instance: Instance, hasChanges: boolean) {
 	instance.panel.title = `${hasChanges ? '* ' : ''}${instance.originalTitle}`
-}
-
-export function onSourceFileChanged(path: string, instance: Instance) {
-
-	if (!instance.supportsAutoReload) {
-		vscode.window.showWarningMessage(`The csv source file '${instance.document.fileName}' changed and it is not in the current workspace. Thus the content could not be automatically reloaded. Please open/display the file in vs code and switch back the to table. Then you need to manually reload the table with the reload button. Alternatively just close the table and reopen it.`, {
-			modal: false,
-
-		})
-		return
-	}
-
-	const msg: SourceFileChangedMessage = {
-		command: 'sourceFileChanged'
-	}
-	instance.panel.webview.postMessage(msg)
 }
 
 /** 

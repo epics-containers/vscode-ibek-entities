@@ -151,16 +151,6 @@ function handleVsCodeMessage(event: { data: ReceivedMessageFromVsCode }) {
 			break
 		}
 
-		case 'sourceFileChanged': {
-
-			if (!isReadonlyMode) {
-				//just relaod the file because we have no changes anyway...
-				return
-			}
-
-			break
-		}
-
 		case 'triggerUndo': {
 			triggerGlobalUndoRedo(undoStack, redoStack)
 			break
