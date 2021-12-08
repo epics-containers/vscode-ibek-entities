@@ -682,7 +682,7 @@ exports.setEditorHasChanges = setEditorHasChanges;
 function parseYaml(yamlString, instance) {
     let jsonSchema = fetchSchema(instance.document);
     let tableHeaders = []; //array of header titles
-    let tablesArray = []; //array of each data array for every table
+    let tableArrays = []; //array of each data array for every table
     let tableColumns = []; //array of arrays of object, where each array of objects is one set of columns
     let parseResult;
     try {
@@ -691,14 +691,14 @@ function parseYaml(yamlString, instance) {
         if (!yamlIsValid) {
             vscode.window.showWarningMessage("Warning: YAML content could not be validated against schema.This may result in error displaying tables.");
         }
-        createTableData(parseResult, tableHeaders, tablesArray);
+        createTableData(parseResult, tableHeaders, tableArrays);
         createColumnData(tableColumns, jsonSchema);
     }
     catch (e) {
         console.log(e); //TO DO: do something if error loading file
     }
     return {
-        tablesArray, tableHeaders, tableColumns
+        tableArrays, tableHeaders, tableColumns
     };
 }
 exports.parseYaml = parseYaml;
@@ -774,9 +774,9 @@ exports.validateYaml = validateYaml;
  * them by type grouping into data sets for Handsontable to process
  * @param parseResult the parsed yaml file
  * @param tableHeaders array containing the "type" of each entity group
- * @param tablesArray array containing each tables dataset
+ * @param tableArrays array containing each tables dataset
  */
-function createTableData(parseResult, tableHeaders, tablesArray) {
+function createTableData(parseResult, tableHeaders, tableArrays) {
     for (let entity in parseResult.entities) {
         let dataArray = []; //data array for each table
         for (let key in parseResult.entities[entity]) {
@@ -788,18 +788,18 @@ function createTableData(parseResult, tableHeaders, tablesArray) {
                 if (tableHeaders.length === 0) {
                     tableHeaders.push(parseResult.entities[entity][key]);
                     dataArray.push(_tempObject);
-                    tablesArray.push(dataArray);
+                    tableArrays.push(dataArray);
                 }
                 //check if current entity group matches current entity
                 else if (tableHeaders[length - 1] === parseResult.entities[entity][key]) {
                     //yes does match so we want to append this entity to current tables
-                    tablesArray[length - 1].push(_tempObject);
+                    tableArrays[length - 1].push(_tempObject);
                 }
                 else {
                     //no, so we want to make a new array and tableheaders
                     tableHeaders.push(parseResult.entities[entity][key]);
                     dataArray.push(_tempObject);
-                    tablesArray.push(dataArray);
+                    tableArrays.push(dataArray);
                 }
             }
         }

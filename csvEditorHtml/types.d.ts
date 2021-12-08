@@ -546,13 +546,13 @@ type HotRegister = {
 }
 
 type InitialDataObject = {
-	tablesArray: any[][]
+	tableArrays: any[][]
 	tableHeaders: string[]
 	tableColumns: any[][]
 }
 
 type ReturnDataObject = {
-	tablesArray: any[][]
+	tableArrays: any[][]
 }
 
 type ReturnChangeObject = {

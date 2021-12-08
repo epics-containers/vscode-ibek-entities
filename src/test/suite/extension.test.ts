@@ -9,7 +9,8 @@ import * as vscode from 'vscode'
 import * as path from "path";
 const fs   = require('fs');
 const YAML = require('yaml')
-import { isYamlFile, returnExistingEntities, moveEntity} from '../../util';
+//import { isYamlFile, returnExistingEntities, moveEntity} from '../../util';
+import { isYamlFile, moveEntity} from '../../util';
 import { validateYaml, getEditorTitle, createTableData, createColumnData, fetchSchema } from '../../extension';
 //import { InstanceManager } from '../../instanceManager';
 
@@ -105,7 +106,7 @@ suite('initial parsing and validating tests', function () {
 
     test('test creating table data', async function () {
         let tableHeaders: string[] = [] 
-        let tablesArray: any[][] = []
+        let tableArrays: any[][] = []
 
         const correctFileHeaders = path.join(__dirname, "samples/tableHeaders.txt")
         const correctHeaders = fs.readFileSync(correctFileHeaders, "utf-8")
@@ -115,10 +116,10 @@ suite('initial parsing and validating tests', function () {
 
 
         const file = path.join(__dirname, "samples/test.yaml")
-        createTableData(YAML.parse(fs.readFileSync(file, "utf-8")), tableHeaders, tablesArray)
+        createTableData(YAML.parse(fs.readFileSync(file, "utf-8")), tableHeaders, tableArrays)
 
         const testHeaders = JSON.stringify(tableHeaders)
-        const testData = JSON.stringify(tablesArray)
+        const testData = JSON.stringify(tableArrays)
 
         assert.equal(testHeaders, correctHeaders)
         assert.equal(testData, correctData)
@@ -143,6 +144,7 @@ suite('initial parsing and validating tests', function () {
 // *** UNIT TESTING (VSCODE SIDE OUTPUT) ***
 
 suite('some tests for writing changes/yaml back to file', function () {
+    /*
     test('test returning existing ioc entities of given type', async function () {
         const correct = [2, 3]
         let test: number[] = []
@@ -155,7 +157,7 @@ suite('some tests for writing changes/yaml back to file', function () {
             test = returnExistingEntities(entities, "pmac.DlsPmacAsynMotor")
         })
         assert.deepEqual(test, correct)
-    })
+    })*/
 
     test('test moving existing ioc entity (index 0 to 3)', async function () {
         const correctFile = path.join(__dirname, "samples/moveEntity.txt")

@@ -343,7 +343,7 @@ function toggleAskCreateTableModalDiv(isVisible: boolean) {
  */
 function resetDataObject(_data: InitialDataObject) {
 	//const _data = parseYaml(content) //here would pass in filename
-	displayYamlData(_data.tablesArray, _data.tableHeaders, _data.tableColumns)
+	displayYamlData(_data.tableArrays, _data.tableHeaders, _data.tableColumns)
 
 	//might be bigger than the current view
 	onResizeGrid()

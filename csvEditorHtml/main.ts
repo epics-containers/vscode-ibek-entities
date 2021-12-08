@@ -272,7 +272,7 @@ setupGlobalShortcutsInVs()
 //see readDataAgain
 if (typeof initialData === 'undefined') {
 	var initialData = {
-		tablesArray: [[]] as any[][],
+		tableArrays: [[]] as any[][],
 		tableHeaders: [""],
 		tableColumns: [[]] as any [][]
 	}
@@ -280,7 +280,7 @@ if (typeof initialData === 'undefined') {
 
 if (initialData === undefined) {
 	var initialData = {
-		tablesArray: [[]] as any[][],
+		tableArrays: [[]] as any[][],
 		tableHeaders: [""],
 		tableColumns: [[]] as any[][]
 	}
@@ -307,10 +307,10 @@ if (_data && !vscode) {
 
 	_data = {
 		tableColumns: [['A', 'B', 'C', 'D', 'E']],
-		tablesArray: _exampleData,
+		tableArrays: _exampleData,
 		tableHeaders: ["Table 1"]
 	}
-	displayYamlData(_data.tablesArray, _data.tableHeaders, _data.tableColumns)
+	displayYamlData(_data.tableArrays, _data.tableHeaders, _data.tableColumns)
 }
 
 
