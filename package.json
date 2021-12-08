@@ -55,12 +55,12 @@
 		"commands": [
 			{
 				"command": "edit-yaml.edit",
-				"category": "YAML",
+				"category": "Ibek YAML",
 				"title": "Edit as table"
 			},
 			{
 				"command": "edit-yaml.goto-source",
-				"category": "YAML",
+				"category": "Ibek YAML",
 				"title": "Go to yaml source file"
 			}
 		],
