@@ -942,21 +942,31 @@ let HotRegisterer: HotRegister = {
 						}
 					},
 					'remove_row': {
-						disabled: function () {
-	
-							if (isReadonlyMode) return true
-							
+						callback: function () { //key, selection, clickEvent
 							hot = getSelectedHot()
 							if (!hot) throw new Error('table was null')
 
-							const selection = hot!.getSelected()
 							let allRowsAreSelected = false
+
+							const selection = hot.getSelected()
 							if (selection) {
 								const selectedRowsCount = Math.abs(selection[0][0] - selection[0][2]) //starts at 0 --> +1
-								allRowsAreSelected = hot!.countRows() === selectedRowsCount + 1
+								allRowsAreSelected = hot!.countRows() === selectedRowsCount + 1 //check whether trying to remove all rows
+
+								if(allRowsAreSelected){
+									//if all rows selected, delete all but index 0 and then clear row 0
+									for(let i = selection[0][0]+1; i <= selection[0][2]; i++){
+										removeRow(i)
+									}
+									const rowSelection = [[0, 0, 0, hot.countCols()]]
+									clearCells(hot, rowSelection)
+								}
+								else{
+									for(let i = selection[0][0]; i <= selection[0][2]; i++){
+										removeRow(i)
+									}
+								}
 							}
-	
-							return hot!.countRows() === 1 || allRowsAreSelected
 						},
 					},
 					'---------': {
