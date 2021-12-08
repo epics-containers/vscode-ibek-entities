@@ -920,6 +920,7 @@ let HotRegisterer: HotRegister = {
 			columns: columnOpt,
 			currentColClassName: 'foo', //actually used to overwrite highlighting
 			currentRowClassName: 'foo', //actually used to overwrite highlighting
+			className: 'htCenter',
 			contextMenu: {
 				items: {
 					'row_above': {
@@ -1465,6 +1466,10 @@ function setColumnOptions(tableColumns: any[]){
 			//don't want type to be accepted column
 			if(_type === "numeric"){
 				let _tmpObj = {data: column.name, title: column.name, type: _type, numericFormat: {pattern: "0", culture: "en-GB"}, editor: CustomEditor, renderer: customRenderer}
+				columnOptions.push(_tmpObj)
+			}
+			else if(column.name === "entity_disabled"){
+				let _tmpObj = {data: column.name, title: "&#10005;", type: "checkbox", checkedTemplate: true, uncheckedTemplate: false}
 				columnOptions.push(_tmpObj)
 			}
 			else{
