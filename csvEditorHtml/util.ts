@@ -210,6 +210,22 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 (Handsontable.renderers as any).registerRenderer('customRenderer', customRenderer);
 
 /**
+ * Custom renderer for checkbox cells to allow setting of tooltip
+ */
+function customCheckboxRenderer(instance: Handsontable, td: HTMLTableDataCellElement, row: number, col: number, prop: any, value: string | null, cellProperties: any) {
+	const args = arguments;
+	//@ts-ignore
+	Handsontable.renderers.CheckboxRenderer.apply(this, args);
+
+	//sets up tooltip
+	if (td && cellProperties.prop === "entity_disabled") {
+		(td as HTMLElement).title = "Disables or enables this row. Check box to disable. Default is enabled."
+	}
+}
+
+(Handsontable.renderers as any).registerRenderer('customCheckboxRenderer', customCheckboxRenderer);
+
+/**
  * Custom editor to return empty stringed cells as null,
  * otherwise any empty cell double clicked on returns empty string to file
  * Also converts floats to ints for int type cells

@@ -1501,7 +1501,7 @@ function setColumnOptions(tableColumns: any[]){
 				columnOptions.push(_tmpObj)
 			}
 			else if(column.name === "entity_disabled"){
-				let _tmpObj = {data: column.name, title: "&#10005;", type: "checkbox", checkedTemplate: true, uncheckedTemplate: false}
+				let _tmpObj = {data: column.name, title: "&#10005;", type: "checkbox", renderer: customCheckboxRenderer, checkedTemplate: true, uncheckedTemplate: false}
 				columnOptions.push(_tmpObj)
 			}
 			else{
