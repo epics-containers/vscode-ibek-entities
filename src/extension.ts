@@ -124,6 +124,8 @@ export function activate(context: vscode.ExtensionContext) {
 		}
 	})
 
+	//keeps track of ongoing timers
+	let changeTimers: Map<string, any> = new Map(); // Keyed by file name.
 	//used to track changes in text file to editor constantly
 	const onDidChangeTextDocument = vscode.workspace.onDidChangeTextDocument((e: vscode.TextDocumentChangeEvent) => {
 		let changes = e.contentChanges
@@ -132,27 +134,34 @@ export function activate(context: vscode.ExtensionContext) {
 		
 		if(!vscode.window.activeTextEditor) return
 
-		const uri = vscode.window.activeTextEditor.document.uri
-		const instance = instanceManager.findInstanceBySourceUri(uri)
-		if(!instance) return
-
-		let data = parseYaml(e.document.getText(), instance)
-		let jsonSchema = fetchSchema(instance.document)
-		let parseResult = YAML.parseDocument(e.document.getText()).toJSON()
-		let yamlIsValid: boolean = validateYaml(parseResult, jsonSchema)
-
-		if(!yamlIsValid){
-			vscode.window.showWarningMessage("Warning: YAML file contents are not valid against schema. This may cause errors in displaying file or tables.")
+		let fileName = e.document.fileName
+		if(changeTimers.has(fileName)){
+			clearTimeout(changeTimers.get(fileName));
 		}
-		const msg: ReceivedMessageFromVsCode = {
-			command: "yamlUpdate",
-			yamlContent: JSON.stringify(data)
+		changeTimers.set(fileName, setTimeout(() => {
+			changeTimers.delete(fileName);
+
+			const uri = vscode.window.activeTextEditor!.document.uri
+			const instance = instanceManager.findInstanceBySourceUri(uri)
+			if(!instance) return
+
+			let data = parseYaml(e.document.getText(), instance)
+			let jsonSchema = fetchSchema(instance.document)
+			let parseResult = YAML.parseDocument(e.document.getText()).toJSON()
+			let yamlIsValid: boolean = validateYaml(parseResult, jsonSchema)
+
+			if(!yamlIsValid){
+				vscode.window.showWarningMessage("Warning: YAML file contents are not valid against schema. This may cause errors in displaying file or tables.")
 			}
+			const msg: ReceivedMessageFromVsCode = {
+				command: "yamlUpdate",
+				yamlContent: JSON.stringify(data)
+				}
 			
-		instance.hasChanges = false
-		setEditorHasChanges(instance, false)
-		instance.panel.webview.postMessage(msg)
-			
+			instance.hasChanges = false
+			setEditorHasChanges(instance, false)
+			instance.panel.webview.postMessage(msg)
+		}, 1500));
 	})
 
 	const onDidChangeConfigurationCallback = onDidChangeConfiguration.bind(undefined, instanceManager)

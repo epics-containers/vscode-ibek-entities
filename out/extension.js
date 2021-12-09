@@ -108,6 +108,8 @@ function activate(context) {
             instance.panel.dispose();
         }
     });
+    //keeps track of ongoing timers
+    let changeTimers = new Map(); // Keyed by file name.
     //used to track changes in text file to editor constantly
     const onDidChangeTextDocument = vscode.workspace.onDidChangeTextDocument((e) => {
         let changes = e.contentChanges;
@@ -115,24 +117,31 @@ function activate(context) {
         vscode.window.showInformationMessage(message);
         if (!vscode.window.activeTextEditor)
             return;
-        const uri = vscode.window.activeTextEditor.document.uri;
-        const instance = instanceManager.findInstanceBySourceUri(uri);
-        if (!instance)
-            return;
-        let data = parseYaml(e.document.getText(), instance);
-        let jsonSchema = fetchSchema(instance.document);
-        let parseResult = YAML.parseDocument(e.document.getText()).toJSON();
-        let yamlIsValid = validateYaml(parseResult, jsonSchema);
-        if (!yamlIsValid) {
-            vscode.window.showWarningMessage("Warning: YAML file contents are not valid against schema. This may cause errors in displaying file or tables.");
+        let fileName = e.document.fileName;
+        if (changeTimers.has(fileName)) {
+            clearTimeout(changeTimers.get(fileName));
         }
-        const msg = {
-            command: "yamlUpdate",
-            yamlContent: JSON.stringify(data)
-        };
-        instance.hasChanges = false;
-        setEditorHasChanges(instance, false);
-        instance.panel.webview.postMessage(msg);
+        changeTimers.set(fileName, setTimeout(() => {
+            changeTimers.delete(fileName);
+            const uri = vscode.window.activeTextEditor.document.uri;
+            const instance = instanceManager.findInstanceBySourceUri(uri);
+            if (!instance)
+                return;
+            let data = parseYaml(e.document.getText(), instance);
+            let jsonSchema = fetchSchema(instance.document);
+            let parseResult = YAML.parseDocument(e.document.getText()).toJSON();
+            let yamlIsValid = validateYaml(parseResult, jsonSchema);
+            if (!yamlIsValid) {
+                vscode.window.showWarningMessage("Warning: YAML file contents are not valid against schema. This may cause errors in displaying file or tables.");
+            }
+            const msg = {
+                command: "yamlUpdate",
+                yamlContent: JSON.stringify(data)
+            };
+            instance.hasChanges = false;
+            setEditorHasChanges(instance, false);
+            instance.panel.webview.postMessage(msg);
+        }, 1500));
     });
     const onDidChangeConfigurationCallback = onDidChangeConfiguration.bind(undefined, instanceManager);
     const onDidChangeConfigurationHandler = vscode.workspace.onDidChangeConfiguration(onDidChangeConfigurationCallback);
