@@ -697,12 +697,12 @@ function afterCreateRow(visualRowIndex: number, amount: number) {
 	const matches = tableKey.match(/\d+$/); //finds counter value
 	let index = fetchHtmlContainerIndex(matches[0])
 
-	onTableChange(tableName, index, undefined, undefined, undefined, visualRowIndex, newRowData, "addRow")
-	//dont' call this as it corrupts hot index mappings (because all other hooks need to finish first before we update hot settings)
-	//also it's not needed as handsontable already handles this internally
-	// updateFixedRowsCols()
-
-	//checkAutoApplyHasHeader()
+	if(isUndoRedo){
+		undoneRemoveRowAction = true
+	}
+	else{
+		onTableChange(tableName, index, undefined, undefined, undefined, visualRowIndex, newRowData, "addRow")
+	}
 }
 
 
@@ -895,8 +895,23 @@ let HotRegisterer: HotRegister = {
 
 				const matches = tableKey.match(/\d+$/); //finds counter value
 				let index = fetchHtmlContainerIndex(matches[0])
-				//@ts-ignore says getDataAtRowProp doesn't exist on default settings but it does?
-				onAnyChange(changes, reason, this.getDataAtRowProp(0, "type"), index)}, //only called when cell value changed (e.g. not when col/row removed)
+				let hot = HotRegisterer.getInstance("table"+matches[0])
+				if(!hot) return
+				let tableName = retrieveTable(hot)
+
+				//this means the "value change" event called here is actually an "addrow" but handsontable splits it into 2 events
+				if(undoneRemoveRowAction){
+					let newRow = changes[0][0]
+					undoneRemoveRowAction = false
+					let newData: any[] = []
+					newData.push(hot.getSourceDataAtRow(newRow)) 
+					onTableChange(tableName, index, undefined, undefined, undefined, newRow, newData, "addRow")
+				}
+				//we don't want to call onAnyChange again when cells cleared aka delete last row
+				else{
+					onAnyChange(changes, reason, tableName, index)
+				} 
+			}, //only called when cell value changed (e.g. not when row removed/created)
 			fillHandle: {
 				direction: 'vertical',
 				autoInsertRow: false
@@ -947,6 +962,7 @@ let HotRegisterer: HotRegister = {
 							if (!hot) throw new Error('table was null')
 
 							let allRowsAreSelected = false
+							let _rows = []
 
 							const selection = hot.getSelected()
 							if (selection) {
@@ -956,15 +972,17 @@ let HotRegisterer: HotRegister = {
 								if(allRowsAreSelected){
 									//if all rows selected, delete all but index 0 and then clear row 0
 									for(let i = selection[0][0]+1; i <= selection[0][2]; i++){
-										removeRow(i)
+										_rows.push(i)
 									}
+									removeRow(_rows)
 									const rowSelection = [[0, 0, 0, hot.countCols()]]
 									clearCells(hot, rowSelection)
 								}
 								else{
 									for(let i = selection[0][0]; i <= selection[0][2]; i++){
-										removeRow(i)
+										_rows.push(i)
 									}
+									removeRow(_rows)
 								}
 							}
 						},
@@ -1005,13 +1023,13 @@ let HotRegisterer: HotRegister = {
 					'globalUndo': {
 						name: "Undo (Ctrl + Z)",
 						callback: function () { 
-							triggerGlobalUndoRedo(undoStack, redoStack)
+							triggerGlobalUndoRedo(undoStack, redoStack, "undo")
 						},
 					},
 					'globalRedo': {
 						name: "Redo (Ctrl + Y)",
 						callback: function () { 
-							triggerGlobalUndoRedo(redoStack, undoStack)
+							triggerGlobalUndoRedo(redoStack, undoStack, "redo")
 						},
 					},
 					'---------4': {
@@ -1212,7 +1230,9 @@ let HotRegisterer: HotRegister = {
 	
 			},
 			afterUndo: function (action: any) {
-				//hot = getSelectedHot()
+				//@ts-ignore
+				let tableKey = this.rootElement.id
+				hot = HotRegisterer.getInstance(tableKey)
 				isUndoRedo = true
 				if (!hot) throw new Error('table was null')
 
@@ -1294,7 +1314,9 @@ let HotRegisterer: HotRegister = {
 			}
 			},
 			afterRedo: function(action: any) {
-				//hot = getSelectedHot()
+				//@ts-ignore
+				let tableKey = this.rootElement.id
+				hot = HotRegisterer.getInstance(tableKey)
 				isUndoRedo = true
 				if (!hot) throw new Error('table was null')
 
@@ -1380,13 +1402,13 @@ let HotRegisterer: HotRegister = {
 				if (event.keyCode === 90 && lastKey === 17){
 					event.stopImmediatePropagation()
 					//event.preventDefault()
-					triggerGlobalUndoRedo(undoStack, redoStack)
+					triggerGlobalUndoRedo(undoStack, redoStack, "undo")
 					return false //this is necessary to prevent handsontable default undo being called as well
 				}
 				else if (event.keyCode === 89 && lastKey === 17){
 					event.stopImmediatePropagation()
 					//event.preventDefault()
-					triggerGlobalUndoRedo(redoStack, undoStack)
+					triggerGlobalUndoRedo(redoStack, undoStack, "redo")
 					return false
 				}
 	

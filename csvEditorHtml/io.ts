@@ -152,12 +152,12 @@ function handleVsCodeMessage(event: { data: ReceivedMessageFromVsCode }) {
 		}
 
 		case 'triggerUndo': {
-			triggerGlobalUndoRedo(undoStack, redoStack)
+			triggerGlobalUndoRedo(undoStack, redoStack, "undo")
 			break
 		}
 
 		case 'triggerRedo': {
-			triggerGlobalUndoRedo(redoStack, undoStack)
+			triggerGlobalUndoRedo(redoStack, undoStack, "redo")
 			break
 		}
 

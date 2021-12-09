@@ -55,6 +55,13 @@ let isUndoRedo: boolean = false
 let lastKey = 0
 
 /**
+ * used to differentiate between row creation called by ui or called by 
+ * undoing a row removal action
+ */
+let undoneRemoveRowAction: boolean = false
+
+
+/**
  * the default csv content to used if we get empty content
  * handson table will throw if we pass in a 1D array because it expects an object?
  */

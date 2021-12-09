@@ -146,13 +146,14 @@ function _insertRowInternal(belowCurrRow: boolean) {
  * Removes a row by index from selected table
  * @param {number} index 0 based
  */
-function removeRow(index: number) {
+function removeRow(rows: number[]) {
 
 	if (isReadonlyMode) return
+	if(rows.length === 0) return
 
 	if (!hot) throw new Error('table was null')
 
-	hot.alter('remove_row', index)
+	hot.alter('remove_row', rows[0], rows.length)
 }
 
 /**
@@ -750,7 +751,7 @@ function returnTableTypeList(){
  * @param fetchStack the stack we are pulling from
  * @param the stack our change gets pushed to after enacted
  */
-function triggerGlobalUndoRedo(fetchStack: any[], pushStack: any[]){
+function triggerGlobalUndoRedo(fetchStack: any[], pushStack: any[], name: string){
     if (fetchStack.length <= 0) return
 		
 	let action = fetchStack.splice(-1)[0];
@@ -771,10 +772,15 @@ function triggerGlobalUndoRedo(fetchStack: any[], pushStack: any[]){
 		}
 		else if (tableAction === false){
 			let hotInstance = action[key]
-			hotInstance.undo();
+			if(name === "undo"){
+				hotInstance.undo();
+			}
+			else if(name === "redo"){
+				hotInstance.redo();
+			}
 		}
 	pushStack.push(action); 
-	isUndoRedo = false
+	isUndoRedo = false;
 	})
 }
 
