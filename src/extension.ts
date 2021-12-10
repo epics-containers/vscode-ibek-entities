@@ -323,7 +323,7 @@ export function createNewEditorInstance(context: vscode.ExtensionContext, active
 	registerCommands();
 
 
-	panel.webview.onDidReceiveMessage((message: PostMessage) => {
+	panel.webview.onDidReceiveMessage(async (message: PostMessage) => {
 
 		switch (message.command) {
 
@@ -400,8 +400,11 @@ export function createNewEditorInstance(context: vscode.ExtensionContext, active
 			
 			case "modify": {
 				const { changeType, changeContent } = message
-				let changeObject: ReturnChangeObject = JSON.parse(changeContent)
-				applyYamlChanges(instance, changeType, changeObject, config.openSourceFileAfterApply)
+				const changeObjects: [ReturnChangeObject] = JSON.parse(changeContent)
+				const changeTypes: string[] = JSON.parse(changeType)
+				for(let i = 0; i < changeObjects.length; i++){
+					await applyYamlChanges(instance, changeTypes[i], changeObjects[i], config.openSourceFileAfterApply)
+				}
 				break
 			}
 
@@ -496,10 +499,9 @@ function _afterEditsApplied(instance: Instance, document: vscode.TextDocument, e
  * @param changeObject object containing details of the change made
  */
 
-function applyYamlChanges(instance: Instance, changeType: string, changeObject: ReturnChangeObject, openSourceFileAfterApply: boolean) {
+async function applyYamlChanges(instance: Instance, changeType: string, changeObject: ReturnChangeObject, openSourceFileAfterApply: boolean) {
 	let newContent: string = ""
-	vscode.workspace.openTextDocument(instance.sourceUri)
-		.then(document => {
+	await vscode.workspace.openTextDocument(instance.sourceUri).then(async document => {
 			let saveSourceFile: boolean = false
 
 			//fetch current (and possibly unsaved) content of file
@@ -682,7 +684,7 @@ function applyYamlChanges(instance: Instance, changeType: string, changeObject: 
 			}
 
 			edit.replace(document.uri, textRange, yamlString)
-			vscode.workspace.applyEdit(edit)
+			await vscode.workspace.applyEdit(edit)
 				.then(
 					editsApplied => {
 						_afterEditsApplied(instance, document, editsApplied, saveSourceFile, openSourceFileAfterApply)

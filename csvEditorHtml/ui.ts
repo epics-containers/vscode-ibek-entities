@@ -389,8 +389,22 @@ function postApplyContent(saveSourceFile: boolean) {
  * @param contentChanges 
  */
 function postModifyContent(reason: string, contentChanges: ReturnChangeObject){
-		const modifiedContent = JSON.stringify(contentChanges)
-		_postModifyContent(reason, modifiedContent)
+		changeBuffer.push(contentChanges)
+		changeTypeBuffer.push(reason)
+
+		if(changeTimers.has("lastChange")){
+			clearTimeout(changeTimers.get("lastChange"));
+		}
+		changeTimers.set("lastChange", setTimeout(() => {
+			changeTimers.delete("lastChange");
+
+			const modifiedContent = JSON.stringify(changeBuffer)
+			const modifiedTypes = JSON.stringify(changeTypeBuffer)
+			_postModifyContent(modifiedTypes, modifiedContent)
+			
+			changeBuffer = []
+			changeTypeBuffer = []
+		}, 500));
 }
 
 

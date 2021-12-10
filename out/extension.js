@@ -277,7 +277,7 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
         }));
     };
     registerCommands();
-    panel.webview.onDidReceiveMessage((message) => {
+    panel.webview.onDidReceiveMessage((message) => __awaiter(this, void 0, void 0, function* () {
         switch (message.command) {
             case 'ready': {
                 (0, util_1.debugLog)('received ready from webview');
@@ -339,8 +339,11 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
             }
             case "modify": {
                 const { changeType, changeContent } = message;
-                let changeObject = JSON.parse(changeContent);
-                applyYamlChanges(instance, changeType, changeObject, config.openSourceFileAfterApply);
+                const changeObjects = JSON.parse(changeContent);
+                const changeTypes = JSON.parse(changeType);
+                for (let i = 0; i < changeObjects.length; i++) {
+                    yield applyYamlChanges(instance, changeTypes[i], changeObjects[i], config.openSourceFileAfterApply);
+                }
                 break;
             }
             case "copyToClipboard": {
@@ -354,7 +357,7 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
             }
             default: notExhaustive(message, `Received unknown post message from extension: ${JSON.stringify(message)}`);
         }
-    }, undefined, context.subscriptions);
+    }), undefined, context.subscriptions);
     panel.onDidDispose(() => {
         (0, util_1.debugLog)(`dispose yaml editor panel (webview)`);
         try {
@@ -415,197 +418,198 @@ function _afterEditsApplied(instance, document, editsApplied, saveSourceFile, op
  * @param changeObject object containing details of the change made
  */
 function applyYamlChanges(instance, changeType, changeObject, openSourceFileAfterApply) {
-    let newContent = "";
-    vscode.workspace.openTextDocument(instance.sourceUri)
-        .then(document => {
-        let saveSourceFile = false;
-        //fetch current (and possibly unsaved) content of file
-        let currentYaml = YAML.parseDocument(document.getText());
-        let entities = currentYaml.get("entities");
-        //let fileIndexes: number[] = returnExistingEntities(entities, changeObject.tableName)
-        let fileIndexes = (0, util_1.returnExistingEntities)(entities, changeObject.tableName);
-        const tableGroup = fileIndexes[changeObject.tableIndex]; //fetch the indexes of entities involved in current change
-        switch (changeType) {
-            case "valueChange":
-                if (!Array.isArray(changeObject.cellValue))
+    return __awaiter(this, void 0, void 0, function* () {
+        let newContent = "";
+        yield vscode.workspace.openTextDocument(instance.sourceUri).then((document) => __awaiter(this, void 0, void 0, function* () {
+            let saveSourceFile = false;
+            //fetch current (and possibly unsaved) content of file
+            let currentYaml = YAML.parseDocument(document.getText());
+            let entities = currentYaml.get("entities");
+            //let fileIndexes: number[] = returnExistingEntities(entities, changeObject.tableName)
+            let fileIndexes = (0, util_1.returnExistingEntities)(entities, changeObject.tableName);
+            const tableGroup = fileIndexes[changeObject.tableIndex]; //fetch the indexes of entities involved in current change
+            switch (changeType) {
+                case "valueChange":
+                    if (!Array.isArray(changeObject.cellValue))
+                        break;
+                    //iterate over all cells with changes
+                    changeObject.cellValue.forEach((cell, i) => {
+                        if (!changeObject.oldRowIndex)
+                            return;
+                        let changedEntityIndex = tableGroup[changeObject.oldRowIndex[i]];
+                        let entity = entities.items[changedEntityIndex];
+                        if (!Array.isArray(changeObject.columnName))
+                            return;
+                        //this checks if new value is null if so deletes item?
+                        if (cell === null) {
+                            entity.delete(changeObject.columnName[i]);
+                        }
+                        else {
+                            entity.set(changeObject.columnName[i], cell);
+                        }
+                    });
                     break;
-                //iterate over all cells with changes
-                changeObject.cellValue.forEach((cell, i) => {
-                    if (!changeObject.oldRowIndex)
-                        return;
-                    let changedEntityIndex = tableGroup[changeObject.oldRowIndex[i]];
-                    let entity = entities.items[changedEntityIndex];
-                    if (!Array.isArray(changeObject.columnName))
-                        return;
-                    //this checks if new value is null if so deletes item?
-                    if (cell === null) {
-                        entity.delete(changeObject.columnName[i]);
+                case "addRow":
+                    let newEntityIndex = 0;
+                    if (Array.isArray(changeObject.newRowIndex))
+                        break;
+                    if (changeObject.newRowIndex >= tableGroup.length) {
+                        //this means we are adding an item to the end of the array
+                        newEntityIndex = tableGroup[changeObject.newRowIndex - 1] + 1;
+                    }
+                    else if (changeObject.newRowIndex === 0) {
+                        //this means a new row was added at the beginning of the table
+                        newEntityIndex = tableGroup[0];
                     }
                     else {
-                        entity.set(changeObject.columnName[i], cell);
+                        newEntityIndex = tableGroup[changeObject.newRowIndex];
                     }
-                });
-                break;
-            case "addRow":
-                let newEntityIndex = 0;
-                if (Array.isArray(changeObject.newRowIndex))
-                    break;
-                if (changeObject.newRowIndex >= tableGroup.length) {
-                    //this means we are adding an item to the end of the array
-                    newEntityIndex = tableGroup[changeObject.newRowIndex - 1] + 1;
-                }
-                else if (changeObject.newRowIndex === 0) {
-                    //this means a new row was added at the beginning of the table
-                    newEntityIndex = tableGroup[0];
-                }
-                else {
-                    newEntityIndex = tableGroup[changeObject.newRowIndex];
-                }
-                const newNode = currentYaml.createNode(changeObject.tableData);
-                newNode.set("type", changeObject.tableName);
-                newNode.items.forEach((item, idx) => {
-                    if (item.key.value === "type") {
-                        let _moveType = newNode.items[idx];
-                        newNode.items.splice(idx, 1);
-                        newNode.items.unshift(_moveType);
-                        return;
-                    }
-                });
-                entities.add(newNode);
-                (0, util_1.moveEntity)(entities.items, entities.items.length - 1, newEntityIndex);
-                break;
-            case "deleteRow":
-                if (!changeObject.oldRowIndex)
-                    break;
-                let oldEntityIndex = tableGroup[changeObject.oldRowIndex[0]];
-                delete entities.items[oldEntityIndex];
-                break;
-            case "moveRow":
-                if (!changeObject.oldRowIndex)
-                    break;
-                if (Array.isArray(changeObject.newRowIndex))
-                    break;
-                //row(s) moved down
-                if (changeObject.newRowIndex > changeObject.oldRowIndex[changeObject.oldRowIndex.length - 1]) {
-                    //this means we want to move rows to last position
-                    if (changeObject.newRowIndex >= tableGroup.length) {
-                        changeObject.newRowIndex--;
-                        let movedEntityIndex = tableGroup[changeObject.newRowIndex];
-                        //the rows we are moving are going to the very end of the file
-                        if (tableGroup[tableGroup.length - 1] === entities.items.length - 1) {
-                            changeObject.oldRowIndex.forEach(movedRow => {
-                                const movedNode = entities.items[tableGroup[movedRow]];
-                                entities.add(movedNode);
-                                delete entities.items[tableGroup[movedRow]];
-                            });
+                    const newNode = currentYaml.createNode(changeObject.tableData);
+                    newNode.set("type", changeObject.tableName);
+                    newNode.items.forEach((item, idx) => {
+                        if (item.key.value === "type") {
+                            let _moveType = newNode.items[idx];
+                            newNode.items.splice(idx, 1);
+                            newNode.items.unshift(_moveType);
+                            return;
                         }
-                        //rows are moving internally
+                    });
+                    entities.add(newNode);
+                    (0, util_1.moveEntity)(entities.items, entities.items.length - 1, newEntityIndex);
+                    break;
+                case "deleteRow":
+                    if (!changeObject.oldRowIndex)
+                        break;
+                    let oldEntityIndex = tableGroup[changeObject.oldRowIndex[0]];
+                    delete entities.items[oldEntityIndex];
+                    break;
+                case "moveRow":
+                    if (!changeObject.oldRowIndex)
+                        break;
+                    if (Array.isArray(changeObject.newRowIndex))
+                        break;
+                    //row(s) moved down
+                    if (changeObject.newRowIndex > changeObject.oldRowIndex[changeObject.oldRowIndex.length - 1]) {
+                        //this means we want to move rows to last position
+                        if (changeObject.newRowIndex >= tableGroup.length) {
+                            changeObject.newRowIndex--;
+                            let movedEntityIndex = tableGroup[changeObject.newRowIndex];
+                            //the rows we are moving are going to the very end of the file
+                            if (tableGroup[tableGroup.length - 1] === entities.items.length - 1) {
+                                changeObject.oldRowIndex.forEach(movedRow => {
+                                    const movedNode = entities.items[tableGroup[movedRow]];
+                                    entities.add(movedNode);
+                                    delete entities.items[tableGroup[movedRow]];
+                                });
+                            }
+                            //rows are moving internally
+                            else {
+                                changeObject.oldRowIndex[0]++;
+                                changeObject.oldRowIndex.forEach(movedRow => {
+                                    movedRow--;
+                                    (0, util_1.moveEntity)(entities.items, tableGroup[movedRow], movedEntityIndex);
+                                });
+                            }
+                            break;
+                        }
+                        //rows are moving internally not to last row position
                         else {
+                            changeObject.newRowIndex--;
                             changeObject.oldRowIndex[0]++;
+                            let movedEntityIndex = tableGroup[changeObject.newRowIndex];
                             changeObject.oldRowIndex.forEach(movedRow => {
                                 movedRow--;
                                 (0, util_1.moveEntity)(entities.items, tableGroup[movedRow], movedEntityIndex);
                             });
+                            break;
                         }
-                        break;
                     }
-                    //rows are moving internally not to last row position
-                    else {
-                        changeObject.newRowIndex--;
-                        changeObject.oldRowIndex[0]++;
+                    //row(s) moved up
+                    else if (changeObject.newRowIndex < changeObject.oldRowIndex[changeObject.oldRowIndex.length - 1]) {
+                        changeObject.oldRowIndex[changeObject.oldRowIndex.length - 1]--; //TO DO there must be a better method than this?
                         let movedEntityIndex = tableGroup[changeObject.newRowIndex];
-                        changeObject.oldRowIndex.forEach(movedRow => {
-                            movedRow--;
+                        changeObject.oldRowIndex.reverse().forEach(movedRow => {
+                            movedRow++;
                             (0, util_1.moveEntity)(entities.items, tableGroup[movedRow], movedEntityIndex);
                         });
-                        break;
                     }
-                }
-                //row(s) moved up
-                else if (changeObject.newRowIndex < changeObject.oldRowIndex[changeObject.oldRowIndex.length - 1]) {
-                    changeObject.oldRowIndex[changeObject.oldRowIndex.length - 1]--; //TO DO there must be a better method than this?
-                    let movedEntityIndex = tableGroup[changeObject.newRowIndex];
-                    changeObject.oldRowIndex.reverse().forEach(movedRow => {
-                        movedRow++;
-                        (0, util_1.moveEntity)(entities.items, tableGroup[movedRow], movedEntityIndex);
-                    });
-                }
-                break;
-            case "addTable":
-                let iterIndex = 0;
-                if (changeObject.tableData) {
-                    changeObject.tableData.forEach((tableRow) => {
-                        const newNode = currentYaml.createNode(tableRow);
-                        //ensures type is first item in entity
-                        newNode.items.forEach((item, idx) => {
-                            if (item.key.value === "type") {
-                                let _moveType = newNode.items[idx];
-                                newNode.items.splice(idx, 1);
-                                newNode.items.unshift(_moveType);
-                                return;
+                    break;
+                case "addTable":
+                    let iterIndex = 0;
+                    if (changeObject.tableData) {
+                        changeObject.tableData.forEach((tableRow) => {
+                            const newNode = currentYaml.createNode(tableRow);
+                            //ensures type is first item in entity
+                            newNode.items.forEach((item, idx) => {
+                                if (item.key.value === "type") {
+                                    let _moveType = newNode.items[idx];
+                                    newNode.items.splice(idx, 1);
+                                    newNode.items.unshift(_moveType);
+                                    return;
+                                }
+                            });
+                            entities.add(newNode);
+                            if (changeObject.tableIndex !== fileIndexes.length) {
+                                //This means table NOT added to end of document so need to move
+                                (0, util_1.moveEntity)(entities.items, entities.items.length - 1, fileIndexes[changeObject.tableIndex][iterIndex]);
+                                iterIndex++;
                             }
                         });
-                        entities.add(newNode);
-                        if (changeObject.tableIndex !== fileIndexes.length) {
-                            //This means table NOT added to end of document so need to move
-                            (0, util_1.moveEntity)(entities.items, entities.items.length - 1, fileIndexes[changeObject.tableIndex][iterIndex]);
-                            iterIndex++;
-                        }
+                    }
+                    break;
+                case "deleteTable":
+                    tableGroup.reverse(); //delete entities in reverse order to preserve index
+                    tableGroup.forEach((entityIndex) => {
+                        delete entities.items[entityIndex];
                     });
-                }
-                break;
-            case "deleteTable":
-                tableGroup.reverse(); //delete entities in reverse order to preserve index
-                tableGroup.forEach((entityIndex) => {
-                    delete entities.items[entityIndex];
-                });
-                break;
-            case "saveChanges":
-                saveSourceFile = true;
-                _afterEditsApplied(instance, document, true, saveSourceFile, openSourceFileAfterApply);
-                break;
-        }
-        let yamlString = currentYaml.toString();
-        newContent = yamlString;
-        let yamlData = currentYaml.toJSON();
-        //validate new yaml file content against schema
-        const jsonSchema = fetchSchema(instance.document);
-        let yamlIsValid = validateYaml(yamlData, jsonSchema);
-        if (!yamlIsValid) {
-            vscode.window.showWarningMessage("Warning: YAML file contents are not valid against schema. This may cause errors in displaying file or tables.");
-        }
-        const edit = new vscode.WorkspaceEdit();
-        var firstLine = document.lineAt(0);
-        var lastLine = document.lineAt(document.lineCount - 1);
-        var textRange = new vscode.Range(0, firstLine.range.start.character, document.lineCount - 1, lastLine.range.end.character);
-        //don't apply if the content didn't change
-        // TO DO - won't work for yaml
-        if (document.getText() === yamlString) {
-            (0, util_1.debugLog)(`content didn't change`);
-            return;
-        }
-        edit.replace(document.uri, textRange, yamlString);
-        vscode.workspace.applyEdit(edit)
-            .then(editsApplied => {
-            _afterEditsApplied(instance, document, editsApplied, saveSourceFile, openSourceFileAfterApply);
-        }, (reason) => {
-            console.warn(`Error applying edits`);
+                    break;
+                case "saveChanges":
+                    saveSourceFile = true;
+                    _afterEditsApplied(instance, document, true, saveSourceFile, openSourceFileAfterApply);
+                    break;
+            }
+            let yamlString = currentYaml.toString();
+            newContent = yamlString;
+            let yamlData = currentYaml.toJSON();
+            //validate new yaml file content against schema
+            const jsonSchema = fetchSchema(instance.document);
+            let yamlIsValid = validateYaml(yamlData, jsonSchema);
+            if (!yamlIsValid) {
+                vscode.window.showWarningMessage("Warning: YAML file contents are not valid against schema. This may cause errors in displaying file or tables.");
+            }
+            const edit = new vscode.WorkspaceEdit();
+            var firstLine = document.lineAt(0);
+            var lastLine = document.lineAt(document.lineCount - 1);
+            var textRange = new vscode.Range(0, firstLine.range.start.character, document.lineCount - 1, lastLine.range.end.character);
+            //don't apply if the content didn't change
+            // TO DO - won't work for yaml
+            if (document.getText() === yamlString) {
+                (0, util_1.debugLog)(`content didn't change`);
+                return;
+            }
+            edit.replace(document.uri, textRange, yamlString);
+            yield vscode.workspace.applyEdit(edit)
+                .then(editsApplied => {
+                _afterEditsApplied(instance, document, editsApplied, saveSourceFile, openSourceFileAfterApply);
+            }, (reason) => {
+                console.warn(`Error applying edits`);
+                console.warn(reason);
+                vscode.window.showErrorMessage(`Error applying edits`);
+            });
+        }), (reason) => {
+            //maybe the source file was deleted...
+            //see https://github.com/microsoft/vscode-extension-samples/pull/195/files
+            console.warn(`Could not find the source file, trying to access it and create a temp file with the same path...`);
             console.warn(reason);
-            vscode.window.showErrorMessage(`Error applying edits`);
-        });
-    }, (reason) => {
-        //maybe the source file was deleted...
-        //see https://github.com/microsoft/vscode-extension-samples/pull/195/files
-        console.warn(`Could not find the source file, trying to access it and create a temp file with the same path...`);
-        console.warn(reason);
-        vscode.workspace.fs.stat(instance.sourceUri).
-            then(fileStat => {
-            //file exists and can be accessed
-            vscode.window.showErrorMessage(`Could apply changed because the source file could not be found`);
-        }, error => {
-            //file is probably deleted
-            vscode.window.showWarningMessage(`The source file could not be found and was probably deleted.`);
-            createNewSourceFile(instance, newContent, openSourceFileAfterApply, false);
+            vscode.workspace.fs.stat(instance.sourceUri).
+                then(fileStat => {
+                //file exists and can be accessed
+                vscode.window.showErrorMessage(`Could apply changed because the source file could not be found`);
+            }, error => {
+                //file is probably deleted
+                vscode.window.showWarningMessage(`The source file could not be found and was probably deleted.`);
+                createNewSourceFile(instance, newContent, openSourceFileAfterApply, false);
+            });
         });
     });
 }

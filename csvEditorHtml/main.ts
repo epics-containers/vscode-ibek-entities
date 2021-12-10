@@ -60,6 +60,23 @@ let lastKey = 0
  */
 let undoneRemoveRowAction: boolean = false
 
+/**
+ * Buffer array to store changes implemented during
+ * setTimeout timer
+ */
+let changeBuffer: any[] = []
+
+/**
+ * Buffer array to store type of changes implemented during
+ * setTimeout timer
+ */
+let changeTypeBuffer: string[] = []
+
+/**
+ * Keeps track of ongoing setTimeout timers. Keyed
+ * by string
+ */
+let changeTimers: Map<string, any> = new Map(); 
 
 /**
  * the default csv content to used if we get empty content
