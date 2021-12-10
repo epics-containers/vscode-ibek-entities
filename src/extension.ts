@@ -865,6 +865,9 @@ export function fetchSchema(document: vscode.TextDocument){
 				//checks valid filepath and loads
 				jsonSchema = JSON.parse(fs.readFileSync(schemaPath, "utf-8"));
 			}
+			else if(fs.existsSync(path.join(__dirname, schemaPath))){
+				jsonSchema = JSON.parse(fs.readFileSync(path.join(__dirname, schemaPath), "utf-8"));
+			}
 
 			if (jsonSchema){
 				return jsonSchema
