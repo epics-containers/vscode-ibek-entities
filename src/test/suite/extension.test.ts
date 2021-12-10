@@ -19,7 +19,7 @@ import { validateYaml, getEditorTitle, createTableData, createColumnData, fetchS
 suite('initial parsing and validating tests', function () {
     test('get editor title', async function () {
         let correct: string = "YAML edit test.yaml"
-        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
+        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "./../../../src/test/samples/test.yaml"))
         let test: string = ""
         await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
             test = getEditorTitle(document)
@@ -36,7 +36,7 @@ suite('initial parsing and validating tests', function () {
     })
 
     test('confirm yml file is yaml', async function () {
-        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yml"))
+        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "./../../../src/test/samples/test.yml"))
         const correct = true
         let test: boolean | "" | undefined
         await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
@@ -47,7 +47,7 @@ suite('initial parsing and validating tests', function () {
 
     test('confirm yaml file is yaml', async function () {
         const correct = true
-        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
+        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "./../../../src/test/samples/test.yaml"))
         let test: boolean | "" | undefined
         await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
             test = isYamlFile(document)
@@ -57,7 +57,7 @@ suite('initial parsing and validating tests', function () {
 
     test('confirm csv file is not yaml', async function () {
         const correct = false
-        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.csv"))
+        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "./../../../src/test/samples/test.csv"))
         let test: boolean | "" | undefined
 
         await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
@@ -67,8 +67,8 @@ suite('initial parsing and validating tests', function () {
     })
 
     test('test fetching schema (url)', async function () {
-        const correct: any = JSON.parse(fs.readFileSync(path.join(__dirname, "samples/test.json"), "utf-8"))
-        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
+        const correct: any = JSON.parse(fs.readFileSync(path.join(__dirname, "./../../../src/test/samples/test.json"), "utf-8"))
+        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "./../../../src/test/samples/test.yaml"))
 
         let test: any
         await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
@@ -78,8 +78,8 @@ suite('initial parsing and validating tests', function () {
     })
 
     test('test fetching schema (filepath)', async function () {
-        const correct: any = JSON.parse(fs.readFileSync(path.join(__dirname, "samples/test.json"), "utf-8"))
-        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/testFileSchema.yaml"))
+        const correct: any = JSON.parse(fs.readFileSync(path.join(__dirname, "./../../../src/test/samples/test.json"), "utf-8"))
+        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "./../../../src/test/samples/testFileSchema.yaml"))
 
         let test: any
         await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
@@ -90,16 +90,16 @@ suite('initial parsing and validating tests', function () {
 
     test('test yaml validation (for valid file)', async function () {
         const correct = true
-        const schema = path.join(__dirname, "samples/test.json")
-        const file = path.join(__dirname, "samples/test.yaml")
+        const schema = path.join(__dirname, "./../../../src/test/samples/test.json")
+        const file = path.join(__dirname, "./../../../src/test/samples/test.yaml")
         const test = validateYaml(YAML.parse(fs.readFileSync(file, "utf-8")), JSON.parse(fs.readFileSync(schema, "utf-8")))
         assert.strictEqual(test, correct)
     })
 
     test('test yaml validation (for invalid file)', async function () {
         const correct = false
-        const schema = path.join(__dirname, "samples/test.json")
-        const file = path.join(__dirname, "samples/testInvalid.yaml")
+        const schema = path.join(__dirname, "./../../../src/test/samples/test.json")
+        const file = path.join(__dirname, "./../../../src/test/samples/testInvalid.yaml")
         const test = validateYaml(YAML.parse(fs.readFileSync(file, "utf-8")), JSON.parse(fs.readFileSync(schema, "utf-8")))
         assert.strictEqual(test, correct)
     })
@@ -108,14 +108,14 @@ suite('initial parsing and validating tests', function () {
         let tableHeaders: string[] = [] 
         let tableArrays: any[][] = []
 
-        const correctFileHeaders = path.join(__dirname, "samples/tableHeaders.txt")
+        const correctFileHeaders = path.join(__dirname, "./../../../src/test/samples/tableHeaders.txt")
         const correctHeaders = fs.readFileSync(correctFileHeaders, "utf-8")
 
-        const correctFileData = path.join(__dirname, "samples/tableData.txt")
+        const correctFileData = path.join(__dirname, "./../../../src/test/samples/tableData.txt")
         const correctData = fs.readFileSync(correctFileData, "utf-8")
 
 
-        const file = path.join(__dirname, "samples/test.yaml")
+        const file = path.join(__dirname, "./../../../src/test/samples/test.yaml")
         createTableData(YAML.parse(fs.readFileSync(file, "utf-8")), tableHeaders, tableArrays)
 
         const testHeaders = JSON.stringify(tableHeaders)
@@ -128,10 +128,10 @@ suite('initial parsing and validating tests', function () {
     test('test creating column data', async function () {
         let tableColumns: any[][] = []
 
-        const correctFile = path.join(__dirname, "samples/tableColumns.txt")
+        const correctFile = path.join(__dirname, "./../../../src/test/samples/tableColumns.txt")
         const correct = fs.readFileSync(correctFile, "utf-8")
 
-        const schema = path.join(__dirname, "samples/test.json")
+        const schema = path.join(__dirname, "./../../../src/test/samples/test.json")
         createColumnData(tableColumns, JSON.parse(fs.readFileSync(schema, "utf-8")))
 
         const test = JSON.stringify(tableColumns)
@@ -160,10 +160,10 @@ suite('some tests for writing changes/yaml back to file', function () {
     })*/
 
     test('test moving existing ioc entity (index 0 to 3)', async function () {
-        const correctFile = path.join(__dirname, "samples/moveEntity.txt")
+        const correctFile = path.join(__dirname, "./../../../src/test/samples/moveEntity.txt")
         const correct = fs.readFileSync(correctFile, "utf-8")
         let test: string = ""
-        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
+        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "./../../../src/test/samples/test.yaml"))
         await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
             const currentYaml = YAML.parseDocument(document.getText())
             const entities = currentYaml.get("entities")
@@ -229,8 +229,9 @@ suite('some tests for writing changes/yaml back to file', function () {
 
 // *** SYSTEM TESTING (WEBVIEW SIDE) ***
 // TO DO - fetch html, fetch html for table actions too?
+/*
 suite('tests with extension activated', function () {
-    const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
+    const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "./../../../src/test/suite/samples/test.yaml"))
 
     //these tests are for table functions contained within applyYamlChanges
     test('activate extension', async function () {
@@ -246,4 +247,4 @@ suite('tests with extension activated', function () {
         })
         assert.strictEqual(test, correct)
     })
-})
+})*/
