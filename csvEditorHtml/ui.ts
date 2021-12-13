@@ -1427,6 +1427,9 @@ let HotRegisterer: HotRegister = {
 				}
 	
 				lastKey = event.keyCode
+				setTimeout(() => {
+					lastKey = 0
+				}, 600)
 
 			} as any,
 		})
