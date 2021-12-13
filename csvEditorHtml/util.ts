@@ -632,6 +632,20 @@ function fetchHtmlContainerIndex(elementId: number){
 }
 
 /**
+ * Adjusts all container heights to account for horizontal
+ * scrollbar space. Needed because handsontable modifies container
+ * size upon hot creation so must modify size after hot created in
+ * container.
+ * @param _el container element to adjust
+ * @param _height the existing height of container
+ */
+function adjustHtmlContainerHeight(_el: string, _height: number){
+	let containerEl = document.getElementById(_el)
+	if(!containerEl) throw new Error("container to modify doesn't exist")
+	containerEl.style.height = _height + 43 + 'px'
+}
+
+/**
  * returns the hot instance which is currently selected
  */
 function getSelectedHot(){

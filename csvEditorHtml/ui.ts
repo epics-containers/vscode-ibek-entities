@@ -261,17 +261,18 @@ function onResizeGrid() {
 		let hot = HotRegisterer.getInstance("table"+i)
 		let _elm = document.getElementById("table"+i)?.getElementsByClassName("ht_master handsontable")[0]
 		if (_elm){ //check if the element exists
-			//let tableEl = <HTMLElement>_elm.getElementsByClassName("wtHider")[i]
 			let tableEl = <HTMLElement>_elm.getElementsByClassName("wtHider")[0]
 			if(hot && tableEl){
 				hot.updateSettings({
 					width: width,
-					//height: height,
 					height: tableEl.offsetHeight + 10,
 				}, false)
 				syncColWidths(hot)
+				//adjust container to account for horizontal scrollbar
+				adjustHtmlContainerHeight("container"+i, tableEl.offsetHeight)
 			}
 		}
+		
 	}
 }
 
@@ -1456,6 +1457,8 @@ let HotRegisterer: HotRegister = {
 	
 		//make sure we see something (right size)...
 		onResizeGrid()
+		//adjust size to make space for horizontal scrollbar
+		//adjustHtmlContainerHeight("container" + HotRegisterer.counter)
 	
 		//because main.ts is loaded before this the first init must be manually...
 		afterHandsontableCreated(hot!)
