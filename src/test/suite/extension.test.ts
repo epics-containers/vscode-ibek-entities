@@ -9,10 +9,8 @@ import * as vscode from 'vscode'
 import * as path from "path";
 const fs   = require('fs');
 const YAML = require('yaml')
-//import { isYamlFile, returnExistingEntities, moveEntity} from '../../util';
-import { isYamlFile, moveEntity} from '../../util';
+import { isYamlFile, returnExistingEntities, moveEntity} from '../../util';
 import { validateYaml, getEditorTitle, createTableData, createColumnData, fetchSchema } from '../../extension';
-//import { InstanceManager } from '../../instanceManager';
 
 // *** UNIT TESTING (VSCODE SIDE INPUT) ***
 
@@ -66,6 +64,7 @@ suite('initial parsing and validating tests', function () {
         assert.strictEqual(test, correct)
     })
 
+    /* ** ONLY RUNS ON LOCAL VSCODE sync-fetch module doesn't work in browser
     test('test fetching schema (url)', async function () {
         const correct: any = JSON.parse(fs.readFileSync(path.join(__dirname, "./../../../src/test/samples/test.json"), "utf-8"))
         const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "./../../../src/test/samples/test.yaml"))
@@ -75,7 +74,7 @@ suite('initial parsing and validating tests', function () {
             test = fetchSchema(document)
         })
         assert.deepEqual(test, correct)
-    })
+    })*/
 
     test('test fetching schema (filepath)', async function () {
         const correct: any = JSON.parse(fs.readFileSync(path.join(__dirname, "./../../../src/test/samples/test.json"), "utf-8"))
@@ -144,12 +143,12 @@ suite('initial parsing and validating tests', function () {
 // *** UNIT TESTING (VSCODE SIDE OUTPUT) ***
 
 suite('some tests for writing changes/yaml back to file', function () {
-    /*
-    test('test returning existing ioc entities of given type', async function () {
-        const correct = [2, 3]
-        let test: number[] = []
 
-        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "samples/test.yaml"))
+    test('test returning existing ioc entity groups', async function () {
+        const correct = [[0], [1], [2, 3]]
+        let test: any[] = []
+
+        const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "./../../../src/test/samples/test.yaml"))
         await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
             const currentYaml = YAML.parseDocument(document.getText())
             const entities = currentYaml.get("entities")
@@ -157,7 +156,7 @@ suite('some tests for writing changes/yaml back to file', function () {
             test = returnExistingEntities(entities, "pmac.DlsPmacAsynMotor")
         })
         assert.deepEqual(test, correct)
-    })*/
+    })
 
     test('test moving existing ioc entity (index 0 to 3)', async function () {
         const correctFile = path.join(__dirname, "./../../../src/test/samples/moveEntity.txt")
@@ -229,22 +228,20 @@ suite('some tests for writing changes/yaml back to file', function () {
 
 // *** SYSTEM TESTING (WEBVIEW SIDE) ***
 // TO DO - fetch html, fetch html for table actions too?
-/*
 suite('tests with extension activated', function () {
-    const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "./../../../src/test/suite/samples/test.yaml"))
+    const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "./../../../src/test/samples/test.yaml"))
 
     //these tests are for table functions contained within applyYamlChanges
     test('activate extension', async function () {
         let test: boolean = false
         const correct: boolean = true
-        await vscode.workspace.openTextDocument(setting).then((document: vscode.TextDocument) => {
-            vscode.window.showTextDocument(document, 1, false).then(() => {
-                vscode.commands.executeCommand("edit-yaml.edit").then(() => {
-                    console.log("extension activated")
+        await vscode.workspace.openTextDocument(setting).then(async (document: vscode.TextDocument) => {
+            await vscode.window.showTextDocument(document).then(async () => {              
+                await vscode.commands.executeCommand("edit-yaml.edit").then(() => {
                     test = true
                 })
             })
         })
         assert.strictEqual(test, correct)
     })
-})*/
+})
