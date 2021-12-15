@@ -205,6 +205,18 @@ function customRenderer(instance: Handsontable, td: HTMLTableDataCellElement, ro
 		td.style.backgroundColor = '#f34f38';
 		td.style.color = ''
 	}
+
+	//check there isn't float in int cell
+	if(cellProperties.cellType === "integer" && !Number.isInteger(Number(args[5]))){
+		td.style.backgroundColor = '#f34f38';
+		td.style.color = ''
+	}
+
+	//check if first cell aka checkbox is checked, if so grey each cell
+	if(instance.getDataAtCell(row,0) === true){
+		td.style.backgroundColor = "#24363D"
+		td.style.color = '#6B90A0'
+	}
 }
 
 (Handsontable.renderers as any).registerRenderer('customRenderer', customRenderer);
@@ -232,10 +244,6 @@ function customCheckboxRenderer(instance: Handsontable, td: HTMLTableDataCellEle
  */
 class CustomEditor extends Handsontable.editors.TextEditor {
 	getValue() {
-		//@ts-ignore
-		if(this.cellProperties.cellType === "integer" && !isNaN(Number(this.TEXTAREA.value)) && this.TEXTAREA.value){
-			return Math.round(Number(this.TEXTAREA.value)) 
-		}
 		return this.TEXTAREA.value === "" ? null : this.TEXTAREA.value;
 	}
 }
@@ -765,7 +773,8 @@ function getIncrementedValues(sourceText: any, num: number){
  * a dropdown in the add table modal for selection
  */
 function returnTableTypeList(){
-	const tableTypeList = initialData.tableHeaders
+	let initialTypeList = initialData.tableHeaders
+	const tableTypeList = [... new Set(initialTypeList)] //removes duplicate table names
 	let dropdownOptions = '<option value="" disabled selected>Select</option>'
     for (const idx in tableTypeList) {
         dropdownOptions += "<option>" + tableTypeList[idx] + "</option>";
