@@ -64,7 +64,6 @@ suite('initial parsing and validating tests', function () {
         assert.strictEqual(test, correct)
     })
 
-    /* ** ONLY RUNS ON LOCAL VSCODE sync-fetch module doesn't work in browser
     test('test fetching schema (url)', async function () {
         const correct: any = JSON.parse(fs.readFileSync(path.join(__dirname, "./../../../src/test/samples/test.json"), "utf-8"))
         const setting: vscode.Uri = vscode.Uri.parse(path.join(__dirname, "./../../../src/test/samples/test.yaml"))
@@ -74,7 +73,7 @@ suite('initial parsing and validating tests', function () {
             test = fetchSchema(document)
         })
         assert.deepEqual(test, correct)
-    })*/
+    })
 
     test('test fetching schema (filepath)', async function () {
         const correct: any = JSON.parse(fs.readFileSync(path.join(__dirname, "./../../../src/test/samples/test.json"), "utf-8"))
