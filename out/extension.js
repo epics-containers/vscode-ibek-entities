@@ -732,23 +732,17 @@ function fetchSchema(document) {
                     jsonSchema = fetch(schemaPath).json();
                 }
                 catch (e) {
-                    vscode.window.showErrorMessage("Error: " + e);
-                    return;
+                    console.log("ERROR: " + e);
+                    jsonSchema = e;
                 }
             }
+            //checks valid filepath and loads
             else if (fs.existsSync(schemaPath)) {
-                //checks valid filepath and loads
                 jsonSchema = JSON.parse(fs.readFileSync(schemaPath, "utf-8"));
             }
+            //checks if is relative path
             else if (fs.existsSync(path.join(__dirname, schemaPath))) {
                 jsonSchema = JSON.parse(fs.readFileSync(path.join(__dirname, schemaPath), "utf-8"));
-            }
-            if (jsonSchema) {
-                return jsonSchema;
-            }
-            else {
-                //TO DO - need proper exception handling?
-                vscode.window.showErrorMessage("Could not fetch JSON schema to validate YAML file. Please check that the path to the schema is correct.");
             }
         }
         else {
@@ -758,9 +752,12 @@ function fetchSchema(document) {
         }
     }
     else {
-        //TO DO - Better error handling?
         vscode.window.showErrorMessage("No active text document open.");
     }
+    if (!jsonSchema) {
+        vscode.window.showErrorMessage("Could not fetch JSON schema to validate YAML file. Please check that the path to the schema is correct.");
+    }
+    return jsonSchema;
 }
 exports.fetchSchema = fetchSchema;
 /**
