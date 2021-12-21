@@ -15,7 +15,7 @@ const fetch = require('sync-fetch')
  * for editor uris this is the scheme to use
  * so we can find editors
  */
-export const editorUriScheme = 'csv-edit'
+export const editorUriScheme = 'yaml-edit'
 
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
@@ -103,7 +103,7 @@ export function activate(context: vscode.ExtensionContext) {
 
 		//when we save an unnamed (temp file) file a new file with the new uri is opened and saved
 		//TODO i don't think we can get the old/new name of the file os wait for 
-		//so just filter for csv file and show it 
+		//so just filter for yaml file and show it 
 		if (args.isUntitled || isYamlFile(args) === false || args.version !== 1) return
 	})
 
@@ -185,7 +185,7 @@ export function deactivate() { }
  */
 function onDidChangeConfiguration(instanceManager: InstanceManager, e: vscode.ConfigurationChangeEvent | null) {
 
-	if (e === null || e.affectsConfiguration('csv-edit.fontSizeInPx')) {
+	if (e === null || e.affectsConfiguration('yaml-edit.fontSizeInPx')) {
 		const newFontSize = getExtensionConfiguration().fontSizeInPx
 
 		const instances = instanceManager.getAllInstances()
@@ -375,7 +375,7 @@ export function createNewEditorInstance(context: vscode.ExtensionContext, active
 					funcSendContent(activeTextEditor.document.uri.fsPath)
 				}
 
-				debugLog('finished sending csv content to webview')
+				debugLog('finished sending yaml content to webview')
 
 				break
 			}

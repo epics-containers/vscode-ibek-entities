@@ -281,6 +281,7 @@ function openCsvText(text: string) {
 /**
  * downloads the csv content as file
  */
+/*
 function downloadAsFile(): void {
 
 	const csvContent = getDataAsCsv(defaultCsvReadOptions, defaultCsvWriteOptions)
@@ -335,7 +336,7 @@ function downloadAsFile(): void {
 	//used to clear focus... else styles are not properly applied (clears btn border)
 	//@ts-ignore
 	if (document.activeElement !== document.body) document.activeElement.blur();
-}
+}*/
 
 
 /**
@@ -396,7 +397,7 @@ function resetDataFromResetDialogWithEncoding() {
 
 Mousetrap.bindGlobal(['meta+s', 'ctrl+s'], (e) => {
 	e.preventDefault()
-	downloadAsFile()
+	//downloadAsFile()
 })
 
 

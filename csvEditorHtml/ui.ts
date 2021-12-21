@@ -7,19 +7,10 @@ type GridSettings = import("../thirdParty/handsontable/handsontable").GridSettin
  * NOT USED CURRENTLY (ui is hidden)
  * only in browser version
  */
-function setNewLineWrite() {
-	const el = _getById('newline-select-write') as HTMLInputElement
+//function setNewLineWrite() {
+//	const el = _getById('newline-select-write') as HTMLInputElement
 
-	if (el.value === '') {
-		defaultCsvWriteOptions.newline = newLineFromInput
-	}
-	else if (el.value === 'lf') {
-		defaultCsvWriteOptions.newline = '\n'
-	}
-	else if (el.value === 'crlf') {
-		defaultCsvWriteOptions.newline = '\r\n'
-	}
-}
+//}
 
 /**
  * renders the hot table again
@@ -365,26 +356,6 @@ function stopReceiveProgBar() {
 
 
 /**
- * called from ui
- * @param saveSourceFile 
- */
-
-function postApplyContent(saveSourceFile: boolean) {
-
-	if (isReadonlyMode) return
-
-	//const csvContent = getDataAsCsv(defaultCsvReadOptions, defaultCsvWriteOptions)
-	//const returnData: ReturnDataObject = {tablesArray: getYamlData()}
-
-	//used to clear focus... else styles are not properly applied
-	//@ts-ignore
-	if (document.activeElement !== document.body) document.activeElement.blur();
-
-	//_postApplyContent(csvContent, saveSourceFile)
-	//_postApplyContent(JSON.stringify(returnData), saveSourceFile)
-}
-
-/**
  * Called from the UI, calls function to post a message back with the changed data
  * @param reason 
  * @param contentChanges 
@@ -458,7 +429,7 @@ function updateFixedRowsCols() {
 	if (!hot) return
 
 	hot.updateSettings({
-		fixedRowsTop: Math.max(fixedRowsTop, 0),
+		fixedRowsTop: 0,
 		fixedColumnsLeft: Math.max(fixedColumnsLeft, 0),
 	}, false)
 }
@@ -494,57 +465,6 @@ function _toggleFixedColumnsText() {
 	} else {
 		fixedColumnsTopText.classList.add('dis-hidden')
 	}
-}
-
-/**
- * moves selected row up
- */
-function moveRowUp(){
-	hot = getSelectedHot()
-	if (!hot) return
-
-	let selectedRowIndex: number = 0
-	let selected = hot.getSelected()
-	if(selected){
-		selectedRowIndex = selected[0][0]
-	}
-	_moveRows(selectedRowIndex, selectedRowIndex - 1, hot)
-}
-
-/**
- * moves selected row down
- */
-function moveRowDown(){
-	hot = getSelectedHot()
-	if (!hot) return
-
-	let selectedRowIndex: number = 0
-	let selected = hot.getSelected()
-	if(selected){
-		selectedRowIndex = selected[0][0]
-	}
-	_moveRows(selectedRowIndex, selectedRowIndex + 2, hot)
-}
-
-/**
- * does the actual moving of rows
- * @param newRowIdx index we are trying to move our row to
- */
-function _moveRows(oldRowIndex: number, newRowIndex: number, hot: Handsontable){
-	if(!hot) return
-	if(newRowIndex < 0 || newRowIndex > hot.countRows()){
-		return
-	}
-	let plugin = hot.getPlugin('manualRowMove')
-	plugin.moveRow(oldRowIndex, newRowIndex)
-	hot.render()
-	if(oldRowIndex < newRowIndex){
-		hot.selectCell(newRowIndex-1, 0)
-	}
-	else{
-		hot.selectCell(newRowIndex, 0)
-	}
-	
 }
 
 function getHandsontableOverlayScrollLeft(): HTMLDivElement | null {
@@ -624,53 +544,6 @@ function afterRenderForced(isForced: boolean) {
 	//there is no other hook?
 	//this is also fired on various other event (e.g. col resize...) but better sync more than miss an event
 	syncColWidths()
-}
-
-function pre_afterRemoveCol(this: any, visualColIndex: number, amount: number, isFromUndoRedo: boolean) {
-	recordedHookActions.push("afterRemoveCol")
-
-	hook_list.push({
-		actionName: 'afterRemoveCol',
-		action: afterRemoveCol.bind(this, visualColIndex, amount, isFromUndoRedo)
-	})
-}
-
-function afterRemoveCol(visualColIndex: number, amount: number, isFromUndoRedo: boolean) {
-	if (!hot) return
-
-	if (headerRowWithIndex && !isFromUndoRedo) {
-		headerRowWithIndex.row.splice(visualColIndex, amount)
-		//hot automatically re-renders after this
-	}
-
-	const sortConfigs = hot.getPlugin('columnSorting').getSortConfig()
-
-	const sortedColumnIds = sortConfigs.map(p => hot!.toPhysicalColumn(p.column))
-
-	let removedColIds: number[] = []
-	for (let i = 0; i < amount; i++) {
-		removedColIds.push(hot.toPhysicalColumn(visualColIndex + i))
-	}
-
-	//if we removed some col that was sorted then clear sorting...
-	if (sortedColumnIds.some(p => removedColIds.includes(p))) {
-		hot.getPlugin('columnSorting').clearSort()
-	}
-
-	if (columnIsQuoted) {
-		// const physicalIndex = hot.toPhysicalColumn(visualColIndex)
-		columnIsQuoted.splice(visualColIndex, amount)
-	}
-
-	allColWidths.splice(visualColIndex, 1)
-	//critical might update settings
-	applyColWidths()
-
-	// syncColWidths() //covered by afterRender
-	onAnyChange()
-	//dont' call this as it corrupts hot index mappings (because all other hooks need to finish first before we update hot settings)
-	//also it's not needed as handsontable already handles this internally
-	// updateFixedRowsCols()
 }
 
 function pre_afterCreateRow(this: any, visualRowIndex: number, amount: number) {
@@ -1189,60 +1062,8 @@ let HotRegisterer: HotRegister = {
 				//we could change data to 1 element array containing the finished data? log to console then step until we get to SheetClip.stringify
 				// console.log('data');
 			},
-			beforeUndo: function (_action: EditHeaderCellAction | RemoveColumnAction | InsertColumnAction | any) {
-
+			beforeUndo: function (_action: any) {
 				isUndoRedo = true
-				let __action = _action as EditHeaderCellAction | RemoveColumnAction | InsertColumnAction
-	
-				//when we change has header this is not a prolbem because the undo stack is cleared when we toggle has header
-				if (__action.actionType === 'changeHeaderCell' && headerRowWithIndex) {
-					let action = __action as EditHeaderCellAction
-					let visualColIndex: number = action.change[1]
-					let beforeValue = action.change[2]
-	
-					let undoPlugin = (hot as any).undoRedo
-					let undoneStack = undoPlugin.undoneActions as any[]
-					undoneStack.push(action)
-	
-					headerRowWithIndex.row[visualColIndex] = beforeValue
-					setTimeout(() => {
-						hot!.render()
-					}, 0)
-					return false
-	
-				} else if (__action.actionType === 'remove_col' && headerRowWithIndex) {
-					// let action = __action as RemoveColumnAction
-					
-					let lastAction = headerRowWithIndexUndoStack.pop()
-					if (lastAction && lastAction.action === "removed") {
-		
-						headerRowWithIndex.row.splice(lastAction.visualIndex,0, ...lastAction.headerData)
-	
-						headerRowWithIndexRedoStack.push({
-							action: 'removed',
-							visualIndex: lastAction.visualIndex,
-							headerData: lastAction.headerData
-						})
-	
-					}
-	
-				} else if (__action.actionType === 'insert_col' && headerRowWithIndex) {
-					// let action = __action as InsertColumnAction
-					
-					let lastAction = headerRowWithIndexUndoStack.pop()
-					if (lastAction && lastAction.action === "added") {
-		
-						headerRowWithIndex.row.splice(lastAction.visualIndex,lastAction.headerData.length)
-	
-						headerRowWithIndexRedoStack.push({
-							action: 'added',
-							visualIndex: lastAction.visualIndex,
-							headerData: lastAction.headerData
-						})
-	
-					}
-				}
-	
 			},
 			afterUndo: function (action: any) {
 				//@ts-ignore
@@ -1276,57 +1097,7 @@ let HotRegisterer: HotRegister = {
 				// syncColWidths() //covered by afterRender
 			},
 			beforeRedo: function (_action: EditHeaderCellAction | RemoveColumnAction | InsertColumnAction | any) {
-	
 				isUndoRedo = true
-
-				let __action = _action as EditHeaderCellAction | RemoveColumnAction | InsertColumnAction
-	
-				//when we change has header this is not a prolbem because the undo stack is cleared when we toggle has header
-				if (__action.actionType === 'changeHeaderCell' && headerRowWithIndex) {
-	
-					let action = __action as EditHeaderCellAction
-					let visualColIndex: number = action.change[1]
-					let afterValue = action.change[3]
-	
-					let undoPlugin = (hot as any).undoRedo
-					let doneStack = undoPlugin.doneActions as any[]
-					doneStack.push(action)
-	
-					headerRowWithIndex.row[visualColIndex] = afterValue
-					setTimeout(() => {
-						hot!.render()
-					}, 0)
-					return false
-	
-				} else if (__action.actionType === 'remove_col' && headerRowWithIndex) {
-				// let action = __action as RemoveColumnAction
-				
-				let lastAction = headerRowWithIndexRedoStack.pop()
-				if (lastAction && lastAction.action === "removed") {
-	
-					headerRowWithIndex.row.splice(lastAction.visualIndex, lastAction.headerData.length)
-	
-					headerRowWithIndexUndoStack.push({
-						action: 'removed',
-						visualIndex: lastAction.visualIndex,
-						headerData: lastAction.headerData
-					})
-				}
-			} else if (__action.actionType === 'insert_col' && headerRowWithIndex) {
-	
-				let lastAction = headerRowWithIndexRedoStack.pop()
-				if (lastAction && lastAction.action === "added") {
-	
-					headerRowWithIndex.row.splice(lastAction.visualIndex, 0, ...lastAction.headerData)
-	
-					headerRowWithIndexUndoStack.push({
-						action: 'added',
-						visualIndex: lastAction.visualIndex,
-						headerData: lastAction.headerData
-					})
-				}
-	
-			}
 			},
 			afterRedo: function(action: any) {
 				//@ts-ignore

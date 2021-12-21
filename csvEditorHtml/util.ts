@@ -328,7 +328,7 @@ function _error(text: string) {
  * some options depend on the state after parse ... e.g. has before/after comments?
  */
 
-function setupAndApplyInitialConfigPart1(initialConfig: CsvEditSettings | undefined, initialVars: InitialVars) {
+function setupAndApplyInitialConfigPart1(initialConfig: YamlEditSettings | undefined, initialVars: InitialVars) {
 
 	if (initialConfig === undefined) {
 
@@ -337,11 +337,8 @@ function setupAndApplyInitialConfigPart1(initialConfig: CsvEditSettings | undefi
 		return
 	}
 
-	highlightCsvComments = initialConfig.highlightCsvComments
 	enableWrapping = initialConfig.enableWrapping
 	initialColumnWidth = initialConfig.initialColumnWidth
-	newColumnQuoteInformationIsQuoted = initialConfig.newColumnQuoteInformationIsQuoted
-	fixedRowsTop = Math.max(initialConfig.initiallyFixedRowsTop, 0)
 	fixedColumnsLeft = Math.max(initialConfig.initiallyFixedColumnsLeft, 0)
 	disableBorders = initialConfig.disableBorders
 
@@ -509,37 +506,6 @@ function afterHandsontableCreated(hot: Handsontable) {
 	hot.addHook('afterCreateCol', afterRowOrColsCountChangeHandler)
 	hot.addHook('afterRemoveCol', afterRowOrColsCountChangeHandler)
 
-}
-
-//don't know how to type this properly without typeof ...
-const b = new Big(1)
-function formatBigJsNumber(bigJsNumber: typeof b, numbersStyleToUse: NumbersStyle): string {
-
-	switch (numbersStyleToUse.key) {
-		case 'en': {
-
-			//@ts-ignore
-			bigJsNumber.format = {
-				decimalSeparator: '.',
-				groupSeparator: '', //TODO or maybe whitespace?
-			}
-			break
-		}
-		case 'non-en': {
-			//@ts-ignore
-			bigJsNumber.format = {
-				decimalSeparator: ',',
-				groupSeparator: '', //TODO or maybe whitespace?
-			}
-			break
-		}
-
-		default:
-			notExhaustiveSwitch(numbersStyleToUse.key)
-	}
-
-	//@ts-ignore
-	return bigJsNumber.toFormat()
 }
 
 /**

@@ -25,7 +25,7 @@ const fetch = require('sync-fetch');
  * for editor uris this is the scheme to use
  * so we can find editors
  */
-exports.editorUriScheme = 'csv-edit';
+exports.editorUriScheme = 'yaml-edit';
 // this method is called when your extension is activated
 // your extension is activated the very first time the command is executed
 function activate(context) {
@@ -92,7 +92,7 @@ function activate(context) {
         // console.log(`onDidOpenTextDocument ${args.uri.toString()}`);
         //when we save an unnamed (temp file) file a new file with the new uri is opened and saved
         //TODO i don't think we can get the old/new name of the file os wait for 
-        //so just filter for csv file and show it 
+        //so just filter for yaml file and show it 
         if (args.isUntitled || (0, util_1.isYamlFile)(args) === false || args.version !== 1)
             return;
     });
@@ -162,7 +162,7 @@ exports.deactivate = deactivate;
  * @param e null to manually update all instances
  */
 function onDidChangeConfiguration(instanceManager, e) {
-    if (e === null || e.affectsConfiguration('csv-edit.fontSizeInPx')) {
+    if (e === null || e.affectsConfiguration('yaml-edit.fontSizeInPx')) {
         const newFontSize = (0, configurationHelper_1.getExtensionConfiguration)().fontSizeInPx;
         const instances = instanceManager.getAllInstances();
         for (let i = 0; i < instances.length; i++) {
@@ -317,7 +317,7 @@ function createNewEditorInstance(context, activeTextEditor, instanceManager) {
                     //file is still open and synchronized
                     funcSendContent(activeTextEditor.document.uri.fsPath);
                 }
-                (0, util_1.debugLog)('finished sending csv content to webview');
+                (0, util_1.debugLog)('finished sending yaml content to webview');
                 break;
             }
             case "msgBox": {

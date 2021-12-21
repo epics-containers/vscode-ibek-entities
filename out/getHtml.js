@@ -16,7 +16,7 @@ function getResourcePath(webview, context, filePath) {
 }
 exports.getResourcePath = getResourcePath;
 /**
- * creates the html for the csv editor
+ * creates the html for the yaml editor
  *
  * this is copied from csvEditorHtml/index.html
  * @param context
@@ -49,7 +49,6 @@ function createEditorHtml(webview, context, initialVars) {
     const uiJs = _getResourcePath('csvEditorHtml/out/ui.js');
     const utilJs = _getResourcePath('csvEditorHtml/out/util.js');
     const mainJs = _getResourcePath('csvEditorHtml/out/main.js');
-    const beforeDomLoadedJs = _getResourcePath('csvEditorHtml/out/beforeDomLoaded.js');
     const config = (0, configurationHelper_1.getExtensionConfiguration)();
     //use blocks so vs code adds folding
     let findWidgetHtml = ``;
@@ -264,7 +263,6 @@ function createEditorHtml(webview, context, initialVars) {
 		var initialConfig = ${JSON.stringify(config)};
 		var initialVars = ${JSON.stringify(initialVars)};
 		</script>
-		<script src="${beforeDomLoadedJs}"></script>
 	
 	${findWidgetHtml}
 

@@ -13,12 +13,7 @@ type InitialVars = {
 /**
  * the settings for the plugin
  */
-type CsvEditSettings = {
-
-	/**
-	 * * true: the cell/row color is changed if the first cell is a comment, (might have negative impact on performance e.g. for large data sets), false: no additional highlighting (comments are still treated as comments)
-	 */
-	highlightCsvComments: boolean
+type YamlEditSettings = {
 
 	/**
 	 * if one edits a cell in the last row and presses enter what the editor should do
@@ -37,73 +32,6 @@ type CsvEditSettings = {
 	lastColumnTabBehavior: 'default' | 'createColumn'
 
 	/**
-	 * the appearance of the (top) option bar
-	 * expanded: option bar will always start expanded
-	 * collapsed: option bar will always start collapsed
-	 * remember: option bar will use the last state (across all edit session, we use the latest)
-	 */
-	optionsBarAppearance: 'expanded' | 'collapsed' //| 'remember'
-
-	/**
-	 * the delimiter to use, empty string to auto detect
-	 */
-	readOption_delimiter: string
-
-	/**
-	 * the string used as comment, empty string to thread every line as data line (no comments)
-	 */
-	readOption_comment: string
-
-	/**
-	 * the string used to quote fields
-	 */
-	readOption_quoteChar: string
-
-	/**
-	 * the string used to escape the quote character within a field
-	 */
-	readOption_escapeChar: string
-
-	/**
- * true: first row is the header row
- * false: first row is a normal data row
- * 
- * Allowing both has some problems when when toggling this option in the ui...
- * 
- * we use a string in case we want to add other options...
- */
-	readOption_hasHeader: 'true' | 'false'
-
-
-	/**
-	 * true: export header as row
-	 * false: not
-	 * 
-	 * we use a string in case we want to add other options...
-	 */
-	writeOption_hasHeader: 'true' | 'false'
-
-	/**
-	 * the delimiter to use, empty string to auto detect
-	 */
-	writeOption_delimiter: string
-
-	/**
-	 * the string used as comment, empty string to exclude comments
-	 */
-	writeOption_comment: string
-
-	/**
-	 * the string used to quote fields
-	 */
-	writeOption_quoteChar: string
-
-	/**
-	 * the string used to escape the quote character within a field
-	 */
-	writeOption_escapeChar: string
-
-	/**
 	 * normally the columns are auto sized, if we click on the handle when it has auto size then its with is set to this value (in px). Useful if we have a very wide column (wider than the screen and quickly want to shrink it)
 	 */
 	doubleClickColumnHandleForcedWith: number
@@ -119,23 +47,6 @@ type CsvEditSettings = {
 	selectTextAfterBeginEditCell: boolean
 
 	/**
-	 * true: to always quote fields, false: not (only if necessary)
-	 */
-	quoteAllFields: boolean
-
-	/**
-	 * whether null, undefined and empty values should be quoted (takes precedence over quoteAllFields)
-	 * true: quote null, undefined and empty string values (takes precedence over quoteAllFields), false: not
-	 * we use an enum in case we later want to add some values (e.g. take retain quote information into account)
-	 */
-	quoteEmptyOrNullFields: 'true' | 'false',
-
-	/**
-	 * true: initially hides rows with comments found in the table, false: not hide rows with comments
-	 */
-	initiallyHideComments: boolean
-
-	/**
 	 * true: cell content is wrapped and the row height is changed, false: no wrapping (content is hidden)
 	 */
 	enableWrapping: boolean
@@ -146,24 +57,9 @@ type CsvEditSettings = {
 	initialColumnWidth: number
 
 	/**
-	 * true: information about quoted fields are retained during parsing (for more details see readme), false: information about quoted field is discarded
-	 */
-	retainQuoteInformation: boolean
-
-	/**
-	 * true: new columns will get true as quote information (also for added columns via expanding), false: new columns will get false as quote information
-	 */
-	newColumnQuoteInformationIsQuoted: boolean
-
-	/**
 	 * true: borders are set to 0 (in css). This helps if you encounter some border color issues, false: normal borders
 	 */
 	disableBorders: boolean
-	
-	/**
-	 * the first X rows are pinned so they will stay in view even if you scroll. This option and readOption_hasHeader are mutually exclusive
-	 */
-	initiallyFixedRowsTop: number
 
 	/**
 	 * the first X columns are pinned so they will stay in view even if you scroll. This option and readOption_hasHeader are mutually exclusive
@@ -176,42 +72,11 @@ type CsvEditSettings = {
 	fontSizeInPx: number
 
 	/**
-	 * true: show column names with letters e.g. A, B, ..., Z (like Excel), false: use numbers for column names e.g. 1, 2, ...
-	 */
-	showColumnHeaderNamesWithLettersLikeExcel: boolean //we use the bloaty name because we want to find (via search) this with something like "excel" or "letters"
-
-	/**
-	 * true: the source csv file is watched for changes. If changes happen the user is notified (maybe the table is automatically reloaded when the table has no changes). false: not watched the source csv file
-	 */
-	shouldWatchCsvSourceFile: boolean
-
-	/**
-	 * the appearance of the side panel
-	 * expanded: side panel will always start expanded
-	 * collapsed: side panel will always start collapsed
-	 */
-	sidePanelAppearance: 'expanded' | 'collapsed'
-
-	/**
-	 * the initial numbers style for the side panel (can be changed later through the ui)
-	 * en: decimal separator is '.' e.g. 3.14
-	 * non-en: decimal separator is ',' e.g. 3,14
-	 */
-	initialNumbersStyle: 'en' | 'non-en'
-
-	/**
 	 * which cell should be focused or selected when a new row is inserted (above or below)
 	 * focusFirstCellNewRow: focus the first cell in the new row: 
 	 * keepRowKeepColumn: keep the currently selected cell
 	 */
 	insertRowBehavior: 'focusFirstCellNewRow' | 'keepRowKeepColumn'
-
-	/**
-	 * which cell should be focused or selected when a new column is inserted (left or right)
-	 * keepRowFocusNewColumn: we stay in the same row but the cell in the new column is selected
-	 * keepRowKeepColumn: keep the currently selected cell
-	 */
-	insertColBehavior: 'keepRowFocusNewColumn' | 'keepRowKeepColumn'
 
 	/**
 	 * table should start in readonly mode?
@@ -224,96 +89,6 @@ type CsvEditSettings = {
 
 /* --- frontend settings --- */
 
-
-type CsvReadOptions = {
-	/**
-	 * always use false to get an array of arrays
-	 */
-	header: false,
-	/**
-	 * the string used for comments in the input
-	 * or false to treat comments as normal rows
-	 */
-	comments: false | string,
-	/**
-	 * the delimiter, use '' for auto detect
-	 */
-	delimiter: string,
-	/**
-	 * the new line string, use '' for auto detect
-	 */
-	newline: string,
-	/**
-	 * the quote string
-	 */
-	quoteChar: string,
-	/**
-	 * the escape char
-	 */
-	escapeChar: string
-	/**
-	 * if false we have invalid rows ... always only 1 col
-	 * also when unparsing empty rows become real rows...
-	 */
-	skipEmptyLines: true,
-	/**
-	 * keep everything as strings
-	 */
-	dynamicTyping: false,
-	/**
-	 * ui props, not part of papaparse options
-	 * used to determine if we check/uncheck the has header read option
-	 */
-	_hasHeader: boolean
-}
-
-
-type CsvWriteOptions = {
-	/**
-	 * true to write a header to the file
-	 */
-	header: boolean
-	/**
-	 * the string used to start comments
-	 * or false to exclude comments
-	 */
-	comments: false | string
-	/**
-	 * the delimiter
-	 */
-	delimiter: string
-	/**
-	 * the new line string
-	 * or same as input
-	 */
-	newline: '\n' | '\r\n' | string
-	/**
-	 * the quote string
-	 */
-	quoteChar: string
-	/**
-	 * the escape string used to escape the quote char
-	 */
-	escapeChar: string
-
-	/**
-	 * true: to always quote fields, false: not (only if necessary)
-	 * this does not apply for null, undefined and empty strings,
-	 * {@link quoteEmptyOrNullFields}
-	 */
-	quoteAllFields: boolean
-
-	/**
-	 * true: quote null, undefined and empty strings
-	 * this setting takes precedence over {@link quoteAllFields}
-	 */
-	quoteEmptyOrNullFields: boolean
-
-	/**
-	 * true: information about quoted fields are retained during parsing and written to output(for more details see readme), false: information about quoted field is discarded
-	 */
-	retainQuoteInformation: boolean
-}
 
 type MiscOptions = {
 

@@ -7,7 +7,7 @@ const defaultInitialVars: InitialVars = {
 
 declare var acquireVsCodeApi: any
 declare var initialContent: string
-declare var initialConfig: CsvEditSettings | undefined
+declare var initialConfig: YamlEditSettings | undefined
 declare var initialData: InitialDataObject
 
 declare var initialVars: InitialVars
@@ -20,14 +20,14 @@ if (typeof acquireVsCodeApi !== 'undefined') {
 
 if (typeof initialConfig === 'undefined') {
 	// tslint:disable-next-line:no-duplicate-variable
-	var initialConfig = undefined as CsvEditSettings | undefined
+	var initialConfig = undefined as YamlEditSettings | undefined
 	// tslint:disable-next-line:no-duplicate-variable
 	var initialVars = {
 		...defaultInitialVars
 	}
 }
 
-const csv: typeof import('papaparse') = (window as any).Papa
+//const csv: typeof import('papaparse') = (window as any).Papa
 //handsontable instance
 let hot: import('../thirdParty/handsontable/handsontable') | null
 
@@ -110,64 +110,13 @@ type HeaderRowWithIndexUndoStackItem = {
 let headerRowWithIndexUndoStack: Array<HeaderRowWithIndexUndoStackItem> = []
 let headerRowWithIndexRedoStack: Array<HeaderRowWithIndexUndoStackItem> = []
 
-/**
- * this is part of the output from papaparse
- * for each column 
- * 	true: column was originally quoted
- * 	false: was not quoted
- * 
- * this is expanded via {@link _normalizeDataArray} so we have information about every column
- * see {@link parseCsv} for quoting rules (e.g. header rows, ...)
- * 
- * so this is set in {@link displayData} and should be kept up-to-date because it's used for unparsing
- */
-let columnIsQuoted: boolean[]
 
-//csv reader options + some ui options
-//this gets overwritten with the real configuration in setCsvReadOptionsInitial
-let defaultCsvReadOptions: CsvReadOptions = {
-	header: false, //always use false to get an array of arrays
-	comments: '#',
-	delimiter: '', //auto detect
-	newline: '', //auto detect
-	quoteChar: '"',
-	escapeChar: '"',
-	skipEmptyLines: true,
-	dynamicTyping: false,
-	_hasHeader: false,
-}
-
-
-//this gets overwritten with the real configuration in setCsvWriteOptionsInitial
-let defaultCsvWriteOptions: CsvWriteOptions = {
-	header: false,
-	comments: '#',
-	delimiter: '', //'' = use from input, will be set from empty to string when exporting (or earlier)
-	newline: '', //set by editor
-	quoteChar: '"',
-	escapeChar: '"',
-	quoteAllFields: false,
-	quoteEmptyOrNullFields: false,
-	retainQuoteInformation: true,
-}
 //will be set when we read the csv content
 let newLineFromInput = '\n'
 
 //we need to store this because for collapsed columns we need to change the selection
 //and we need to know if we we need to change the column or not
 let lastHandsonMoveWas: 'tab' | 'enter' | null = null
-
-/**
- * true: the cell/row color is changed if the first cell is a comment, (might have negative impact on performance e.g. for large data sets),
- * false: no additional highlighting (comments are still treated as comments)
- */
-let highlightCsvComments: boolean = true
-
-/**
- * true: new columns will get true as quote information (also for added columns via expanding),
- * false: new columns will get false as quote information
- */
-let newColumnQuoteInformationIsQuoted: boolean = false
 
 /**
  * true: cell content is wrapped and the row height is changed,
@@ -180,11 +129,6 @@ let enableWrapping: boolean = true
  * false: normal borders
  */
 let disableBorders: boolean = false
-
-/**
- * fixes the first X rows so they will stay in view even if you scroll
- */
-let fixedRowsTop: number = 0
 
 /**
  * fixes the first X columns so they will stay in view even if you scroll
@@ -258,8 +202,6 @@ const findWidgetInstance = new FindWidget()
 /* main */
 
 //set defaults when we are in browser
-//setCsvReadOptionsInitial(defaultCsvReadOptions)
-//setCsvWriteOptionsInitial(defaultCsvWriteOptions)
 
 if (typeof initialContent === 'undefined') {
 	// tslint:disable-next-line:no-duplicate-variable

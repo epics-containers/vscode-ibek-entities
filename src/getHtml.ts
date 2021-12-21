@@ -14,7 +14,7 @@ export function getResourcePath(webview: vscode.Webview, context: vscode.Extensi
 }
 
 /**
- * creates the html for the csv editor
+ * creates the html for the yaml editor
  * 
  * this is copied from csvEditorHtml/index.html
  * @param context 
@@ -54,8 +54,6 @@ export function createEditorHtml(webview: vscode.Webview, context: vscode.Extens
 	const uiJs = _getResourcePath('csvEditorHtml/out/ui.js')
 	const utilJs = _getResourcePath('csvEditorHtml/out/util.js')
 	const mainJs = _getResourcePath('csvEditorHtml/out/main.js')
-
-	const beforeDomLoadedJs = _getResourcePath('csvEditorHtml/out/beforeDomLoaded.js')
 
 	const config = getExtensionConfiguration()
 
@@ -276,7 +274,6 @@ export function createEditorHtml(webview: vscode.Webview, context: vscode.Extens
 		var initialConfig = ${JSON.stringify(config)};
 		var initialVars = ${JSON.stringify(initialVars)};
 		</script>
-		<script src="${beforeDomLoadedJs}"></script>
 	
 	${findWidgetHtml}
 
